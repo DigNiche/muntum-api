@@ -1,0 +1,47 @@
+server:
+  port: ${service.port}
+
+
+# 애플리케이션 정보
+spring:
+  config:
+    import: secrets-prod.yml
+
+  # JPA
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+
+  # MySQL DB
+  datasource:
+    url:
+    driver-class-name:
+    username:
+    password:
+
+
+# Observability
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+  endpoint:
+    health:
+      show-details: never
+
+
+# Logging
+logging:
+  level:
+    root: WARN
+    org.springframework: WARN
+    com.art.deepcuration: INFO
+    org.hibernate: WARN
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF

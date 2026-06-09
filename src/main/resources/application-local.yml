@@ -1,0 +1,53 @@
+server:
+  port: ${service.port}
+
+
+# 애플리케이션 정보
+spring:
+  config:
+    import: secrets-local.yml
+
+  # JPA
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true # logging.level.org.hibernate
+
+
+  # MySQL DB
+  datasource:
+    url: jdbc:mysql://localhost:3306/${db.name}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&sslMode=REQUIRED&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${db.user}
+    password: ${db.password}
+
+
+# Observability
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  info:
+    env:
+      enabled: true
+    build:
+      enabled: true
+
+  endpoint:
+    health:
+      show-details: always
+
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.art.deepcuration: DEBUG
+    org.springframework.web: WARN
+    org.springframework.security: DEBUG # ['DEBUG', 'INFO'] 인증 흐름 디버깅 시 -> DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
