@@ -1,6 +1,6 @@
 ---
 name: Task
-about: 개발 작업 단위 정
+about: 개발 작업 단위 정리
 title: "[TASK] "
 labels: task
 assignees: ""
