@@ -46,7 +46,7 @@ management:
 logging:
   level:
     root: INFO
-    com.art.deepcuration: DEBUG
+    com.digniche.muntum: DEBUG
     org.springframework.web: WARN
     org.springframework.security: DEBUG # ['DEBUG', 'INFO'] 인증 흐름 디버깅 시 -> DEBUG
     org.hibernate.SQL: DEBUG
