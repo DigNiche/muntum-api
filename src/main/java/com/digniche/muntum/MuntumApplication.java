@@ -1,13 +1,13 @@
-package com.art.deepcuration;
+package com.digniche.muntum;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class DeepcurationApplication {
+public class MuntumApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DeepcurationApplication.class, args);
+        SpringApplication.run(MuntumApplication.class, args);
     }
 
 }

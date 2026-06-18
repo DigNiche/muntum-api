@@ -41,7 +41,7 @@ logging:
   level:
     root: WARN
     org.springframework: WARN
-    com.art.deepcuration: INFO
+    com.digniche.muntum: INFO
     org.hibernate: WARN
     org.hibernate.SQL: OFF
     org.hibernate.orm.jdbc.bind: OFF

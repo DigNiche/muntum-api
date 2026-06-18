@@ -1,10 +1,10 @@
-package com.art.deepcuration;
+package com.digniche.muntum;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DeepcurationApplicationTests {
+class MuntumApplicationTests {
 
     @Test
     void contextLoads() {
