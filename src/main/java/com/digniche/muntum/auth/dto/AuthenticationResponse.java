@@ -1,5 +1,8 @@
 package com.digniche.muntum.auth.dto;
 
+/**
+ * 인증 Res DTO
+ */
 public record AuthenticationResponse(
         String accessToken,
         String tokenType,
