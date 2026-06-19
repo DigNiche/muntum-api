@@ -1,6 +1,7 @@
 package com.digniche.muntum.global.security;
 
 import com.digniche.muntum.user.entity.User;
+import com.digniche.muntum.user.entity.UserRole;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,14 +13,14 @@ import java.util.UUID;
 /**
  * - DB에서 User 조회하여 UserDetails 객체로 반환
  * - user.getRole().toAuthority() -> "ROLD_AUDEINCE" (Ex)
- * - AuthenticationManager가 내부적으로 이 서비스를 사용해 authenticat() 수행 
+ * - AuthenticationManager가 내부적으로 이 서비스를 사용해 authenticat() 수행
  */
 public class CustomUserDetails implements UserDetails {
 
     private final User user;
 
-    public CustomUserDetails(User user) {
-        this.user = user;
+    public CustomUserDetails(UUID userId, UserRole role) {
+        this.user = User.ofClaims(userId, role);
     }
 
     public UUID getUserId() { return user.getUserId(); }

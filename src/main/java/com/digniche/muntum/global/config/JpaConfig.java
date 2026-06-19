@@ -1,5 +1,6 @@
 package com.digniche.muntum.global.config;
 
+import com.digniche.muntum.global.security.CustomUserDetails;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
