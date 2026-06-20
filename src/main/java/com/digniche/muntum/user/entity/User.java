@@ -76,6 +76,14 @@ public class User extends BaseEntity {
         this.status = UserStatus.ACTIVE;
     }
 
+    private User(UUID userId, UserRole role) {
+        this.id = userId;
+        this.role = role;
+    }
+    public static User ofClaims(UUID userId, UserRole role) {
+        return new User(userId, role);
+    }
+
     // 닉네임 설정 및 수정
     public void updateNickname(String nickname) {
         this.nickname = nickname;
