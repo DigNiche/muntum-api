@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.AuditorAware;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -55,6 +56,12 @@ public class User extends BaseEntity {
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    @Column(name = "deleted_at", updatable = false)
+    private LocalDateTime deletedAt;
+
+    @Column(name="deleted_by", updatable = false)
+    private UUID deletedBy;
 
 
 
@@ -108,10 +115,14 @@ public class User extends BaseEntity {
     }
 
     // 사용자 삭제(Soft Deleted)
-    public void softDelete(UUID manager) {
+    public void softDelete(UUID deletedBy) {
         this.status = UserStatus.DELETED;
-        this.deletedBy = manager;
+        this.deletedBy = deletedBy;
         this.deletedAt = LocalDateTime.now();
+
+//        final AuditorAware<UUID> auditorAware;
+//        auditorAware.getCurrentAuditor()
+//                .orElse(null);
     }
 
     // 이메일 인증 완료
