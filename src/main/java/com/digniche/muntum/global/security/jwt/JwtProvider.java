@@ -1,8 +1,8 @@
 package com.digniche.muntum.global.security.jwt;
 
 
-import com.digniche.muntum.auth.exception.AuthBusinessException;
-import com.digniche.muntum.auth.exception.AuthErrorCode;
+import com.digniche.muntum.global.exception.BusinessException;
+import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.user.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -89,13 +89,13 @@ public class JwtProvider {
             parseClaims(token); // 파싱 성공 후 결과 버림
         } catch (ExpiredJwtException e) {
             log.warn("🚫 JWT 토큰 만료: {}", e.getMessage());
-            throw new AuthBusinessException(AuthErrorCode.EXPIRED_REFRESH_TOKEN);
+            throw new BusinessException(ErrorCode.EXPIRED_TOKEN);
         } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
             log.warn("❌ JWT 토큰 잘못됨: {}", e.getMessage());
-            throw new AuthBusinessException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
         } catch (io.jsonwebtoken.security.SignatureException e) {
             log.warn("❗ JWT 서명 불일치: {}", e.getMessage());
-            throw new AuthBusinessException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
     }
 
@@ -111,7 +111,7 @@ public class JwtProvider {
                 return false;
             }
             return true;
-        } catch(AuthBusinessException e) {
+        } catch(BusinessException e) {
             return false;
         }
     }

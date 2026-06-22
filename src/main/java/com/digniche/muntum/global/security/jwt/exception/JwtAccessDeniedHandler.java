@@ -1,4 +1,4 @@
-package com.digniche.muntum.global.security.jwt;
+package com.digniche.muntum.global.security.jwt.exception;
 
 import com.digniche.muntum.global.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,10 +12,9 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
- * 인증되었지만 권한이 부족할 때 (403)
+ * Servlet 진입 전 예외 처리 : 인증되었지만 권한이 부족할 때 (403)
  */
 @Component
 @RequiredArgsConstructor

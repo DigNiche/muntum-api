@@ -1,4 +1,4 @@
-package com.digniche.muntum.global.security.jwt;
+package com.digniche.muntum.global.security.jwt.exception;
 
 
 import com.digniche.muntum.global.ApiResponse;
@@ -14,10 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
- * 인증되지 않은 요청이 보호된 엔드포인트에 접근했을 때 (401)
+ * Servlet 진입 전 예외 처리 : 인증되지 않은 요청이 보호된 엔드포인트에 접근했을 때 (401)
  */
 @Component
 @RequiredArgsConstructor
