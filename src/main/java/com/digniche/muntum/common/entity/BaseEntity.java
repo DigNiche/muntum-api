@@ -36,4 +36,11 @@ public abstract class BaseEntity {
     @LastModifiedBy
     @Column(name="updated_by")
     private UUID updatedBy;
+
+    // 삭제일, 삭제자
+    @Column(name = "deleted_at", updatable = false)
+    private LocalDateTime deletedAt;
+
+    @Column(name="deleted_by", updatable = false)
+    private UUID deletedBy;
 }

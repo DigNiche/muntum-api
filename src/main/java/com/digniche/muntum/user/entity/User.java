@@ -56,12 +56,6 @@ public class User extends BaseEntity {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    @Column(name = "deleted_at", updatable = false)
-    private LocalDateTime deletedAt;
-
-    @Column(name="deleted_by", updatable = false)
-    private UUID deletedBy;
-
 
 
     /**
