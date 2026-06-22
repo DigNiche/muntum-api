@@ -92,10 +92,6 @@ public class User extends BaseEntity {
         this.role = role;
     }
 
-    // 사용자 ID 조회
-    public UUID getUserId() {
-        return this.id;
-    }
 
     // 닉네임 설정 및 수정
     public void updateNickname(String nickname) {

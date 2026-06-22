@@ -50,7 +50,7 @@ public class JwtProvider {
         Date expireDate = new Date(now.getTime() + accessTokenExpirationTime);
 
         String token = Jwts.builder()
-                .subject(user.getUserId().toString())
+                .subject(user.getId().toString())
                 .claim("role", user.getRole().name())
                 .claim("tokenType", "ACCESS")  // ACCESS | REFRESH
                 .issuedAt(now)
@@ -75,7 +75,7 @@ public class JwtProvider {
      */
 
     // 토큰 파싱
-    private Claims parseClaims(String token) {
+    public Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key)
                 .build()

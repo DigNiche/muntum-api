@@ -22,7 +22,6 @@ import java.util.UUID;
  * SecuritySecurityContext에 인증 정보를 채워주는 필터 - Authorization 헤더 검사하여 진행
  * - DB 조회 없이 JWT claims만으로 인증 구성
  */
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -41,14 +40,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 jwtProvider.validateToken(token);
 
-                UUID userId = jwtProvider.getUserId(token);
-                UserRole role = jwtProvider.getRole(token);
+                UUID userId = UUID.fromString(jwtProvider.parseClaims(token).getSubject());
+                UserRole role = UserRole.valueOf(jwtProvider.parseClaims(token).get("role", String.class));
 
                 SecurityContextHolder.getContext().setAuthentication(createAuthentication(userId, role));
             } catch (RuntimeException e) {
                 // JwtProvider가 던지는 구체적인 예외 타입(만료/위변조 등)에 맞춰 catch 절을 좁혀도 된다.
                 log.debug("JWT 인증 실패: {}", e.getMessage());
-                SecurityContextHolder.clearContext();
+                SecurityContextHolder.clearContext(); // 잔여 인증 정보 제거 
                 request.setAttribute("exception", e);
             }
         }
@@ -59,9 +58,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    // 인증된 토큰 생성
     private Authentication createAuthentication(UUID userId, UserRole role) {
         CustomUserDetails userDetails = new CustomUserDetails(userId, role);
-        // 3-arg 생성자를 쓰면 즉시 "인증된(authenticated=true)" 토큰이 만들어진다.
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
