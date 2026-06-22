@@ -30,7 +30,7 @@ public abstract class BaseEntity {
 
     // 수정일, 수정자
     @LastModifiedDate
-    @Column(name="updated_at", nullable = false)
+    @Column(name="updated_at")
     private LocalDateTime updatedAt;
 
     @LastModifiedBy

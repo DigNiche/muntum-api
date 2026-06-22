@@ -24,40 +24,43 @@ public class User extends BaseEntity {
     @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
 
-    @Column
+    @Column(name = "email_verified_at")
     private LocalDateTime emailVerifiedAt;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password_hash", nullable = false)
     private String password;
 
-    @Column(unique = true, length = 50)
+    @Column(name = "nickname", unique = true, length = 50)
     private String nickname;
 
-    @Column(length = 500)
+    @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20)
     private UserStatus status = UserStatus.ACTIVE;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "role", nullable = false, length = 20)
     private UserRole role = UserRole.AUDIENCE;
 
-    @Column(nullable = false)
+    @Column(name = "taste_selected", nullable = false)
     private boolean tasteSelected = false;
 
-    @Column
+    @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    @Column
+    @Column(name = "deleted_at", updatable = false)
     private LocalDateTime deletedAt;
+
+    @Column(name="deleted_by", updatable = false)
+    private UUID deletedBy;
 
 
 
@@ -76,12 +79,22 @@ public class User extends BaseEntity {
         this.status = UserStatus.ACTIVE;
     }
 
+    /**
+     * Claim용 User 객체 생성
+     * @param userId
+     * @param role
+     */
+    public static User ofClaims(UUID userId, UserRole role) {
+        return new User(userId, role);
+    }
     private User(UUID userId, UserRole role) {
         this.id = userId;
         this.role = role;
     }
-    public static User ofClaims(UUID userId, UserRole role) {
-        return new User(userId, role);
+
+    // 사용자 ID 조회
+    public UUID getUserId() {
+        return this.id;
     }
 
     // 닉네임 설정 및 수정
@@ -94,9 +107,9 @@ public class User extends BaseEntity {
         this.status = status;
     }
 
-    // 사용자 계정 활성화
+    // 사용자 계정 활성화 확인
     public boolean isActive() {
-        return this.status == UserStatus.ACTIVE;
+        return UserStatus.ACTIVE.equals(this.status);
     }
 
     // 사용자 계정 비활성화
@@ -105,8 +118,9 @@ public class User extends BaseEntity {
     }
 
     // 사용자 삭제(Soft Deleted)
-    public void softDelete() {
+    public void softDelete(UUID manager) {
         this.status = UserStatus.DELETED;
+        this.deletedBy = manager;
         this.deletedAt = LocalDateTime.now();
     }
 
@@ -124,13 +138,6 @@ public class User extends BaseEntity {
     // 취향 키워드 설정 완료
     public void updateTasteSelected() {
         this.tasteSelected = true;
-    }
-
-
-
-    // 사용자 ID 조회
-    public UUID getUserId() {
-        return this.id;
     }
 
 }
