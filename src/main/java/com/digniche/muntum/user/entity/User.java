@@ -120,6 +120,7 @@ public class User extends BaseEntity {
         this.deletedBy = deletedBy;
         this.deletedAt = LocalDateTime.now();
 
+//        TODO: 추후 정리
 //        final AuditorAware<UUID> auditorAware;
 //        auditorAware.getCurrentAuditor()
 //                .orElse(null);

@@ -1,7 +1,7 @@
 package com.digniche.muntum.global.config;
 
-import com.digniche.muntum.global.security.jwt.JwtAccessDeniedHandler;
-import com.digniche.muntum.global.security.jwt.JwtAuthenticationEntryPoint;
+import com.digniche.muntum.global.security.jwt.exception.JwtAccessDeniedHandler;
+import com.digniche.muntum.global.security.jwt.exception.JwtAuthenticationEntryPoint;
 import com.digniche.muntum.global.security.jwt.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
