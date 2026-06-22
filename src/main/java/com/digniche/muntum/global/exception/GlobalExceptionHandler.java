@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Controller / Service에서의 전반적인 예외 처리
+ * DispatcherServlet 진입 후 내에서의 전반적인 예외 처리
+ * - Controller
+ * - Service
  */
 @Slf4j
 @RestControllerAdvice
