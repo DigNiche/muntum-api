@@ -4,7 +4,6 @@ package com.digniche.muntum.global.security.jwt;
 import com.digniche.muntum.auth.exception.AuthBusinessException;
 import com.digniche.muntum.auth.exception.AuthErrorCode;
 import com.digniche.muntum.user.entity.User;
-import com.digniche.muntum.user.entity.UserRole;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.UUID;
 
 /**
  * JWT 프로바이더 - 토큰 생성, 검증, claims 파싱
