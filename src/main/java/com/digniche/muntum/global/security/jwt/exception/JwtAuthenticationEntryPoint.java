@@ -2,6 +2,7 @@ package com.digniche.muntum.global.security.jwt.exception;
 
 
 import com.digniche.muntum.global.ApiResponse;
+import com.digniche.muntum.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,10 +27,11 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        ErrorCode errorCode = ErrorCode.NOT_AUTHENTICATED;
+        response.setStatus(errorCode.getStatus().value());
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(objectMapper.writeValueAsString(
-                ApiResponse.fail(response.getStatus(), "INVALID_USER", resolveMessage(request))
+                ApiResponse.fail(response.getStatus(), String.valueOf(errorCode), resolveMessage(request))
         ));
     }
 

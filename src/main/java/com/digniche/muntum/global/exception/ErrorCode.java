@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 /**
- * Auth 에러 코드 모음
+ * 에러 코드 모음
  */
 @Getter
 @RequiredArgsConstructor
@@ -19,8 +19,10 @@ public enum ErrorCode {
     USER_NOT_FOUND("002", "존재하지 않는 사용자입니다", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD("003", "비밀번호가 일치하지 않습니다", HttpStatus.UNAUTHORIZED),
     INACTIVE_ACCOUNT("004", "비활성화된 계정입니다", HttpStatus.FORBIDDEN),
+    ACCESS_DENIED("004", "접근 권한이 없습니다", HttpStatus.FORBIDDEN),
     INVALID_TOKEN("005", "유효하지 않은 토큰입니다", HttpStatus.UNAUTHORIZED),
     EXPIRED_TOKEN("006", "만료된 토큰입니다", HttpStatus.UNAUTHORIZED),
+    NOT_AUTHENTICATED("000", "인증되지 않은 사용자 입니다", HttpStatus.UNAUTHORIZED),
 
 
     // 유효하지 않은 요청

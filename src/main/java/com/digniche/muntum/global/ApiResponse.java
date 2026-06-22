@@ -3,6 +3,9 @@ package com.digniche.muntum.global;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * 일관된 API 응답 형식
+ */
 @Getter
 @Builder
 public class ApiResponse<T> {
@@ -13,11 +16,12 @@ public class ApiResponse<T> {
     private T data;
 
     public static <T> ApiResponse<T> success(
-            T data,
-            String message
+            int status,
+            String message,
+            T data
     ) {
         return ApiResponse.<T>builder()
-                .status(200)
+                .status(status)
                 .message(message)
                 .data(data)
                 .build();

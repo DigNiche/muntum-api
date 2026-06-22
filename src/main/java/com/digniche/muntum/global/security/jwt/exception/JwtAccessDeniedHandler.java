@@ -1,6 +1,7 @@
 package com.digniche.muntum.global.security.jwt.exception;
 
 import com.digniche.muntum.global.ApiResponse;
+import com.digniche.muntum.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,10 +25,11 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        response.setStatus(HttpStatus.FORBIDDEN.value());
+        ErrorCode errorCode = ErrorCode.ACCESS_DENIED;
+        response.setStatus(errorCode.getStatus().value());
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(objectMapper.writeValueAsString(
-                ApiResponse.fail(response.getStatus(), "ACCESS_DENIED", "접근 권한이 없습니다.")
+                ApiResponse.fail(response.getStatus(), String.valueOf(errorCode), errorCode.getMessage())
         ));
     }
 }
