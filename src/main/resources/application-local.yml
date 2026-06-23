@@ -25,6 +25,14 @@ spring:
     password: ${db.password}
 
 
+  # Redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${redis.password}
+
+
 # JWT
 jwt:
   secret-key: ${jwt.secret-key}
