@@ -27,8 +27,6 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
 
-    private static final String AUTHENTICATION_SCHEME_PREFIX = "Bearer ";
-
     // 회원가입
     @Transactional
     public SignupResponse signup(SignUpRequest request) {
@@ -65,7 +63,6 @@ public class AuthService {
         refreshTokenService.save(user.getId(), refreshToken, jwtProvider.getRefreshTokenExpirationTime());
 
         return AuthenticationResponse.of(
-                AUTHENTICATION_SCHEME_PREFIX,
                 accessToken, jwtProvider.getAccessTokenExpirationTime(),
                 refreshToken, jwtProvider.getRefreshTokenExpirationTime(),
                 user.getId(), user.getEmail(), user.getNickname()
