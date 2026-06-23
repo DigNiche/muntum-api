@@ -4,6 +4,7 @@ import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
 import com.digniche.muntum.auth.dto.response.SignupResponse;
+import com.digniche.muntum.global.redis.RefreshTokenService;
 import com.digniche.muntum.global.security.jwt.JwtProvider;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
@@ -24,7 +25,11 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final RefreshTokenService refreshTokenService;
 
+    private static final String AUTHENTICATION_SCHEME_PREFIX = "Bearer ";
+
+    // 회원가입
     @Transactional
     public SignupResponse signup(SignUpRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -32,9 +37,13 @@ public class AuthService {
         }
         String encodedPassword = passwordEncoder.encode(request.password());
         User user = userRepository.save(request.toEntity(encodedPassword));
+
+        // TODO: 이메일 중복 여부 확인
+
         return SignupResponse.of(user.getId(), user.getEmail(), user.getCreatedAt());
     }
 
+    // 로그인
     @Transactional
     public AuthenticationResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
@@ -51,6 +60,18 @@ public class AuthService {
         user.updateLastLogin();
 
         String accessToken = jwtProvider.generateAccessToken(user);
-        return AuthenticationResponse.of(accessToken, jwtProvider.getAccessTokenExpirationTime(), null, jwtProvider.getRefreshTokenExpirationTime(), user.getId(), user.getEmail(), user.getNickname());
+        String refreshToken = jwtProvider.generateRefreshToken(user);
+
+        refreshTokenService.save(user.getId(), refreshToken, jwtProvider.getRefreshTokenExpirationTime());
+
+        return AuthenticationResponse.of(
+                AUTHENTICATION_SCHEME_PREFIX,
+                accessToken, jwtProvider.getAccessTokenExpirationTime(),
+                refreshToken, jwtProvider.getRefreshTokenExpirationTime(),
+                user.getId(), user.getEmail(), user.getNickname()
+        );
     }
+
+    // Refresh 토큰 재발급
+
 }
