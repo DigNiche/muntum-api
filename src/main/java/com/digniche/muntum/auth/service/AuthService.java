@@ -4,7 +4,7 @@ import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
 import com.digniche.muntum.auth.dto.response.SignupResponse;
-import com.digniche.muntum.auth.infrastructure.JwtProvider;
+import com.digniche.muntum.global.security.jwt.JwtProvider;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.user.entity.User;

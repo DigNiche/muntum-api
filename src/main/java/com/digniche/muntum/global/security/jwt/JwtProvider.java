@@ -1,4 +1,4 @@
-package com.digniche.muntum.auth.infrastructure;
+package com.digniche.muntum.global.security.jwt;
 
 
 import com.digniche.muntum.global.exception.BusinessException;

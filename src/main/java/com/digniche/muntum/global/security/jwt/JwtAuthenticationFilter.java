@@ -1,6 +1,5 @@
 package com.digniche.muntum.global.security.jwt;
 
-import com.digniche.muntum.auth.infrastructure.JwtProvider;
 import com.digniche.muntum.global.security.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;

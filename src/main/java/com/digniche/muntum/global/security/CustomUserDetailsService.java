@@ -8,8 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * Flow A 전용 — DaoAuthenticationProvider가 authenticate() 수행 시 호출
- * loadUserByUsername(email) → DB 조회 → UserPrincipal(User) 반환
+ * 인증 시 User 조회
  */
 @Service
 @RequiredArgsConstructor
@@ -21,6 +20,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return userRepository.findByEmail(email)
                 .map(UserPrincipal::new)
-                .orElseThrow(() -> new UsernameNotFoundException(email));
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
     }
 }
