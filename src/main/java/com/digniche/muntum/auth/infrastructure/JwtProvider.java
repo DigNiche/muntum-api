@@ -26,16 +26,16 @@ public class JwtProvider {
     private static final String CLAIM_ROLE = "role";
     private final SecretKey key;
     private final long accessTokenExpirationTime;
-    // TODO: private final long refreshTokenExpirationTime;
+    private final long refreshTokenExpirationTime;
 
     public JwtProvider(
             @Value("${jwt.secret-key}") String secret,
-            @Value("${jwt.access-token-validity-time}") long accessTokenExpirationTime
-            // TODO: @Value("${jwt.refresh-token-validity-time}") long refreshTokenExpirationTime
+            @Value("${jwt.access-token-validity-time}") long accessTokenExpirationTime,
+            @Value("${jwt.refresh-token-validity-time}") long refreshTokenExpirationTime
     ) {
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
         this.accessTokenExpirationTime = accessTokenExpirationTime;
-        // TODO: this.refreshTokenExpirationTime = refreshTokenExpirationTime;
+        this.refreshTokenExpirationTime = refreshTokenExpirationTime;
     }
 
 
