@@ -1,7 +1,7 @@
 package com.digniche.muntum.global.security.jwt;
 
-import com.digniche.muntum.global.security.CustomUserDetails;
-import com.digniche.muntum.user.entity.UserRole;
+import com.digniche.muntum.global.security.UserPrincipal;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +22,6 @@ import java.util.UUID;
  * SecuritySecurityContext에 인증 정보를 채워주는 필터 - Authorization 헤더 검사하여 진행
  * - DB 조회 없이 JWT claims만으로 인증 구성
  */
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -41,14 +40,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 jwtProvider.validateToken(token);
 
-                UUID userId = jwtProvider.getUserId(token);
-                UserRole role = jwtProvider.getRole(token);
+                Claims claims = jwtProvider.parseClaims(token);
+                UUID userId = UUID.fromString(claims.getSubject());
+                String userRole = claims.get("role", String.class);
 
-                SecurityContextHolder.getContext().setAuthentication(createAuthentication(userId, role));
+                SecurityContextHolder.getContext().setAuthentication(createAuthentication(userId, userRole));
             } catch (RuntimeException e) {
-                // JwtProvider가 던지는 구체적인 예외 타입(만료/위변조 등)에 맞춰 catch 절을 좁혀도 된다.
+                // TODO: JwtProvider가 던지는 구체적인 예외 타입(만료/위변조 등)에 맞춰 catch 절 좁히기
                 log.debug("JWT 인증 실패: {}", e.getMessage());
-                SecurityContextHolder.clearContext();
+                SecurityContextHolder.clearContext(); // 잔여 인증 정보 제거 
                 request.setAttribute("exception", e);
             }
         }
@@ -59,10 +59,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private Authentication createAuthentication(UUID userId, UserRole role) {
-        CustomUserDetails userDetails = new CustomUserDetails(userId, role);
-        // 3-arg 생성자를 쓰면 즉시 "인증된(authenticated=true)" 토큰이 만들어진다.
-        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    // 인증된 토큰 생성
+    private Authentication createAuthentication(UUID userId, String userRole) {
+        UserPrincipal userPrincipal = new UserPrincipal(userId, userRole);
+        return new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
 
     private String resolveToken(HttpServletRequest request) {

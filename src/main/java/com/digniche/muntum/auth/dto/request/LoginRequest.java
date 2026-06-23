@@ -1,4 +1,4 @@
-package com.digniche.muntum.auth.dto;
+package com.digniche.muntum.auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

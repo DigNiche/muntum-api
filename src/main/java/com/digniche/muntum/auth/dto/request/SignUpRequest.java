@@ -1,4 +1,4 @@
-package com.digniche.muntum.auth.dto;
+package com.digniche.muntum.auth.dto.request;
 
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserRole;

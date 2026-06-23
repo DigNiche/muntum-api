@@ -23,21 +23,31 @@ public class CustomUserDetails implements UserDetails {
         this.user = User.ofClaims(userId, role);
     }
 
-    public UUID getUserId() { return user.getUserId(); }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(user.getRole().toAuthority()));
+        return List.of(
+                new SimpleGrantedAuthority(
+                        user.getRole().toAuthority()
+                )
+        );
     }
 
+    // 사용자 ID 조회
+    public UUID getUserId() { return user.getId(); }
+
+    // 사용자 Nickname 조회
+    public String getNickname() { return user.getNickname(); }
+
+    // 사용자 비밀번호 조회
     @Override
     public String getPassword() {
         return user.getPassword();
     }
 
+    // 사용자 이메일 조회 (Username 아님)
     @Override
     public String getUsername() {
-        return user.getNickname();
+        return user.getEmail();
     }
 
     @Override
@@ -46,17 +56,6 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /*
-
-
-    @Override
-    public String getPassword() {
-        return "";
-    }
-
-    @Override
-    public String getUsername() {
-        return "";
-    }
 
     @Override
     public boolean isAccountNonExpired() {
