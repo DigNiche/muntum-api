@@ -1,4 +1,4 @@
-package com.digniche.muntum.global.security.jwt;
+package com.digniche.muntum.auth.infrastructure;
 
 
 import com.digniche.muntum.global.exception.BusinessException;
@@ -7,6 +7,7 @@ import com.digniche.muntum.user.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import java.util.Date;
  * JWT 프로바이더 - 토큰 생성, 검증, claims 파싱
  */
 @Slf4j
+@Getter
 @Component
 public class JwtProvider {
 

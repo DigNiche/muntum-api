@@ -1,7 +1,7 @@
 package com.digniche.muntum.global.security.jwt;
 
-import com.digniche.muntum.global.security.CustomUserDetails;
-import com.digniche.muntum.user.entity.UserRole;
+import com.digniche.muntum.auth.infrastructure.JwtProvider;
+import com.digniche.muntum.global.security.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -43,9 +43,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 Claims claims = jwtProvider.parseClaims(token);
                 UUID userId = UUID.fromString(claims.getSubject());
-                UserRole role = UserRole.valueOf(claims.get("role", String.class));
+                String userRole = claims.get("role", String.class);
 
-                SecurityContextHolder.getContext().setAuthentication(createAuthentication(userId, role));
+                SecurityContextHolder.getContext().setAuthentication(createAuthentication(userId, userRole));
             } catch (RuntimeException e) {
                 // TODO: JwtProvider가 던지는 구체적인 예외 타입(만료/위변조 등)에 맞춰 catch 절 좁히기
                 log.debug("JWT 인증 실패: {}", e.getMessage());
@@ -61,9 +61,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     // 인증된 토큰 생성
-    private Authentication createAuthentication(UUID userId, UserRole role) {
-        CustomUserDetails userDetails = new CustomUserDetails(userId, role);
-        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    private Authentication createAuthentication(UUID userId, String userRole) {
+        UserPrincipal userPrincipal = new UserPrincipal(userId, userRole);
+        return new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
 
     private String resolveToken(HttpServletRequest request) {
