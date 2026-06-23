@@ -19,7 +19,7 @@ public record AuthenticationResponse(
     public static AuthenticationResponse of(String prefix, String accessToken, long accessExpiresIn, String refreshToken, long refreshExpiresIn, UUID userId, String email, String nickname) {
         return new AuthenticationResponse(
                 prefix, accessToken, accessExpiresIn,
-                null, refreshExpiresIn,
+                refreshToken, refreshExpiresIn,
                 userId, email, nickname
         );
     }
