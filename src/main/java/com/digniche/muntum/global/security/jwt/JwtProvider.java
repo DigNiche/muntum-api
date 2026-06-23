@@ -59,17 +59,29 @@ public class JwtProvider {
                 .expiration(expireDate)
                 .signWith(key)
                 .compact();
-//        if (user.getRole() != null) {
-//            builder.claim(CLAIM_ROLE, user.getRole().name());
-//        }
-
         log.debug("JWT 액세스 토큰 생성됨: 사용자 ID={}, 역할={}", user.getId(), user.getRole());
 
         return token;
     }
 
-    // TODO: Refresh 토큰 생성
+    // Refresh 토큰 생성
+    public String generateRefreshToken(User user) {
+        Date now = new Date();
+        Date expireDate = new Date(now.getTime() + refreshTokenExpirationTime);
 
+        String token = Jwts.builder()
+                .subject(user.getId().toString())
+                .claim("role", user.getRole().name())
+                .claim("tokenType", "REFRESH")  // ACCESS | REFRESH
+                .issuedAt(now)
+                .expiration(expireDate)
+                .signWith(key)
+                .compact();
+
+        log.debug("JWT 리프레시 토큰 생성됨: 사용자 ID={}, 역할={}", user.getId(), user.getRole());
+
+        return token;
+    }
 
 
     /**
