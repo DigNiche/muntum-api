@@ -1,0 +1,74 @@
+package com.digniche.muntum.keyword.entity;
+
+import com.digniche.muntum.common.entity.SoftDeleteEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+/**
+ * 키워드 엔티티
+ */
+@Entity
+@Table(name = "keyword")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Keyword extends SoftDeleteEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(
+            name = "id",
+            columnDefinition = "BINARY(16)",
+            nullable = false,
+            updatable = false
+    )
+    private UUID id;
+
+    @Column(
+            name = "name",
+            nullable = false,
+            unique = true,
+            length = 50
+    )
+    private String name;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean active = true;
+
+    @Column(name = "description", length = 255)
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", length = 20)
+    private KeywordType type;
+
+    @Column(name = "category", length = 100)
+    private String category;
+    // 1
+    @Builder
+    public Keyword(
+            String name,
+            String description,
+            KeywordType type,
+            String category
+    ) {
+        this.name = name;
+        this.description = description;
+        this.type = type;
+        this.category = category;
+        this.active = true;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+}
+

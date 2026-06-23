@@ -3,6 +3,7 @@ package com.digniche.muntum.common.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -15,6 +16,7 @@ import java.util.UUID;
 /**
  * 엔티티 기본 정보
  */
+@Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity {
@@ -25,12 +27,12 @@ public abstract class BaseEntity {
     private LocalDateTime createdAt;
 
     @CreatedBy
-    @Column(name="created_by", updatable = false)
+    @Column(name="created_by", nullable = false, updatable = false)
     private UUID createdBy;
 
     // 수정일, 수정자
     @LastModifiedDate
-    @Column(name="updated_at", nullable = false)
+    @Column(name="updated_at")
     private LocalDateTime updatedAt;
 
     @LastModifiedBy
