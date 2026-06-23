@@ -37,25 +37,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         if (StringUtils.hasText(token)) {
-            try {
-                jwtProvider.validateToken(token);
+            Claims claims = jwtProvider.validateToken(token); // 토큰 검증 및 파싱
 
-                Claims claims = jwtProvider.parseClaims(token);
-                UUID userId = UUID.fromString(claims.getSubject());
-                String userRole = claims.get("role", String.class);
+            UUID userId = UUID.fromString(claims.getSubject());
+            String userRole = claims.get(JwtProvider.CLAIM_ROLE, String.class);
 
-                SecurityContextHolder.getContext().setAuthentication(createAuthentication(userId, userRole));
-            } catch (RuntimeException e) {
-                // TODO: JwtProvider가 던지는 구체적인 예외 타입(만료/위변조 등)에 맞춰 catch 절 좁히기
-                log.debug("JWT 인증 실패: {}", e.getMessage());
-                SecurityContextHolder.clearContext(); // 잔여 인증 정보 제거 
-                request.setAttribute("exception", e);
-            }
+            SecurityContextHolder.getContext().setAuthentication(createAuthentication(userId, userRole));
+
         }
 
-        // 토큰이 없거나 검증에 실패해도 일단 체인은 계속 진행한다.
-        // signup/login처럼 공개 엔드포인트는 인증 없이도 통과해야 하고,
-        // 보호된 엔드포인트는 authorizeHttpRequests + AuthenticationEntryPoint가 401로 막아준다.
         filterChain.doFilter(request, response);
     }
 

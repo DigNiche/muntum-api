@@ -19,14 +19,19 @@ import java.util.Date;
  * JWT 프로바이더 - 토큰 생성, 검증, claims 파싱
  */
 @Slf4j
-@Getter
 @Component
 public class JwtProvider {
 
-    private static final String CLAIM_ROLE = "role";
     private final SecretKey key;
-    private final long accessTokenExpirationTime;
-    private final long refreshTokenExpirationTime;
+    @Getter private final long accessTokenExpirationTime;
+    @Getter private final long refreshTokenExpirationTime;
+
+    static final String CLAIM_ROLE = "role";
+    static final String CLAIM_TOKEN_TYPE = "tokenType";
+
+    private enum TokenType {
+        ACCESS, REFRESH
+    }
 
     public JwtProvider(
             @Value("${jwt.secret-key}") String secret,
@@ -39,7 +44,6 @@ public class JwtProvider {
     }
 
 
-
     /**
      * 토큰 생성
      * - Access 토큰 생성
@@ -48,38 +52,28 @@ public class JwtProvider {
 
     // Access 토큰 생성
     public String generateAccessToken(User user) {
-        Date now = new Date();
-        Date expireDate = new Date(now.getTime() + accessTokenExpirationTime);
-
-        String token = Jwts.builder()
-                .subject(user.getId().toString())
-                .claim("role", user.getRole().name())
-                .claim("tokenType", "ACCESS")  // ACCESS | REFRESH
-                .issuedAt(now)
-                .expiration(expireDate)
-                .signWith(key)
-                .compact();
-        log.debug("JWT 액세스 토큰 생성됨: 사용자 ID={}, 역할={}", user.getId(), user.getRole());
-
-        return token;
+        return buildToken(user, accessTokenExpirationTime, TokenType.ACCESS);
     }
 
     // Refresh 토큰 생성
     public String generateRefreshToken(User user) {
+        return buildToken(user, refreshTokenExpirationTime, TokenType.REFRESH);
+    }
+
+    private String buildToken(User user, long expirationMillis, TokenType type) {
         Date now = new Date();
-        Date expireDate = new Date(now.getTime() + refreshTokenExpirationTime);
+        Date expireDate = new Date(now.getTime() + expirationMillis);
 
         String token = Jwts.builder()
                 .subject(user.getId().toString())
-                .claim("role", user.getRole().name())
-                .claim("tokenType", "REFRESH")  // ACCESS | REFRESH
+                .claim(CLAIM_ROLE, user.getRole().name())
+                .claim(CLAIM_TOKEN_TYPE, type.name())
                 .issuedAt(now)
                 .expiration(expireDate)
                 .signWith(key)
                 .compact();
 
-        log.debug("JWT 리프레시 토큰 생성됨: 사용자 ID={}, 역할={}", user.getId(), user.getRole());
-
+        log.debug("JWT {} 토큰 생성됨: 사용자 ID={}, 역할={}", type, user.getId(), user.getRole());
         return token;
     }
 
@@ -89,7 +83,7 @@ public class JwtProvider {
      */
 
     // 토큰 파싱
-    public Claims parseClaims(String token) {
+    private Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
@@ -98,9 +92,9 @@ public class JwtProvider {
     }
 
     // 토큰 검증
-    public void validateToken(String token) {
+    public Claims validateToken(String token) {
         try {
-            parseClaims(token); // 파싱 성공 후 결과 버림
+            return parseClaims(token);     // 토큰 파싱
         } catch (ExpiredJwtException e) {
             log.warn("🚫 JWT 토큰 만료: {}", e.getMessage());
             throw new BusinessException(ErrorCode.EXPIRED_TOKEN);
@@ -113,20 +107,14 @@ public class JwtProvider {
         }
     }
 
-    // Refresh Token 유효성 여부 확인
-    public boolean isValidRefreshToken(String token) {
-        try {
-            Claims claims = parseClaims(token);
+    // Refresh Token인지 확인
+    public void validRefreshToken(String token) {
+        Claims claims = validateToken(token);  // 토큰 파싱 및 검증
 
-            // Refresh 토큰 타입 확인
-            String tokenType = claims.get("tokenType", String.class);
-            if (!"REFRESH".equals(tokenType)) {
-                log.warn("Refresh Token 아닌 토큰으로 재발급 시도됨");
-                return false;
-            }
-            return true;
-        } catch(BusinessException e) {
-            return false;
+        String tokenType = claims.get(CLAIM_TOKEN_TYPE, String.class);
+        if (!TokenType.REFRESH.name().equals(tokenType)) {
+            log.warn("Refresh Token 아닌 토큰으로 재발급 시도됨");
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
     }
 
