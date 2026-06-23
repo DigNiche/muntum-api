@@ -16,12 +16,10 @@ public class ApiResponse<T> {
     private T data;
 
     public static <T> ApiResponse<T> success(
-            int status,
             String message,
             T data
     ) {
         return ApiResponse.<T>builder()
-                .status(status)
                 .message(message)
                 .data(data)
                 .build();
