@@ -33,11 +33,6 @@ spring:
       password: ${redis.password}
 
 
-# JWT
-jwt:
-  secret-key: ${jwt.secret-key}
-
-
 # Observability
 management:
   endpoints:

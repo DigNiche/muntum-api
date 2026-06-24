@@ -26,7 +26,7 @@ spring:
 
 # JWT
 jwt:
-  secret-key: ${jwt.secret-key}
+  secret-key: ${JWT_SECRET_KEY}
 
 
 # Observability

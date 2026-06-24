@@ -27,7 +27,7 @@ public abstract class BaseEntity {
     private LocalDateTime createdAt;
 
     @CreatedBy
-    @Column(name="created_by", updatable = false)
+    @Column(name="created_by", nullable = false, updatable = false)
     private UUID createdBy;
 
     // 수정일, 수정자
@@ -38,4 +38,5 @@ public abstract class BaseEntity {
     @LastModifiedBy
     @Column(name="updated_by")
     private UUID updatedBy;
-}
+
+    }
