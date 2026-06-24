@@ -67,10 +67,10 @@ public class UserKeyword extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "keyword_id", nullable = false)
-    private Keywords keyword;
+    private Keyword keyword;
 
     @Builder
-    public UserKeyword(User user, Keywords keyword) {
+    public UserKeyword(User user, Keyword keyword) {
         this.user = user;
         this.keyword = keyword;
     }

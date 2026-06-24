@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Scraps extends BaseEntity {
+public class Scrap extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -69,7 +69,7 @@ public class Scraps extends BaseEntity {
     private Program program;
 
     @Builder
-    public Scraps(User user, Program program) {
+    public Scrap(User user, Program program) {
         this.user = user;
         this.program = program;
     }
