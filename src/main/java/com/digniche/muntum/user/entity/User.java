@@ -60,6 +60,21 @@ public class User extends BaseEntity {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
+    /**
+     * 논리 삭제 처리
+     */
+    public void softDelete(UUID deletedBy) {
+        this.status = UserStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
+
     @Builder
     public User(
             String email,
@@ -100,16 +115,6 @@ public class User extends BaseEntity {
 
     public void deactivate() {
         this.status = UserStatus.INACTIVE;
-    }
-
-    /**
-     * 상태를 DELETED로 변경하고,
-     * SoftDeleteEntity에 삭제 시각과 삭제자를 기록한다.
-     */
-    @Override
-    public void softDelete(UUID deletedBy) {
-        this.status = UserStatus.DELETED;
-        super.softDelete(deletedBy);
     }
 
     public void verifyEmail() {

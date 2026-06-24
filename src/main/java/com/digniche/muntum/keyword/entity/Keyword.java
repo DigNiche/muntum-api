@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
+import java.time.LocalDateTime;
+
 /**
  * 키워드 엔티티
  */
@@ -47,6 +49,21 @@ public class Keyword extends BaseEntity {
 
     @Column(name = "category", length = 100)
     private String category;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
+    /**
+     * 논리 삭제 처리
+     */
+    public void softDelete(UUID deletedBy) {
+        this.active = false;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
     // 1
     @Builder
     public Keyword(

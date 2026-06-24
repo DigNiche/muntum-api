@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
-
+import java.time.LocalDateTime;
 /**
  * 프로그램 엔티티
  */
@@ -91,6 +91,21 @@ public class Program extends BaseEntity {
 
     @Column(name = "view_count", nullable = false)
     private int viewCount = 0;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
+    /**
+     * 논리 삭제 처리
+     */
+    public void softDelete(UUID deletedBy) {
+        this.status = ProgramStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

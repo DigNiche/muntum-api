@@ -27,7 +27,7 @@ public abstract class BaseEntity {
     private LocalDateTime createdAt;
 
     @CreatedBy
-    @Column(name="created_by", updatable = false)
+    @Column(name="created_by", nullable = false, updatable = false)
     private UUID createdBy;
 
     // 수정일, 수정자
@@ -39,17 +39,4 @@ public abstract class BaseEntity {
     @Column(name="updated_by")
     private UUID updatedBy;
 
-    @Column(name= "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name="deleted_by")
-    private UUID deletedBy;
-
-    /**
-     * 논리 삭제 처리
-     */
-    public void softDelete(UUID deletedBy) {
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
     }
-}

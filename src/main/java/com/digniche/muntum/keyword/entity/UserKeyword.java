@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
+import java.time.LocalDateTime;
+
 
 // 이 Entity가 사용자와 키워드를 연결하지만, 기능 중심으로 보면 키워드 선택 관계에 더 가깝기 때문에 Keyword에다가 둠.
 @Entity
@@ -44,6 +46,20 @@ public class UserKeyword extends BaseEntity {
             updatable = false
     )
     private UUID id;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
+    /**
+     * 논리 삭제 처리
+     */
+    public void softDelete(UUID deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
