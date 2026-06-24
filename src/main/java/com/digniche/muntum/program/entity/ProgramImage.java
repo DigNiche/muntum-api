@@ -44,20 +44,6 @@ public class ProgramImage extends BaseEntity {
     @Column(name = "display_order", nullable = false) //나중에 DTO 검증에서 displayOrder >= 1을 보장
     private int displayOrder;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
-
-    /**
-     * 논리 삭제 처리
-     */
-    public void softDelete(UUID deletedBy) {
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
-    }
-
     @Builder
     public ProgramImage(
             Program program,
