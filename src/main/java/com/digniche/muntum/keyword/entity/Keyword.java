@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Table(name = "keywords")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Keywords extends BaseEntity {
+public class Keyword extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -66,7 +66,7 @@ public class Keywords extends BaseEntity {
     }
     // 1
     @Builder
-    public Keywords(
+    public Keyword(
             String name,
             String description,
             KeywordType type,
