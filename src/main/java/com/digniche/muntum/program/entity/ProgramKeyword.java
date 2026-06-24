@@ -1,6 +1,6 @@
 package com.digniche.muntum.program.entity;
 
-import com.digniche.muntum.keyword.entity.Keyword;
+import com.digniche.muntum.keyword.entity.Keywords;
 import com.digniche.muntum.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -64,10 +64,10 @@ public class ProgramKeyword extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "keyword_id", nullable = false)
-    private Keyword keyword;
+    private Keywords keyword;
 
     @Builder
-    public ProgramKeyword(Program program, Keyword keyword) {
+    public ProgramKeyword(Program program, Keywords keyword) {
         this.program = program;
         this.keyword = keyword;
     }

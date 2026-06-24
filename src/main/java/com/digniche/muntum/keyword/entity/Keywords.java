@@ -14,10 +14,10 @@ import java.time.LocalDateTime;
  * 키워드 엔티티
  */
 @Entity
-@Table(name = "keyword")
+@Table(name = "keywords")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Keyword extends BaseEntity {
+public class Keywords extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -66,7 +66,7 @@ public class Keyword extends BaseEntity {
     }
     // 1
     @Builder
-    public Keyword(
+    public Keywords(
             String name,
             String description,
             KeywordType type,

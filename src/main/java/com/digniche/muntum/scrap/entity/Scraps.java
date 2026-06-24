@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "scrap",
+        name = "scraps",
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_scrap_user_program",
@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Scrap extends BaseEntity {
+public class Scraps extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -69,7 +69,7 @@ public class Scrap extends BaseEntity {
     private Program program;
 
     @Builder
-    public Scrap(User user, Program program) {
+    public Scraps(User user, Program program) {
         this.user = user;
         this.program = program;
     }
