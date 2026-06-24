@@ -1,6 +1,6 @@
 package com.digniche.muntum.program.entity;
 
-import com.digniche.muntum.common.entity.SoftDeleteEntity;
+import com.digniche.muntum.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @Table(name= "programs")
 @Getter
 @NoArgsConstructor(access =  AccessLevel.PROTECTED)
-public class Program extends SoftDeleteEntity {
+public class Program extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(

@@ -1,6 +1,6 @@
 package com.digniche.muntum.keyword.entity;
 
-import com.digniche.muntum.common.entity.SoftDeleteEntity;
+import com.digniche.muntum.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @Table(name = "keyword")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Keyword extends SoftDeleteEntity {
+public class Keyword extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

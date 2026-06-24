@@ -1,6 +1,6 @@
 package com.digniche.muntum.user.entity;
 
-import com.digniche.muntum.common.entity.SoftDeleteEntity;
+import com.digniche.muntum.common.entity.BaseEntity;
 import com.digniche.muntum.user.entity.UserRole;
 import com.digniche.muntum.user.entity.UserStatus;
 import jakarta.persistence.*;
@@ -16,7 +16,7 @@ import java.util.UUID;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends SoftDeleteEntity {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
