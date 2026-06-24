@@ -1,5 +1,6 @@
 package com.digniche.muntum.auth.service;
 
+import com.digniche.muntum.auth.dto.request.ReissueRequest;
 import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
@@ -10,14 +11,19 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 /**
  * 인증/인가 서비스
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -70,5 +76,45 @@ public class AuthService {
     }
 
     // Refresh 토큰 재발급
+    @Transactional
+    public AuthenticationResponse reissueRefreshToken(ReissueRequest request) {
+        log.debug("토큰 재발급 시도");
+
+        String requestToken = request.refreshToken();
+
+        // 1.서명 / 만료 / 타입 검증
+        jwtProvider.validRefreshToken(requestToken);
+        // 2. Claims에서 사용자 정보 추출
+        Claims claims = jwtProvider.validateToken(requestToken);
+        UUID userId = UUID.fromString(claims.getSubject());
+
+        // 3. Redis 조회
+        String storedToken = refreshTokenService.get(userId);
+        if (storedToken == null) {
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        }
+        // 4. 일치 여부 확인
+        if (!storedToken.equals(requestToken)) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // 5. DB에서 최신 User 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        // 6. 기존 토큰 삭제 (Token Rotation)
+        refreshTokenService.delete(userId);
+
+        // 7. 새 토큰 발급 및 저장
+        String newAccessToken = jwtProvider.generateAccessToken(user);
+        String newRefreshToken = jwtProvider.generateRefreshToken(user);
+        refreshTokenService.save(userId, newRefreshToken, jwtProvider.getRefreshTokenExpirationTime());
+
+        return AuthenticationResponse.of(
+                newAccessToken, jwtProvider.getAccessTokenExpirationTime(),
+                newRefreshToken, jwtProvider.getRefreshTokenExpirationTime(),
+                user.getId(), user.getEmail(), user.getNickname()
+        );
+
+    }
 
 }
