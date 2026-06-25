@@ -1,19 +1,17 @@
 package com.digniche.muntum.user.entity;
 
 import com.digniche.muntum.common.entity.BaseEntity;
+import com.digniche.muntum.user.entity.UserRole;
+import com.digniche.muntum.user.entity.UserStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.domain.AuditorAware;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * 사용자 엔티티 - 사용자 프로필 정보
- */
 @Entity
 @Table(name = "users")
 @Getter
@@ -22,7 +20,12 @@ public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
+    @Column(
+            name = "id",
+            columnDefinition = "BINARY(16)",
+            nullable = false,
+            updatable = false
+    )
     private UUID id;
 
     @Column(name = "email", nullable = false, unique = true)
@@ -57,89 +60,77 @@ public class User extends BaseEntity {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    @Column(name = "deleted_at", updatable = false)
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(name="deleted_by", updatable = false)
+    @Column(name = "deleted_by")
     private UUID deletedBy;
 
-
-
     /**
-     * 사용자 엔티티 생성
-     *
-     * @param email 사용자 이메일
-     * @param password 암호화된 비밀번호
-     * @param role 사용자 역할 (MANAGER, CURATOR, AUDIENCE)
+     * 논리 삭제 처리
      */
+    public void softDelete(UUID deletedBy) {
+        this.status = UserStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
+
     @Builder
-    public User(String email, String password, UserRole role) {
+    public User(
+            String email,
+            String password,
+            UserRole role
+    ) {
         this.email = email;
         this.password = password;
-        this.role = role;
+        this.role = role != null ? role : UserRole.AUDIENCE;
         this.status = UserStatus.ACTIVE;
+        this.emailVerified = false;
+        this.tasteSelected = false;
     }
 
     /**
      * Claim용 User 객체 생성
-     * @param userId
-     * @param role
      */
-    public static User ofClaims(UUID userId, UserRole role) {
-        return new User(userId, role);
-    }
     private User(UUID userId, UserRole role) {
         this.id = userId;
         this.role = role;
     }
 
+    public static User ofClaims(UUID userId, UserRole role) {
+        return new User(userId, role);
+    }
 
-    // 닉네임 설정 및 수정
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
 
-    // 사용자 계정 상태 변경
     public void updateStatus(UserStatus status) {
         this.status = status;
     }
 
-    // 사용자 계정 활성화 확인
     public boolean isActive() {
         return UserStatus.ACTIVE.equals(this.status);
     }
 
-    // 사용자 계정 비활성화
     public void deactivate() {
         this.status = UserStatus.INACTIVE;
     }
 
-    // 사용자 삭제(Soft Deleted)
-    public void softDelete(UUID deletedBy) {
-        this.status = UserStatus.DELETED;
-        this.deletedBy = deletedBy;
-        this.deletedAt = LocalDateTime.now();
-
-//        TODO: 추후 정리
-//        final AuditorAware<UUID> auditorAware;
-//        auditorAware.getCurrentAuditor()
-//                .orElse(null);
-    }
-
-    // 이메일 인증 완료
     public void verifyEmail() {
         this.emailVerified = true;
         this.emailVerifiedAt = LocalDateTime.now();
     }
 
-    // 마지막 로그인 시간 변경
     public void updateLastLogin() {
         this.lastLoginAt = LocalDateTime.now();
     }
 
-    // 취향 키워드 설정 완료
     public void updateTasteSelected() {
         this.tasteSelected = true;
     }
 
+    public UUID getUserId() {
+        return this.id;
+    }
 }

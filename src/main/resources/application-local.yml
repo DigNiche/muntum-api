@@ -32,10 +32,9 @@ spring:
       port: 6379
       password: ${redis.password}
 
-
 # JWT
 jwt:
-  secret-key: ${jwt.secret-key}
+  secret-key: ${JWT_SECRET_KEY}
 
 
 # Observability
