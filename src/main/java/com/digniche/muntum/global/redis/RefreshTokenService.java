@@ -7,17 +7,19 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Refresh 토큰 관리 서비스
+ */
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
 
     private final StringRedisTemplate redisTemplate;
     private static final String PREFIX = "refresh:";
-
     // 저장: 로그인 / 토큰 재발급 시
-    public void save(UUID userId, String refreshToken, long ttlMillis) {
+    public void save(UUID userId, String refreshToken, long refreshTokenExpirationTime) {
         redisTemplate.opsForValue()
-                .set(PREFIX + userId, refreshToken, ttlMillis, TimeUnit.MILLISECONDS);
+                .set(PREFIX + userId, refreshToken, refreshTokenExpirationTime, TimeUnit.MILLISECONDS);
     }
 
     // 조회: 재발급 요청 시 Redis에 저장된 토큰과 비교 : null인 경우 Redis에 토큰 없는=로그아웃 또는 만료된 상태

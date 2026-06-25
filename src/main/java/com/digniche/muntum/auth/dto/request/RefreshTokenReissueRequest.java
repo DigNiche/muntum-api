@@ -5,6 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * Refresh Token 재발급 Request
  */
-public record ReissueRequest(
+public record RefreshTokenReissueRequest(
         @NotBlank String refreshToken
 ) {}

@@ -108,7 +108,7 @@ public class JwtProvider {
     }
 
     // Refresh Token인지 확인
-    public void validRefreshToken(String token) {
+    public Claims validRefreshToken(String token) {
         Claims claims = validateToken(token);  // 토큰 파싱 및 검증
 
         String tokenType = claims.get(CLAIM_TOKEN_TYPE, String.class);
@@ -116,6 +116,7 @@ public class JwtProvider {
             log.warn("Refresh Token 아닌 토큰으로 재발급 시도됨");
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
+        return claims;
     }
 
 }

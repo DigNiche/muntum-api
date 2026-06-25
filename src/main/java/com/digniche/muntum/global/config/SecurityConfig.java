@@ -64,6 +64,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // TODO: 경로 다시 확인하기
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

@@ -1,6 +1,6 @@
 package com.digniche.muntum.auth.service;
 
-import com.digniche.muntum.auth.dto.request.ReissueRequest;
+import com.digniche.muntum.auth.dto.request.RefreshTokenReissueRequest;
 import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
@@ -75,17 +75,21 @@ public class AuthService {
         );
     }
 
+    // 로그아웃
+    public void logout(UUID userId) {
+        refreshTokenService.delete(userId);
+    }
+
     // Refresh 토큰 재발급
     @Transactional
-    public AuthenticationResponse reissueRefreshToken(ReissueRequest request) {
+    public AuthenticationResponse reissueRefreshToken(RefreshTokenReissueRequest request) {
         log.debug("토큰 재발급 시도");
 
         String requestToken = request.refreshToken();
 
-        // 1.서명 / 만료 / 타입 검증
-        jwtProvider.validRefreshToken(requestToken);
-        // 2. Claims에서 사용자 정보 추출
-        Claims claims = jwtProvider.validateToken(requestToken);
+        // 1. Refresh Token 서명/만료/Refresh 타입 검증
+        Claims claims = jwtProvider.validRefreshToken(requestToken);
+        // 2. Claims 사용자 정보 추출
         UUID userId = UUID.fromString(claims.getSubject());
 
         // 3. Redis 조회
