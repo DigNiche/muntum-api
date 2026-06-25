@@ -6,17 +6,24 @@ import java.util.UUID;
  * 인증 Res DTO
  */
 public record AuthenticationResponse(
-        String accessToken,
         String tokenType,
+        String accessToken,
         long accessExpiresIn,
-        String refreshToken,   // TODO: 추후 Refresh Token 활성화 시 사용
+        String refreshToken,
         long refreshExpiresIn,
         UUID userId,
         String email,
         String nickname
 
 ) {
-    public static AuthenticationResponse of(String accessToken, long accessExpiresIn, String refreshToken, long refreshExpiresIn, UUID userId, String email, String nickname) {
-        return new AuthenticationResponse(accessToken, "Bearer", accessExpiresIn, null, refreshExpiresIn, userId, email, nickname);
+    public static AuthenticationResponse of(
+            String accessToken, long accessExpiresIn,
+            String refreshToken, long refreshExpiresIn,
+            UUID userId, String email, String nickname) {
+        return new AuthenticationResponse(
+                "Bearer", accessToken, accessExpiresIn,
+                refreshToken, refreshExpiresIn,
+                userId, email, nickname
+        );
     }
 }

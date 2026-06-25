@@ -16,6 +16,9 @@ import java.util.UUID;
 @Component
 public class AuditorAwareImpl implements AuditorAware<UUID> {
 
+    private static final UUID SYSTEM_UUID =
+        UUID.fromString("99999999-9999-9999-9999-999999999999");
+
     @Override
     public Optional<UUID> getCurrentAuditor() {
         Authentication authentication =
@@ -25,6 +28,7 @@ public class AuditorAwareImpl implements AuditorAware<UUID> {
                 .filter(Authentication::isAuthenticated)                           // 인증 여부 확인
                 .map(Authentication::getPrincipal)                                 // Get Principal
                 .filter(principal -> principal instanceof UserPrincipal)    // DB와 일치하는 User 정보
-                .map(principal -> ((UserPrincipal) principal).getUserId());
+                .map(principal -> ((UserPrincipal) principal).getUserId())
+                .or(() -> Optional.of(SYSTEM_UUID));
     }
 }

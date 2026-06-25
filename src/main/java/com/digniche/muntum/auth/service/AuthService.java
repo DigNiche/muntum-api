@@ -1,22 +1,29 @@
 package com.digniche.muntum.auth.service;
 
+import com.digniche.muntum.auth.dto.request.RefreshTokenReissueRequest;
 import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
 import com.digniche.muntum.auth.dto.response.SignupResponse;
+import com.digniche.muntum.global.redis.RefreshTokenService;
 import com.digniche.muntum.global.security.jwt.JwtProvider;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 /**
  * 인증/인가 서비스
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -24,7 +31,9 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final RefreshTokenService refreshTokenService;
 
+    // 회원가입
     @Transactional
     public SignupResponse signup(SignUpRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -32,9 +41,13 @@ public class AuthService {
         }
         String encodedPassword = passwordEncoder.encode(request.password());
         User user = userRepository.save(request.toEntity(encodedPassword));
+
+        // TODO: 이메일 중복 여부 확인
+
         return SignupResponse.of(user.getId(), user.getEmail(), user.getCreatedAt());
     }
 
+    // 로그인
     @Transactional
     public AuthenticationResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
@@ -51,6 +64,61 @@ public class AuthService {
         user.updateLastLogin();
 
         String accessToken = jwtProvider.generateAccessToken(user);
-        return AuthenticationResponse.of(accessToken, jwtProvider.getAccessTokenExpirationTime(), null, jwtProvider.getRefreshTokenExpirationTime(), user.getId(), user.getEmail(), user.getNickname());
+        String refreshToken = jwtProvider.generateRefreshToken(user);
+
+        refreshTokenService.save(user.getId(), refreshToken, jwtProvider.getRefreshTokenExpirationTime());
+
+        return AuthenticationResponse.of(
+                accessToken, jwtProvider.getAccessTokenExpirationTime(),
+                refreshToken, jwtProvider.getRefreshTokenExpirationTime(),
+                user.getId(), user.getEmail(), user.getNickname()
+        );
     }
+
+    // 로그아웃
+    public void logout(UUID userId) {
+        refreshTokenService.delete(userId);
+    }
+
+    // Refresh 토큰 재발급
+    @Transactional
+    public AuthenticationResponse reissueRefreshToken(RefreshTokenReissueRequest request) {
+        log.debug("토큰 재발급 시도");
+
+        String requestToken = request.refreshToken();
+
+        // 1. Refresh Token 서명/만료/Refresh 타입 검증
+        Claims claims = jwtProvider.validRefreshToken(requestToken);
+        // 2. Claims 사용자 정보 추출
+        UUID userId = UUID.fromString(claims.getSubject());
+
+        // 3. Redis 조회
+        String storedToken = refreshTokenService.get(userId);
+        if (storedToken == null) {
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        }
+        // 4. 일치 여부 확인
+        if (!storedToken.equals(requestToken)) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // 5. DB에서 최신 User 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        // 6. 기존 토큰 삭제 (Token Rotation)
+        refreshTokenService.delete(userId);
+
+        // 7. 새 토큰 발급 및 저장
+        String newAccessToken = jwtProvider.generateAccessToken(user);
+        String newRefreshToken = jwtProvider.generateRefreshToken(user);
+        refreshTokenService.save(userId, newRefreshToken, jwtProvider.getRefreshTokenExpirationTime());
+
+        return AuthenticationResponse.of(
+                newAccessToken, jwtProvider.getAccessTokenExpirationTime(),
+                newRefreshToken, jwtProvider.getRefreshTokenExpirationTime(),
+                user.getId(), user.getEmail(), user.getNickname()
+        );
+
+    }
+
 }

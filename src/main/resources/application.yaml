@@ -16,8 +16,8 @@ spring:
 
 # JWT
 jwt:
-  access-token-validity-time: 3600000
-  refresh-token-validity-time: 604800
+  access-token-validity-time: 3600000      # 1h = 3600000
+  refresh-token-validity-time: 1209600000  # 14d * 24h = 1209600000
 
 
 # Observability

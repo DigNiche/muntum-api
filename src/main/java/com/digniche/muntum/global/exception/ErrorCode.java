@@ -23,6 +23,8 @@ public enum ErrorCode {
     INVALID_TOKEN("005", "유효하지 않은 토큰입니다", HttpStatus.UNAUTHORIZED),
     EXPIRED_TOKEN("006", "만료된 토큰입니다", HttpStatus.UNAUTHORIZED),
     NOT_AUTHENTICATED("000", "인증되지 않은 사용자 입니다", HttpStatus.UNAUTHORIZED),
+    REFRESH_TOKEN_NOT_FOUND("009", "Refresh Token이 존재하지 않습니다", HttpStatus.UNAUTHORIZED),
+    INVALID_REFRESH_TOKEN("010", "유효하지 않은 Refresh Token입니다", HttpStatus.UNAUTHORIZED),
 
 
     // 유효하지 않은 요청
