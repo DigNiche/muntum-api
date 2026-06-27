@@ -21,7 +21,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
-
+import org.springframework.http.HttpMethod;
 
 /**
  * 보안 관련 설정
@@ -64,7 +64,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // TODO: 경로 다시 확인하기
+                        .requestMatchers(HttpMethod.GET, "/api/v1/programs", "/api/v1/program/**").permitAll() // 명세상 단건/목록 조회는 게스트도 봐야 하니 추가함
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
