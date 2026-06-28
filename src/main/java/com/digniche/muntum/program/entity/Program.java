@@ -40,8 +40,7 @@ public class Program extends BaseEntity {
     @Column(name = "tagline", nullable = false, length = 255)
     private String tagline;
 
-    @Lob
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String curation;
 
     @Column(name = "is_reserved", nullable = false)
@@ -95,17 +94,11 @@ public class Program extends BaseEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(name = "deleted_by")
+    @Column(
+            name = "deleted_by",
+            columnDefinition = "BINARY(16)"
+    )
     private UUID deletedBy;
-
-    /**
-     * 논리 삭제 처리
-     */
-    public void softDelete(UUID deletedBy) {
-        this.status = ProgramStatus.DELETED;
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
-    }
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -137,8 +130,8 @@ public class Program extends BaseEntity {
         this.programType = programType;
         this.tagline = tagline;
         this.curation = curation;
-        this.reserved = reserved != null ? reserved : false; //2
-        this.free = free != null ? free : true;
+        this.reserved = reserved;  // @NotNull + @Valid로 보장됨
+        this.free = free; // 나머지 String/날짜 필드는 this.x = x 그대로
         this.price = price;
         this.venueName = venueName;
         this.venueMeta = venueMeta;
@@ -156,6 +149,58 @@ public class Program extends BaseEntity {
         this.status = ProgramStatus.ACTIVE;
     }
 
+    /**
+     * 논리 삭제 처리
+     */
+    public void softDelete(UUID deletedBy) {
+        this.status = ProgramStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
+    /**
+     * 프로그램 정보 수정 (PUT - 전체 교체)
+     */
+    public void update(
+            String title,
+            ProgramType programType,
+            String tagline,
+            String curation,
+            Boolean reserved,
+            Boolean free,
+            String price,
+            String venueName,
+            String venueMeta,
+            String address,
+            BigDecimal latitude,
+            BigDecimal longitude,
+            String officialUrl,
+            LocalDate startDate,
+            LocalDate endDate,
+            String operatingPeriodMeta,
+            String operatingHours,
+            String operatingHoursMeta,
+            String inquiryContact
+    ) {
+        this.title = title;
+        this.programType = programType;
+        this.tagline = tagline;
+        this.curation = curation;
+        this.reserved = reserved != null ? reserved : this.reserved;
+        this.free = free != null ? free : this.free;
+        this.price = price;
+        this.venueName = venueName;
+        this.venueMeta = venueMeta;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.officialUrl = officialUrl;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.operatingPeriodMeta = operatingPeriodMeta;
+        this.operatingHours = operatingHours;
+        this.operatingHoursMeta = operatingHoursMeta;
+        this.inquiryContact = inquiryContact;
+    }
     public void increaseViewCount() {
         this.viewCount++;
     }
@@ -164,3 +209,4 @@ public class Program extends BaseEntity {
         this.status = status;
     }
 }
+

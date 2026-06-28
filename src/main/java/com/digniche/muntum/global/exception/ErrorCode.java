@@ -29,13 +29,16 @@ public enum ErrorCode {
 
     // 유효하지 않은 요청
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
-
+    // 프로그램
+    PROGRAM_NOT_FOUND("100", "존재하지 않는 프로그램입니다", HttpStatus.NOT_FOUND),
+    INVALID_PROGRAM_PERIOD("101", "프로그램 종료일은 시작일보다 빠를 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     /**
      * 500 ~
      */
     // 서버
     SERVER_ERROR("008", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
+
 
     private final String code;
     private final String message;

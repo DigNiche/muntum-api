@@ -1,0 +1,99 @@
+package com.digniche.muntum.program.dto.request;
+
+import com.digniche.muntum.program.entity.Program;
+import com.digniche.muntum.program.entity.ProgramType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+/**
+ * 프로그램 등록 요청 DTO
+ */
+public record ProgramCreateRequest(
+
+        @NotBlank(message = "제목은 필수입니다.")
+        @Size(max = 100, message = "제목은 100자를 넘을 수 없습니다.")
+        String title,
+
+        @NotNull(message = "프로그램 유형은 필수입니다.")
+        ProgramType programType,
+
+        @NotBlank(message = "태그라인은 필수입니다.")
+        @Size(max = 255, message = "태그라인은 255자를 넘을 수 없습니다.")
+        String tagline,
+
+        @NotBlank(message = "큐레이션 내용은 필수입니다.")
+        String curation,
+
+        Boolean reserved,
+
+        Boolean free,
+
+        @Size(max = 255, message = "가격 정보는 255자를 넘을 수 없습니다.")
+        String price,
+
+        @NotBlank(message = "장소명은 필수입니다.")
+        @Size(max = 100, message = "장소명은 100자를 넘을 수 없습니다.")
+        String venueName,
+
+        @Size(max = 255, message = "장소 부가 정보는 255자를 넘을 수 없습니다.")
+        String venueMeta,
+
+        @NotBlank(message = "주소는 필수입니다.")
+        @Size(max = 255, message = "주소는 255자를 넘을 수 없습니다.")
+        String address,
+
+        BigDecimal latitude,
+
+        BigDecimal longitude,
+
+        @Size(max = 500, message = "공식 URL은 500자를 넘을 수 없습니다.")
+        String officialUrl,
+
+        LocalDate startDate,
+
+        LocalDate endDate,
+
+        @Size(max = 255, message = "운영 기간 설명은 255자를 넘을 수 없습니다.")
+        String operatingPeriodMeta,
+
+        @Size(max = 500, message = "운영 시간은 500자를 넘을 수 없습니다.")
+        String operatingHours,
+
+        @Size(max = 255, message = "운영 시간 부가 설명은 255자를 넘을 수 없습니다.")
+        String operatingHoursMeta,
+
+        @Size(max = 255, message = "문의처는 255자를 넘을 수 없습니다.")
+        String inquiryContact
+
+) {
+    /**
+     * DTO -> 엔티티 변환
+     */
+    public Program toEntity() {
+        return Program.builder()
+                .title(title)
+                .programType(programType)
+                .tagline(tagline)
+                .curation(curation)
+                .reserved(reserved)
+                .free(free)
+                .price(price)
+                .venueName(venueName)
+                .venueMeta(venueMeta)
+                .address(address)
+                .latitude(latitude)
+                .longitude(longitude)
+                .officialUrl(officialUrl)
+                .startDate(startDate)
+                .endDate(endDate)
+                .operatingPeriodMeta(operatingPeriodMeta)
+                .operatingHours(operatingHours)
+                .operatingHoursMeta(operatingHoursMeta)
+                .inquiryContact(inquiryContact)
+                .build();
+    }
+}
