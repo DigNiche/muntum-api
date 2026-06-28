@@ -22,6 +22,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * @return
      */
     boolean existsByEmailAndStatusNot(String email, UserStatus status);
+    boolean existsByNicknameAndIdNot(String nickname, UUID id);
 
     @Query("SELECT u FROM User u WHERE u.status = :status AND u.email LIKE CONCAT(:email, :maskingLetterPrefix, '%') ESCAPE '\\'")
     Optional<User> findWithdrawnUserForReactivation(@Param("email") String email, @Param("status") UserStatus status, @Param("maskingLetterPrefix") String MASKING_LETTER_PREFIX);

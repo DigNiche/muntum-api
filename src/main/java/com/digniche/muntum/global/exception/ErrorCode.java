@@ -27,8 +27,12 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN("010", "유효하지 않은 Refresh Token입니다", HttpStatus.UNAUTHORIZED),
 
 
+    // 사용자 정보
+    NICKNAME_ALREADY_EXISTS("011", "이미 사용 중인 닉네임입니다", HttpStatus.CONFLICT),
+
     // 유효하지 않은 요청
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
+
     // 프로그램
     PROGRAM_NOT_FOUND("100", "존재하지 않는 프로그램입니다", HttpStatus.NOT_FOUND),
     INVALID_PROGRAM_PERIOD("101", "프로그램 종료일은 시작일보다 빠를 수 없습니다.", HttpStatus.BAD_REQUEST),

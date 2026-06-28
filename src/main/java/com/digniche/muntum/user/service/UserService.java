@@ -4,6 +4,7 @@ import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.global.redis.RefreshTokenService;
+import com.digniche.muntum.user.dto.UpdateNicknameRequest;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.repository.UserRepository;
@@ -33,6 +34,16 @@ public class UserService {
     private static final int DATA_RETENTION_DISPOSAL_YEAR = 5;
     private static final String WITHDRAWAL_NICKNAME_PREFIX = "탈퇴회원";
 
+    // 닉네임 설정(생성 및 수정)
+    @Transactional
+    public void setNickname(UUID userId, UpdateNicknameRequest request) {
+        if (userRepository.existsByNicknameAndIdNot(request.nickname(), userId)) {
+            throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXISTS);
+        }
+
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.updateNickname(request.nickname());
+    }
     // 회원 탈퇴
     @Transactional
     public void withdraw(UUID userId, WithdrawRequest request) {
