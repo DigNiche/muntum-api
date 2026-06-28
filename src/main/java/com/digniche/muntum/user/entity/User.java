@@ -58,22 +58,17 @@ public class User extends BaseEntity {
     private boolean tasteSelected = false;
 
     @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
+    private LocalDateTime lastLoginAt = null;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private LocalDateTime deletedAt = null;
 
     @Column(name = "deleted_by")
-    private UUID deletedBy;
+    private UUID deletedBy = null;
 
-    /**
-     * 논리 삭제 처리
-     */
-    public void softDelete(UUID deletedBy) {
-        this.status = UserStatus.DELETED;
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
-    }
+    @Column(name = "reactivated_at")
+    private LocalDateTime reactivatedAt = null;
+
 
     @Builder
     public User(
@@ -101,20 +96,26 @@ public class User extends BaseEntity {
         return new User(userId, role);
     }
 
+    /**
+     * 수정
+     */
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
-
     public void updateStatus(UserStatus status) {
         this.status = status;
     }
-
     public boolean isActive() {
         return UserStatus.ACTIVE.equals(this.status);
     }
-
     public void deactivate() {
         this.status = UserStatus.INACTIVE;
+    }
+    public void updateLastLogin() {
+        this.lastLoginAt = LocalDateTime.now();
+    }
+    public void updateTasteSelected() {
+        this.tasteSelected = true;
     }
 
     public void verifyEmail() {
@@ -122,15 +123,35 @@ public class User extends BaseEntity {
         this.emailVerifiedAt = LocalDateTime.now();
     }
 
-    public void updateLastLogin() {
-        this.lastLoginAt = LocalDateTime.now();
+    /**
+     * 사용자 소프트삭제
+     */
+    public void softDelete(UUID deletedBy) {
+        this.status = UserStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
     }
 
-    public void updateTasteSelected() {
-        this.tasteSelected = true;
+    public void maskDeletedUserInfo(String addMaskingLetter, String withdrawalNicknamePrefix) {
+        this.email = this.email + addMaskingLetter;
+        this.nickname = withdrawalNicknamePrefix + addMaskingLetter;
+        this.password = this.password + addMaskingLetter;
+        this.profileImageUrl = null;
     }
 
-    public UUID getUserId() {
-        return this.id;
+    // 사용자 소프트 삭제 복구(재가입)
+    public void reactivate(String email, String password) {
+        this.email = email;
+        this.password = password;
+        this.nickname = null;
+        this.reactivatedAt = LocalDateTime.now();
+        this.deletedAt = null;
+        this.deletedBy = null;
+        this.emailVerified = false;
+        this.emailVerifiedAt = null;
+        this.status = UserStatus.ACTIVE;
+        this.tasteSelected = false;
+        this.lastLoginAt = null;
+
     }
 }
