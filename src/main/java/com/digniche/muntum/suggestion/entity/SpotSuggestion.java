@@ -44,7 +44,7 @@ public class SpotSuggestion extends BaseEntity {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "informer", nullable = false) //제보한 사용자
+    @JoinColumn(name = "informer") //제보한 사용자
     private User informer;
 
     @ManyToOne(fetch = FetchType.LAZY)
