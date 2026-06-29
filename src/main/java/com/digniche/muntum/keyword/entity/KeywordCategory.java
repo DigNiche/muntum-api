@@ -22,16 +22,17 @@ public enum KeywordCategory {
     private final String description;
 
     // 키워드 등록 시, Literal 카테고리를 DISPLAY_CHAR 등을 이용하여 DB에 삽입 및 Display
-    public static String validateCategories(String rawCategories, String split_char, String concation_char) {
-
+    public static String validateCategories(String rawCategories) {
+        String splitChar = ",";
+        String concationChar = ", ";
 
         if (rawCategories == null || rawCategories.isBlank()) return "";
         Set<String> validCategoryDescription = Arrays.stream(values())
                 .map(KeywordCategory::getDescription)
                 .collect(Collectors.toSet());
-        return Arrays.stream(rawCategories.split(split_char))
+        return Arrays.stream(rawCategories.split(splitChar))
                 .map(String::trim)
                 .filter(validCategoryDescription::contains)
-                .collect(Collectors.joining(concation_char));
+                .collect(Collectors.joining(concationChar));
     }
 }

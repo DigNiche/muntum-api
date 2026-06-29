@@ -4,10 +4,10 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.keyword.dto.KeywordResponse;
 import com.digniche.muntum.keyword.dto.SelectKeywordsRequest;
-import com.digniche.muntum.keyword.entity.Keyword;
-import com.digniche.muntum.keyword.entity.UserKeyword;
+import com.digniche.muntum.keyword.entity.*;
 import com.digniche.muntum.keyword.repository.KeywordRepository;
 import com.digniche.muntum.keyword.repository.UserKeywordRepository;
+import com.digniche.muntum.keyword.dto.RegisterKeywordRequest;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * 키워드 서비스
@@ -52,5 +51,26 @@ public class KeywordService {
         userKeywordRepository.saveAll(userKeywords);
 
         return keywords.stream().map(KeywordResponse::from).toList();
+    }
+
+    // 키워드 등록
+    @Transactional
+    public KeywordResponse createKeyword(RegisterKeywordRequest request) {
+        if (keywordRepository.existsByName(request.name())) {
+            throw new BusinessException(ErrorCode.KEYWORD_ALREADY_EXISTS);
+        }
+
+        String categories = KeywordCategory.validateCategories(request.categories());
+        KeywordType keywordType = KeywordType.validateType(request.type());
+
+        Keyword keyword = Keyword.builder()
+                .name(request.name())
+                .description(request.description())
+                .type(keywordType)
+                .categories(categories)
+                .build();
+
+        keywordRepository.save(keyword);
+        return KeywordResponse.from(keyword);
     }
 }
