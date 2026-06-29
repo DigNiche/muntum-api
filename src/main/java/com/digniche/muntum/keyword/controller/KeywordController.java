@@ -38,4 +38,11 @@ public class KeywordController {
                 .body(ApiResponse.success("취향 설정이 저장되었습니다.", new SelectedKeywordsResponse(res)));
 
     }
+    // 내 취향 키워드 목록 조회
+    @GetMapping("/me/keywords")
+    public ResponseEntity<ApiResponse<SelectedKeywordsResponse>> getMyKeywords(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        List<KeywordResponse> keywords = keywordService.retrieveSelectedKeywords(userPrincipal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("내 취향 키워드 목록을 조회했습니다.", new SelectedKeywordsResponse(keywords)));
+    }
 }

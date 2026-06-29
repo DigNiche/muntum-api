@@ -132,4 +132,12 @@ public class KeywordService {
         return KeywordResponse.from(keyword);
     }
 
+    // 내 취향 키워드 목록 조회
+    @Transactional(readOnly = true)
+    public List<KeywordResponse> retrieveSelectedKeywords(UUID userId) {
+        return userKeywordRepository.findAllByUserId(userId).stream()
+                .map(uk -> KeywordResponse.from(uk.getKeyword()))
+                .toList();
+    }
+
 }

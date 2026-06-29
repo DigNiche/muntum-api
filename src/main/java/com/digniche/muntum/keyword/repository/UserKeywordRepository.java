@@ -21,4 +21,6 @@ public interface UserKeywordRepository extends JpaRepository<UserKeyword, UUID> 
     @Modifying
     @Query("DELETE FROM UserKeyword uk WHERE uk.keyword.id = :keywordId")
     void deleteAllByKeywordId(@Param("keywordId") UUID keywordId);
+
+    List<UserKeyword> findAllByUserId(UUID userId);
 }
