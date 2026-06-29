@@ -38,7 +38,6 @@ public class UserController {
             @RequestBody @Valid WithdrawRequest request) {
         userService.withdraw(userPrincipal.getUserId(), request);
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("회원탈퇴가 완료되었습니다.", null));
+        return ResponseEntity.ok(ApiResponse.success("회원탈퇴가 완료되었습니다.", null));
     }
 }
