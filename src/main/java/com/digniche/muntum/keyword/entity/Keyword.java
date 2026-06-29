@@ -82,10 +82,15 @@ public class Keyword extends BaseEntity {
     public void activate() {
         this.active = true;
     }
-
     public void deactivate() {
         this.active = false;
     }
 
+    public void update(String name, String description, KeywordType type, String categories) {
+        this.name = name;
+        this.description = description;
+        this.type = type;
+        this.categories = categories;
+    }
 }
 

@@ -13,5 +13,6 @@ import java.util.UUID;
 public interface KeywordRepository extends JpaRepository<Keyword, UUID> {
     List<Keyword> findAllByNameInAndActiveTrue(List<String> names);
     boolean existsByName(String name);
+    boolean existsByNameAndIdNot(String name, UUID keywordId);
 
 }

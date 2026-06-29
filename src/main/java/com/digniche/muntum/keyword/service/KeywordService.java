@@ -2,12 +2,10 @@ package com.digniche.muntum.keyword.service;
 
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
-import com.digniche.muntum.keyword.dto.KeywordResponse;
-import com.digniche.muntum.keyword.dto.SelectKeywordsRequest;
+import com.digniche.muntum.keyword.dto.*;
 import com.digniche.muntum.keyword.entity.*;
 import com.digniche.muntum.keyword.repository.KeywordRepository;
 import com.digniche.muntum.keyword.repository.UserKeywordRepository;
-import com.digniche.muntum.keyword.dto.RegisterKeywordRequest;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +53,7 @@ public class KeywordService {
 
     // 키워드 등록
     @Transactional
-    public KeywordResponse createKeyword(RegisterKeywordRequest request) {
+    public KeywordResponse createKeyword(KeywordRequest request) {
         if (keywordRepository.existsByName(request.name())) {
             throw new BusinessException(ErrorCode.KEYWORD_ALREADY_EXISTS);
         }
@@ -73,4 +71,36 @@ public class KeywordService {
         keywordRepository.save(keyword);
         return KeywordResponse.from(keyword);
     }
+
+    // 키워드 수정
+    @Transactional
+    public KeywordResponse updateKeyword(UUID keywordId, KeywordRequest request) {
+        Keyword keyword = keywordRepository.findById(keywordId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.KEYWORD_NOT_FOUND));
+
+        if (keywordRepository.existsByNameAndIdNot(request.name(), keywordId)) {
+            throw new BusinessException(ErrorCode.KEYWORD_ALREADY_EXISTS);
+        }
+
+
+        String categories = KeywordCategory.validateCategories(request.categories());
+        KeywordType keywordType = KeywordType.validateType(request.type());
+
+        keyword.update(request.name(), request.description(), keywordType, categories);
+        return KeywordResponse.from(keyword);
+    }
+
+
+    // 키워드 상태 변경
+    @Transactional
+    public KeywordActiveResponse updateKeywordStatus(UUID keywordId, KeywordActiveRequest request) {
+        Keyword keyword = keywordRepository.findById(keywordId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.KEYWORD_NOT_FOUND));
+
+        if (request.active()) keyword.activate();
+        else keyword.deactivate();
+
+        return KeywordActiveResponse.from(keyword);
+    }
+
 }
