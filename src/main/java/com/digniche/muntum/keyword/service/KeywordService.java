@@ -120,9 +120,16 @@ public class KeywordService {
 
     // 키워드 전체 조회
     @Transactional(readOnly = true)
-    public Page<KeywordResponse> getKeywords(Pageable pageable) {
+    public Page<KeywordResponse> retrieveKeywords(Pageable pageable) {
         return keywordRepository.findAll(pageable)
                 .map(KeywordResponse::from);
+    }
+
+    // 키워드 단건 조회
+    @Transactional(readOnly = true)
+    public KeywordResponse retrieveKeyword(UUID keywordId) {
+        Keyword keyword = keywordRepository.findById(keywordId).orElseThrow(() -> new BusinessException(ErrorCode.KEYWORD_NOT_FOUND));
+        return KeywordResponse.from(keyword);
     }
 
 }

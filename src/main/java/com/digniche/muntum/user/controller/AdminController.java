@@ -78,8 +78,16 @@ public class AdminController {
     @GetMapping("/taste/keywords")
     public ResponseEntity<ApiResponse<Page<KeywordResponse>>> getKeywords(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<KeywordResponse> response = keywordService.getKeywords(pageable);
+        Page<KeywordResponse> response = keywordService.retrieveKeywords(pageable);
         return ResponseEntity.ok(ApiResponse.success("키워드 목록 조회에 성공했습니다.", response));
+    }
+
+    @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
+    @GetMapping("/taste/keyword/{keyword_id}")
+    public ResponseEntity<ApiResponse<KeywordResponse>> getKeyword(
+            @PathVariable("keyword_id") UUID keywordId) {
+        KeywordResponse response = keywordService.retrieveKeyword(keywordId);
+        return ResponseEntity.ok(ApiResponse.success("키워드 조회에 성공했습니다.", response));
     }
 
 
