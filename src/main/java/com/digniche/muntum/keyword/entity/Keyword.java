@@ -64,7 +64,7 @@ public class Keyword extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;
     }
-    // 1
+
     @Builder
     public Keyword(
             String name,
