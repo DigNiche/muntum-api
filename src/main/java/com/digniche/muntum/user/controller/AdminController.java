@@ -59,6 +59,16 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(message, response));
     }
 
+    // 키워드 삭제
+    @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
+    @DeleteMapping("/taste/keyword/{keyword_id}")
+    public ResponseEntity<ApiResponse<KeywordActiveResponse>> removeKeyword(
+            @PathVariable("keyword_id") UUID keywordId) {
+        keywordService.deleteKeyword(keywordId);
+
+        return ResponseEntity.ok(ApiResponse.success("키워드가 삭제되었습니다.", null));
+    }
+
 
 
 }

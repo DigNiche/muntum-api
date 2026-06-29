@@ -44,6 +44,7 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.updateNickname(request.nickname());
     }
+
     // 회원 탈퇴
     @Transactional
     public void withdraw(UUID userId, WithdrawRequest request) {

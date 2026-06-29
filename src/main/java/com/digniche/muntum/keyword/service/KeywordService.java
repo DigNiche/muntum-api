@@ -5,6 +5,7 @@ import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.keyword.dto.*;
 import com.digniche.muntum.keyword.entity.*;
 import com.digniche.muntum.keyword.repository.KeywordRepository;
+import com.digniche.muntum.keyword.repository.ProgramKeywordRepository;
 import com.digniche.muntum.keyword.repository.UserKeywordRepository;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.repository.UserRepository;
@@ -27,6 +28,7 @@ public class KeywordService {
     private final KeywordRepository keywordRepository;
     private final UserKeywordRepository userKeywordRepository;
     private final UserRepository userRepository;
+    private final ProgramKeywordRepository programKeywordRepository;
 
     // 키워드 선택(온보딩 생성 / 마이페이지 수정)
     @Transactional
@@ -101,6 +103,17 @@ public class KeywordService {
         else keyword.deactivate();
 
         return KeywordActiveResponse.from(keyword);
+    }
+
+    // 키워드 삭제
+    @Transactional
+    public void deleteKeyword(UUID keywordId) {
+        Keyword keyword = keywordRepository.findById(keywordId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.KEYWORD_NOT_FOUND));
+
+        userKeywordRepository.deleteAllByKeywordId(keywordId);
+        programKeywordRepository.deleteAllByKeywordId(keywordId);
+        keywordRepository.delete(keyword);
     }
 
 }
