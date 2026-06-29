@@ -17,6 +17,10 @@ import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.program.dto.request.ProgramSortType;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import com.digniche.muntum.program.entity.ProgramImage;
+import com.digniche.muntum.program.repository.ProgramImageRepository;
+
+import java.util.List;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -30,6 +34,7 @@ import java.util.UUID;
 public class ProgramService {
 
     private final ProgramRepository programRepository;
+    private final ProgramImageRepository programImageRepository;
 
     /**
      * 프로그램 등록
@@ -41,7 +46,13 @@ public class ProgramService {
         Program program = request.toEntity();
         Program savedProgram = programRepository.save(program);
 
-        return ProgramResponse.from(savedProgram);
+        saveProgramImages(savedProgram, request.imageUrls());
+
+        List<String> imageUrls = request.imageUrls() != null
+                ? request.imageUrls()
+                : List.of();          // null이면 빈 리스트로
+
+        return ProgramResponse.from(savedProgram, imageUrls);
     }
 
     /**
@@ -86,7 +97,13 @@ public class ProgramService {
 
         program.increaseViewCount();
 
-        return ProgramResponse.from(program);
+        List<String> imageUrls = programImageRepository
+                .findByProgramIdOrderByDisplayOrderAsc(programId)
+                .stream()
+                .map(ProgramImage::getImageUrl)
+                .toList();
+
+        return ProgramResponse.from(program, imageUrls);
     }
 
     /**
@@ -118,9 +135,23 @@ public class ProgramService {
                 request.operatingHours(),
                 request.operatingHoursMeta(),
                 request.inquiryContact()
-        );
 
-        return ProgramResponse.from(program);
+        );
+        // imageUrls가 null이면 이미지 미변경, null이 아니면(빈 배열 포함) 교체
+        if (request.imageUrls() != null) {
+            programImageRepository.deleteByProgramId(programId);
+            programImageRepository.flush();
+            saveProgramImages(program, request.imageUrls());
+        }
+
+        // 응답은 항상 DB 실제 상태로 (응답-DB 불일치 방지)
+        List<String> imageUrls = programImageRepository
+                .findByProgramIdOrderByDisplayOrderAsc(programId)
+                .stream()
+                .map(ProgramImage::getImageUrl)
+                .toList();
+
+        return ProgramResponse.from(program, imageUrls);
     }
 
     /**
@@ -151,6 +182,25 @@ public class ProgramService {
 
         if (endDate.isBefore(startDate)) {
             throw new BusinessException(ErrorCode.INVALID_PROGRAM_PERIOD);
+        }
+    }
+    /**
+     * 프로그램 이미지 저장
+     * - imageUrls 순서대로 displayOrder를 1부터 부여 (1번 = 썸네일)
+     * - 단방향이므로 ProgramImage에 program을 직접 연결해 저장
+     */
+    private void saveProgramImages(Program program, List<String> imageUrls) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            return;   // 이미지는 선택값이므로 없으면 그냥 끝
+        }
+
+        for (int i = 0; i < imageUrls.size(); i++) {
+            ProgramImage image = ProgramImage.builder()
+                    .program(program)
+                    .imageUrl(imageUrls.get(i))
+                    .displayOrder(i + 1)   // 인덱스 0 → order 1
+                    .build();
+            programImageRepository.save(image);
         }
     }
 }
