@@ -43,7 +43,8 @@ public class KeywordService {
         userKeywordRepository.deleteAllByUserId(userId);
 
         User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        if (!user.isTasteSelected()) user.updateTasteSelected();
+        user.updateTasteSelected(!request.selectKeywords().isEmpty());
+
         List<UserKeyword> userKeywords = keywords.stream()
                 .map(k -> UserKeyword.builder().user(user).keyword(k).build())
                 .toList();

@@ -114,8 +114,8 @@ public class User extends BaseEntity {
     public void updateLastLogin() {
         this.lastLoginAt = LocalDateTime.now();
     }
-    public void updateTasteSelected() {
-        this.tasteSelected = true;
+    public void updateTasteSelected(boolean selected) {
+        this.tasteSelected = selected;
     }
 
     public void verifyEmail() {
