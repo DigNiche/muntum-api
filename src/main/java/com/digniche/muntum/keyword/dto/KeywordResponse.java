@@ -1,7 +1,6 @@
 package com.digniche.muntum.keyword.dto;
 
 import com.digniche.muntum.keyword.entity.Keyword;
-import com.digniche.muntum.keyword.entity.KeywordCategoryConverter;
 
 import java.util.UUID;
 
