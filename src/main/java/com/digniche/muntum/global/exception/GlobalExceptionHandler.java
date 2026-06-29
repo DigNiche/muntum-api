@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * DispatcherServlet 진입 후 내에서의 전반적인 예외 처리
@@ -39,7 +40,13 @@ public class GlobalExceptionHandler {
                 .status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.getStatus().value(), String.valueOf(errorCode), message));
     }
-
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), errorCode.getMessage()));
+    }
     // 이 외 모든 Catch 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {

@@ -5,6 +5,7 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.entity.Program;
+import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import com.digniche.muntum.program.service.ProgramImageService;
 import com.digniche.muntum.scrap.entity.Scrap;
@@ -101,7 +102,7 @@ public class ScrapService {
     }
 
     private Program getActiveProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNull(programId)
+        return programRepository.findByIdAndDeletedAtIsNullAndStatus(programId, ProgramStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 }

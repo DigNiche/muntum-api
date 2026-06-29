@@ -7,6 +7,7 @@ import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
 import com.digniche.muntum.program.entity.Program;
+import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -66,7 +67,7 @@ public class ProgramService {
         );
         // ① 엔티티 페이지 (변환 전) - 이름: programPage, 타입: Page<Program>
         // 1. 프로그램 목록 조회 (쿼리 1번)
-        Page<Program> programPage = programRepository.findByDeletedAtIsNull(pageable);
+        Page<Program> programPage = programRepository.findByDeletedAtIsNullAndStatus(ProgramStatus.ACTIVE, pageable);
 
         // 2. 이 페이지 프로그램들의 id 모으기
         List<UUID> programIds = programPage.getContent().stream()
@@ -158,7 +159,7 @@ public class ProgramService {
      * 삭제되지 않은 프로그램 조회
      */
     private Program getActiveProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNull(programId)
+        return programRepository.findByIdAndDeletedAtIsNullAndStatus(programId, ProgramStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 
