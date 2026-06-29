@@ -25,9 +25,14 @@ public record ProgramListResponse(
         BigDecimal longitude,   // 지도 핀용 - 유지
         LocalDate startDate,
         LocalDate endDate,
-        int viewCount           // 조회순 정렬용 - 유지
+        int viewCount,           // 조회순 정렬용 - 유지
+        String thumbnailUrl
 ) {
     public static ProgramListResponse from(Program program) {
+        return from(program, null);
+    }
+
+    public static ProgramListResponse from(Program program, String thumbnailUrl) {
         return new ProgramListResponse(
                 program.getId(),
                 program.getTitle(),
@@ -42,7 +47,8 @@ public record ProgramListResponse(
                 program.getLongitude(),
                 program.getStartDate(),
                 program.getEndDate(),
-                program.getViewCount()
+                program.getViewCount(),
+                thumbnailUrl
         );
     }
 }

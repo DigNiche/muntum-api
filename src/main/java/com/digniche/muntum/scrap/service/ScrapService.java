@@ -6,6 +6,7 @@ import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.repository.ProgramRepository;
+import com.digniche.muntum.program.service.ProgramImageService;
 import com.digniche.muntum.scrap.entity.Scrap;
 import com.digniche.muntum.scrap.repository.ScrapRepository;
 import com.digniche.muntum.user.entity.User;
@@ -16,6 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -29,6 +32,7 @@ public class ScrapService {
     private final ScrapRepository scrapRepository;
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
+    private final ProgramImageService programImageService;
 
     /**
      * 스크랩 등록
@@ -73,9 +77,20 @@ public class ScrapService {
      * 내 스크랩 목록 조회
      */
     public PageResponse<ProgramListResponse> getMyScraps(UUID userId, Pageable pageable) {
-        Page<ProgramListResponse> page = scrapRepository
-                .findMyScrapsWithProgram(userId, pageable)
-                .map(scrap -> ProgramListResponse.from(scrap.getProgram()));
+        Page<Scrap> scrapPage = scrapRepository.findMyScrapsWithProgram(userId, pageable);
+
+        // 스크랩된 프로그램들의 id 모으기
+        List<UUID> programIds = scrapPage.getContent().stream()
+                .map(scrap -> scrap.getProgram().getId())
+                .toList();
+
+        // 썸네일 IN 조회 (N+1 방지) - 프로그램 목록과 동일 로직 재사용
+        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
+
+        Page<ProgramListResponse> page = scrapPage.map(scrap -> {
+            Program program = scrap.getProgram();
+            return ProgramListResponse.from(program, thumbnailMap.get(program.getId()));
+        });
 
         return PageResponse.from(page);
     }

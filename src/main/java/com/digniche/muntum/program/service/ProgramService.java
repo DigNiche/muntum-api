@@ -19,9 +19,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import com.digniche.muntum.program.entity.ProgramImage;
 import com.digniche.muntum.program.repository.ProgramImageRepository;
-
 import java.util.List;
-
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -34,7 +34,7 @@ import java.util.UUID;
 public class ProgramService {
 
     private final ProgramRepository programRepository;
-    private final ProgramImageRepository programImageRepository;
+    private final ProgramImageService programImageService;
 
     /**
      * 프로그램 등록
@@ -46,12 +46,7 @@ public class ProgramService {
         Program program = request.toEntity();
         Program savedProgram = programRepository.save(program);
 
-        saveProgramImages(savedProgram, request.imageUrls());
-
-        List<String> imageUrls = request.imageUrls() != null
-                ? request.imageUrls()
-                : List.of();          // null이면 빈 리스트로
-
+        List<String> imageUrls = request.imageUrls() != null ? request.imageUrls() : List.of();
         return ProgramResponse.from(savedProgram, imageUrls);
     }
 
@@ -69,11 +64,21 @@ public class ProgramService {
                 size,
                 createSort(sort, order)
         );
+        // ① 엔티티 페이지 (변환 전) - 이름: programPage, 타입: Page<Program>
+        // 1. 프로그램 목록 조회 (쿼리 1번)
+        Page<Program> programPage = programRepository.findByDeletedAtIsNull(pageable);
 
-        Page<ProgramListResponse> programPage = programRepository.findByDeletedAtIsNull(pageable)
-                .map(ProgramListResponse::from);
+        // 2. 이 페이지 프로그램들의 id 모으기
+        List<UUID> programIds = programPage.getContent().stream()
+                .map(Program::getId)
+                .toList();
 
-        return PageResponse.from(programPage);
+        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
+
+        Page<ProgramListResponse> responsePage = programPage.map(program ->
+                ProgramListResponse.from(program, thumbnailMap.get(program.getId()))
+        );
+        return PageResponse.from(responsePage);
     }
 
     private Sort createSort(ProgramSortType sort, Sort.Direction order) {
@@ -96,13 +101,7 @@ public class ProgramService {
         Program program = getActiveProgram(programId);
 
         program.increaseViewCount();
-
-        List<String> imageUrls = programImageRepository
-                .findByProgramIdOrderByDisplayOrderAsc(programId)
-                .stream()
-                .map(ProgramImage::getImageUrl)
-                .toList();
-
+        List<String> imageUrls = programImageService.getImageUrls(programId);
         return ProgramResponse.from(program, imageUrls);
     }
 
@@ -139,18 +138,9 @@ public class ProgramService {
         );
         // imageUrls가 null이면 이미지 미변경, null이 아니면(빈 배열 포함) 교체
         if (request.imageUrls() != null) {
-            programImageRepository.deleteByProgramId(programId);
-            programImageRepository.flush();
-            saveProgramImages(program, request.imageUrls());
+            programImageService.replaceImages(program, request.imageUrls());
         }
-
-        // 응답은 항상 DB 실제 상태로 (응답-DB 불일치 방지)
-        List<String> imageUrls = programImageRepository
-                .findByProgramIdOrderByDisplayOrderAsc(programId)
-                .stream()
-                .map(ProgramImage::getImageUrl)
-                .toList();
-
+        List<String> imageUrls = programImageService.getImageUrls(programId);
         return ProgramResponse.from(program, imageUrls);
     }
 
@@ -182,25 +172,6 @@ public class ProgramService {
 
         if (endDate.isBefore(startDate)) {
             throw new BusinessException(ErrorCode.INVALID_PROGRAM_PERIOD);
-        }
-    }
-    /**
-     * 프로그램 이미지 저장
-     * - imageUrls 순서대로 displayOrder를 1부터 부여 (1번 = 썸네일)
-     * - 단방향이므로 ProgramImage에 program을 직접 연결해 저장
-     */
-    private void saveProgramImages(Program program, List<String> imageUrls) {
-        if (imageUrls == null || imageUrls.isEmpty()) {
-            return;   // 이미지는 선택값이므로 없으면 그냥 끝
-        }
-
-        for (int i = 0; i < imageUrls.size(); i++) {
-            ProgramImage image = ProgramImage.builder()
-                    .program(program)
-                    .imageUrl(imageUrls.get(i))
-                    .displayOrder(i + 1)   // 인덱스 0 → order 1
-                    .build();
-            programImageRepository.save(image);
         }
     }
 }
