@@ -10,8 +10,4 @@ public record SignupResponse(
         UUID userId,
         String email,
         LocalDateTime createdAt
-) {
-    public static SignupResponse of(UUID userId, String email, LocalDateTime createdAt) {
-        return new SignupResponse(userId, email, createdAt);
-    }
-}
+) { }

@@ -13,10 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 인증/인가 컨트롤러
@@ -37,6 +34,7 @@ public class AuthController {
                 .body(ApiResponse.success("회원가입이 완료되었습니다.", res));
     }
 
+
     // 로그인
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthenticationResponse>> login(@RequestBody @Valid LoginRequest request) {
@@ -46,7 +44,8 @@ public class AuthController {
                 .body(ApiResponse.success("로그인이 완료되었습니다.", res));
     }
 
-    // Refresh Token 재발행
+
+    // Refresh Token 재발급
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthenticationResponse>> refresh(@RequestBody @Valid RefreshTokenReissueRequest request) {
         AuthenticationResponse res = authService.reissueRefreshToken(request);
@@ -54,6 +53,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("토큰이 재발급되었습니다.", res));
     }
+
 
     // 로그아웃
     @PostMapping("/logout")

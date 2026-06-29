@@ -48,7 +48,7 @@ public class Keyword extends BaseEntity {
     private KeywordType type;
 
     @Column(name = "category", length = 100)
-    private String category;
+    private String categories;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -64,28 +64,33 @@ public class Keyword extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;
     }
-    // 1
+
     @Builder
     public Keyword(
             String name,
             String description,
             KeywordType type,
-            String category
+            String categories
     ) {
         this.name = name;
         this.description = description;
         this.type = type;
-        this.category = category;
+        this.categories = categories;
         this.active = true;
     }
 
     public void activate() {
         this.active = true;
     }
-
     public void deactivate() {
         this.active = false;
     }
 
+    public void update(String name, String description, KeywordType type, String categories) {
+        this.name = name;
+        this.description = description;
+        this.type = type;
+        this.categories = categories;
+    }
 }
 

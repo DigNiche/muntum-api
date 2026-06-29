@@ -25,6 +25,14 @@ spring:
     password: ${db.password}
 
 
+  # Batch
+  batch:
+    job:
+      enabled: true
+    jdbc:
+      initialize-schema: always
+
+
   # Redis
   data:
     redis:
