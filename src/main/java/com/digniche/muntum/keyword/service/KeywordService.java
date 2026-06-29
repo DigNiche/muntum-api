@@ -11,6 +11,8 @@ import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -114,6 +116,13 @@ public class KeywordService {
         userKeywordRepository.deleteAllByKeywordId(keywordId);
         programKeywordRepository.deleteAllByKeywordId(keywordId);
         keywordRepository.delete(keyword);
+    }
+
+    // 키워드 전체 조회
+    @Transactional(readOnly = true)
+    public Page<KeywordResponse> getKeywords(Pageable pageable) {
+        return keywordRepository.findAll(pageable)
+                .map(KeywordResponse::from);
     }
 
 }

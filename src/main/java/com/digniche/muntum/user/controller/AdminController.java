@@ -8,6 +8,10 @@ import com.digniche.muntum.keyword.service.KeywordService;
 import com.digniche.muntum.keyword.dto.KeywordRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,11 +66,20 @@ public class AdminController {
     // 키워드 삭제
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
     @DeleteMapping("/taste/keyword/{keyword_id}")
-    public ResponseEntity<ApiResponse<KeywordActiveResponse>> removeKeyword(
+    public ResponseEntity<ApiResponse<Void>> removeKeyword(
             @PathVariable("keyword_id") UUID keywordId) {
         keywordService.deleteKeyword(keywordId);
 
         return ResponseEntity.ok(ApiResponse.success("키워드가 삭제되었습니다.", null));
+    }
+
+    // 키워드 목록 조회
+    @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
+    @GetMapping("/taste/keywords")
+    public ResponseEntity<ApiResponse<Page<KeywordResponse>>> getKeywords(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<KeywordResponse> response = keywordService.getKeywords(pageable);
+        return ResponseEntity.ok(ApiResponse.success("키워드 목록 조회에 성공했습니다.", response));
     }
 
 

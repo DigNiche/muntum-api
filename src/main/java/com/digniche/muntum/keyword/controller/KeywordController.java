@@ -8,13 +8,14 @@ import com.digniche.muntum.keyword.dto.SelectedKeywordsResponse;
 import com.digniche.muntum.keyword.service.KeywordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class KeywordController {
 
     private final KeywordService keywordService;
 
+    // 키워드 설정
     @PostMapping("/me/keyword")
     public ResponseEntity<ApiResponse<SelectedKeywordsResponse>> selectUserKeyword(@AuthenticationPrincipal UserPrincipal userPrincipal, @Valid @RequestBody SelectKeywordsRequest request) {
         List<KeywordResponse> res = keywordService.setTasteKeywords(userPrincipal.getUserId(), request);
