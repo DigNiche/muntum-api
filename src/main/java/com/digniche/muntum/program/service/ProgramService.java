@@ -13,6 +13,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.program.dto.request.ProgramSortType;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -43,11 +47,35 @@ public class ProgramService {
     /**
      * 프로그램 목록 조회
      */
-    public Page<ProgramListResponse> getPrograms(Pageable pageable) {
-        return programRepository.findByDeletedAtIsNull(pageable)
+    public PageResponse<ProgramListResponse> getPrograms(
+            ProgramSortType sort,
+            Sort.Direction order,
+            int page,
+            int size
+    ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                createSort(sort, order)
+        );
+
+        Page<ProgramListResponse> programPage = programRepository.findByDeletedAtIsNull(pageable)
                 .map(ProgramListResponse::from);
+
+        return PageResponse.from(programPage);
     }
 
+    private Sort createSort(ProgramSortType sort, Sort.Direction order) {
+        Sort primarySort = Sort.by(order, sort.getProperty());
+        // 1차 정렬이 createdAt이면 보조 키로 createdAt을 또 넣으면 중복이라, id만 붙인다.
+        if ("createdAt".equals(sort.getProperty())) {
+            return primarySort.and(Sort.by(Sort.Direction.DESC, "id"));
+        }
+
+        return primarySort
+                .and(Sort.by(Sort.Direction.DESC, "createdAt"))
+                .and(Sort.by(Sort.Direction.DESC, "id"));
+    }
     /**
      * 프로그램 단건 조회
      * 조회수 증가가 있으므로 readOnly 트랜잭션이 아니다.
