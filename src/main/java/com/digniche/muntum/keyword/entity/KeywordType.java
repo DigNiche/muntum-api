@@ -10,8 +10,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum KeywordType {
     THEME("테마"),
-    SUBJECTSITUATION("주제"),
+    SUBJECT("주제"),
     SITUATION("상황");
 
-    private final String type_kr;
+    private final String description;
 }

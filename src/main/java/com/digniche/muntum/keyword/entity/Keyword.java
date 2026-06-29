@@ -48,7 +48,7 @@ public class Keyword extends BaseEntity {
     private KeywordType type;
 
     @Column(name = "category", length = 100)
-    private String category;
+    private String categories;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -70,12 +70,12 @@ public class Keyword extends BaseEntity {
             String name,
             String description,
             KeywordType type,
-            String category
+            String categories
     ) {
         this.name = name;
         this.description = description;
         this.type = type;
-        this.category = category;
+        this.categories = categories;
         this.active = true;
     }
 
