@@ -34,7 +34,7 @@ public class ProgramController {
      * 프로그램 등록 (관리자)
      */
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @PostMapping("/admin/program")
+    @PostMapping("/admin/programs")
     public ResponseEntity<ApiResponse<ProgramResponse>> createProgram(
             @Valid @RequestBody ProgramCreateRequest request
     ) {
@@ -57,7 +57,7 @@ public class ProgramController {
     /**
      * 프로그램 단건 조회 (누구나)
      */
-    @GetMapping("/program/{program_id}")
+    @GetMapping("/programs/{program_id}")
     public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(
             @PathVariable("program_id") UUID programId
     ) {
@@ -69,7 +69,7 @@ public class ProgramController {
      * 프로그램 수정 (관리자)
      */
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @PutMapping("/program/{program_id}")
+    @PutMapping("/programs/{program_id}")
     public ResponseEntity<ApiResponse<ProgramResponse>> updateProgram(
             @PathVariable("program_id") UUID programId,
             @Valid @RequestBody ProgramUpdateRequest request
@@ -82,7 +82,7 @@ public class ProgramController {
      * 프로그램 삭제 (관리자, Soft Delete)
      */
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @DeleteMapping("/program/{program_id}")
+    @DeleteMapping("/programs/{program_id}")
     public ResponseEntity<ApiResponse<Void>> deleteProgram(
             @PathVariable("program_id") UUID programId,
             @AuthenticationPrincipal UserPrincipal userPrincipal
