@@ -3,7 +3,10 @@ package com.digniche.muntum.user.controller;
 import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
+
 import com.digniche.muntum.user.dto.NicknameUpdateRequest;
+import com.digniche.muntum.user.dto.TermsConsentListRequest;
+import com.digniche.muntum.user.dto.UpdateNicknameRequest;
 import com.digniche.muntum.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,13 @@ public class UserController {
             @RequestBody @Valid NicknameUpdateRequest request) {
         userService.setNickname(userPrincipal.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success("닉네임이 설정되었습니다.", null));
+    }
+
+    // 사용자 약관 동의
+    @PatchMapping("/terms")
+    public ResponseEntity<ApiResponse<Void>> updateTermsConsent(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestBody @Valid TermsConsentListRequest request) {
+        userService.updateTermsConsent(userPrincipal.getUserId(), request);
+        return ResponseEntity.ok(ApiResponse.success("약관 동의 상태가 변경되었습니다.", null));
     }
 
     // 회원 탈퇴

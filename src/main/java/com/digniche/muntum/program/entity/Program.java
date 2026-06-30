@@ -62,10 +62,10 @@ public class Program extends BaseEntity {
     @Column(nullable = false, length = 255)
     private String address;
 
-    @Column(precision = 10, scale = 7)
+    @Column(precision = 10, scale = 8)
     private BigDecimal latitude;
 
-    @Column(precision = 10, scale = 7)
+    @Column(precision = 11, scale = 8)
     private BigDecimal longitude;
 
     @Column(name = "official_url", length = 500)

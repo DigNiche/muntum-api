@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(

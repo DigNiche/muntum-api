@@ -26,6 +26,11 @@ public enum ErrorCode {
     // 사용자 정보
     NICKNAME_ALREADY_EXISTS("U001", "이미 사용 중인 닉네임입니다", HttpStatus.CONFLICT),
 
+    // 사용자 약관 동의
+    TERMS_NOT_FOUND("T001", "약관 동의 정보가 존재하지 않습니다", HttpStatus.NOT_FOUND),
+    REQUIRED_TERMS_CANNOT_DISAGREE("T002", "필수 약관은 철회할 수 없습니다", HttpStatus.BAD_REQUEST),
+    REQUIRED_TERMS_NOT_AGREED("T003", "필수 약관에 동의하지 않았습니다", HttpStatus.BAD_REQUEST),
+
     // 프로그램
     PROGRAM_NOT_FOUND("P001", "존재하지 않는 프로그램입니다", HttpStatus.NOT_FOUND),
     INVALID_PROGRAM_PERIOD("P002", "프로그램 종료일은 시작일보다 빠를 수 없습니다.", HttpStatus.BAD_REQUEST),
@@ -47,7 +52,7 @@ public enum ErrorCode {
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
 
     // 500~
-    SERVER_ERROR("5001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
+    SERVER_ERROR("G001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
 
 
     private final String code;

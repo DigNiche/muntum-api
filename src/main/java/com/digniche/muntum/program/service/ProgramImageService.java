@@ -75,9 +75,4 @@ public class ProgramImageService {
             throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE);
         }
     }
-
-    private Program getProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNull(programId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
-    }
 }
