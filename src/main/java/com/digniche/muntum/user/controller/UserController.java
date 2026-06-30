@@ -3,6 +3,8 @@ package com.digniche.muntum.user.controller;
 import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
+
+import com.digniche.muntum.user.dto.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.TermsConsentListRequest;
 import com.digniche.muntum.user.dto.UpdateNicknameRequest;
 import com.digniche.muntum.user.service.UserService;
@@ -24,7 +26,9 @@ public class UserController {
 
     // 닉네임 설정(생성 및 수정)
     @PatchMapping("nickname")
-    public ResponseEntity<ApiResponse<Void>> setNickname(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestBody @Valid UpdateNicknameRequest request) {
+    public ResponseEntity<ApiResponse<Void>> setNickname(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestBody @Valid NicknameUpdateRequest request) {
         userService.setNickname(userPrincipal.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success("닉네임이 설정되었습니다.", null));
     }

@@ -2,6 +2,7 @@ package com.digniche.muntum.program.service;
 
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
+import com.digniche.muntum.program.dto.request.GeoCoordinate;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
@@ -14,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+
+import java.math.BigDecimal;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.program.dto.request.ProgramSortType;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +25,9 @@ import org.springframework.data.domain.Sort;
 import java.util.List;
 import java.util.Map;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -32,6 +39,7 @@ import java.util.UUID;
 public class ProgramService {
 
     private final ProgramRepository programRepository;
+    private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
 
     /**
@@ -39,9 +47,23 @@ public class ProgramService {
      */
     @Transactional
     public ProgramResponse createProgram(ProgramCreateRequest request) {
-        validateProgramPeriod(request.startDate(), request.endDate());
-
         Program program = request.toEntity();
+
+        if (request.operatingPeriod() != null) {
+            List<LocalDate> operatingPeriod = validateProgramPeriod(request.operatingPeriod());
+            program.updateOperatingPeriod(operatingPeriod);
+        }
+
+        // 프로그램 등록 시 주소 → 좌표 변환
+        GeoCoordinate coord = geocodingService.getCoordinate(request.address())
+                .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
+
+        program.setLatitude(BigDecimal.valueOf(coord.latitude()));
+        program.setLongitude(BigDecimal.valueOf(coord.longitude()));
+
+        // TODO: 키워드 설정
+        // TODO: 프로그램 이미지 저장
+
         Program savedProgram = programRepository.save(program);
 
         programImageService.saveImages(savedProgram, request.imageUrls());
@@ -114,30 +136,34 @@ public class ProgramService {
      */
     @Transactional
     public ProgramResponse updateProgram(UUID programId, ProgramUpdateRequest request) {
-        validateProgramPeriod(request.startDate(), request.endDate());
-
         Program program = getActiveProgram(programId);
 
+        if (request.operatingPeriod() != null) {
+            List<LocalDate> operatingPeriod = validateProgramPeriod(request.operatingPeriod());
+            program.updateOperatingPeriod(operatingPeriod);
+        }
+
+        // 프로그램 등록 시 주소 → 좌표 변환
+        if (request.address() != null) {
+            GeoCoordinate coord = geocodingService.getCoordinate(request.address())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
+
+            program.setLatitude(BigDecimal.valueOf(coord.latitude()));
+            program.setLongitude(BigDecimal.valueOf(coord.longitude()));
+        }
+
+        // TODO: 키워드 수정
+        // TODO: 프로그램 이미지 수정
+
         program.update(
-                request.title(),
-                request.programType(),
-                request.tagline(),
-                request.curation(),
-                request.reserved(),
-                request.free(),
-                request.price(),
-                request.venueName(),
-                request.venueMeta(),
+                request.title(), request.programType(), request.tagline(),
+                request.curation(), request.reserved(), request.free(),
+                request.price(), request.venueName(), request.venueMeta(),
                 request.address(),
-                request.latitude(),
-                request.longitude(),
                 request.officialUrl(),
-                request.startDate(),
-                request.endDate(),
-                request.operatingPeriodMeta(),
-                request.operatingHours(),
-                request.operatingHoursMeta(),
-                request.inquiryContact()
+                request.operatingPeriodMeta(), request.operatingHours(),
+                request.operatingHoursMeta(), request.inquiryContact()
+        );
 
         );
         // imageUrls가 null이면 이미지 미변경, null이 아니면(빈 배열 포함) 교체
@@ -170,13 +196,30 @@ public class ProgramService {
     /**
      * 프로그램 기간 검증
      */
-    private void validateProgramPeriod(LocalDate startDate, LocalDate endDate) {
+    private List<LocalDate> validateProgramPeriod(String operatingPeriod) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        String[] parts = operatingPeriod != null ? operatingPeriod.split(" - ") : new String[]{null, null};
+        LocalDate startDate = parts[0] != null ? LocalDate.parse(parts[0], formatter) : null;
+        LocalDate endDate = parts.length > 1 && parts[1] != null ? LocalDate.parse(parts[1], formatter) : null;
+
         if (startDate == null || endDate == null) {
-            return;
+            return null;
         }
 
         if (endDate.isBefore(startDate)) {
             throw new BusinessException(ErrorCode.INVALID_PROGRAM_PERIOD);
         }
+
+        List<LocalDate> dateList = new ArrayList<>();
+        dateList.add(startDate);
+        dateList.add(endDate);
+        return dateList;
+    }
+
+    private List<LocalDate> extractFromOperatingPeriod(String operatingPeriod) {
+        if (operatingPeriod != null) {
+            return validateProgramPeriod(operatingPeriod);
+        }
+        return null;
     }
 }

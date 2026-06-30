@@ -35,6 +35,9 @@ public enum ErrorCode {
     PROGRAM_NOT_FOUND("P001", "존재하지 않는 프로그램입니다", HttpStatus.NOT_FOUND),
     INVALID_PROGRAM_PERIOD("P002", "프로그램 종료일은 시작일보다 빠를 수 없습니다.", HttpStatus.BAD_REQUEST),
 
+    // 카카오 GeoCoordinate
+    ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+
     // 키워드
     KEYWORD_NOT_FOUND("K001", "존재하지 않는 키워드입니다", HttpStatus.BAD_REQUEST),
     KEYWORD_ALREADY_EXISTS("K002", "이미 존재하는 키워드입니다", HttpStatus.CONFLICT),

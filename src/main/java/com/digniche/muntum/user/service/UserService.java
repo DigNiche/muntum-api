@@ -4,6 +4,7 @@ import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.global.redis.RefreshTokenService;
+import com.digniche.muntum.user.dto.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.TermsConsentListRequest;
 import com.digniche.muntum.user.dto.TermsConsentRequest;
 import com.digniche.muntum.user.dto.UpdateNicknameRequest;
@@ -41,7 +42,7 @@ public class UserService {
 
     // 닉네임 설정(생성 및 수정)
     @Transactional
-    public void setNickname(UUID userId, UpdateNicknameRequest request) {
+    public void setNickname(UUID userId, NicknameUpdateRequest request) {
         if (userRepository.existsByNicknameAndIdNot(request.nickname(), userId)) {
             throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXISTS);
         }
