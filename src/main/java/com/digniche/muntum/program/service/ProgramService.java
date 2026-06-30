@@ -15,6 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -32,9 +36,15 @@ public class ProgramService {
      */
     @Transactional
     public ProgramResponse createProgram(ProgramCreateRequest request) {
-        validateProgramPeriod(request.startDate(), request.endDate());
-
         Program program = request.toEntity();
+
+        if (request.operatingPeriod() != null) {
+            List<LocalDate> operatingPeriod = validateProgramPeriod(request.operatingPeriod());
+            program.updateOperatingPeriod(operatingPeriod);
+        }
+
+        // TODO : 위도 경도
+
         Program savedProgram = programRepository.save(program);
 
         return ProgramResponse.from(savedProgram);
@@ -116,13 +126,23 @@ public class ProgramService {
     /**
      * 프로그램 기간 검증
      */
-    private void validateProgramPeriod(LocalDate startDate, LocalDate endDate) {
+    private List<LocalDate> validateProgramPeriod(String operatingPeriod) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        String[] parts = operatingPeriod != null ? operatingPeriod.split(" - ") : new String[]{null, null};
+        LocalDate startDate = parts[0] != null ? LocalDate.parse(parts[0], formatter) : null;
+        LocalDate endDate = parts.length > 1 && parts[1] != null ? LocalDate.parse(parts[1], formatter) : null;
+
         if (startDate == null || endDate == null) {
-            return;
+            return null;
         }
 
         if (endDate.isBefore(startDate)) {
             throw new BusinessException(ErrorCode.INVALID_PROGRAM_PERIOD);
         }
+
+        List<LocalDate> dateList = new ArrayList<>();
+        dateList.add(startDate);
+        dateList.add(endDate);
+        return dateList;
     }
 }

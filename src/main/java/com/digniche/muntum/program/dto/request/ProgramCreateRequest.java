@@ -4,10 +4,12 @@ import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /**
  * 프로그램 등록 요청 DTO
@@ -46,16 +48,19 @@ public record ProgramCreateRequest(
         @Size(max = 255, message = "주소는 255자를 넘을 수 없습니다.")
         String address,
 
-        BigDecimal latitude,
-
-        BigDecimal longitude,
+//        BigDecimal latitude,
+//        BigDecimal longitude,
 
         @Size(max = 500, message = "공식 URL은 500자를 넘을 수 없습니다.")
         String officialUrl,
 
-        LocalDate startDate,
-
-        LocalDate endDate,
+//        LocalDate startDate,
+//        LocalDate endDate,
+        @Pattern(
+                regexp = "^\\d{4}\\.\\d{2}\\.\\d{2} - \\d{4}\\.\\d{2}\\.\\d{2}$",
+                message = "운영 기간은 'YYYY.MM.DD - YYYY.MM.DD' 형식이어야 합니다."
+        )
+        String operatingPeriod,
 
         @Size(max = 255, message = "운영 기간 설명은 255자를 넘을 수 없습니다.")
         String operatingPeriodMeta,
@@ -85,11 +90,7 @@ public record ProgramCreateRequest(
                 .venueName(venueName)
                 .venueMeta(venueMeta)
                 .address(address)
-                .latitude(latitude)
-                .longitude(longitude)
                 .officialUrl(officialUrl)
-                .startDate(startDate)
-                .endDate(endDate)
                 .operatingPeriodMeta(operatingPeriodMeta)
                 .operatingHours(operatingHours)
                 .operatingHoursMeta(operatingHoursMeta)

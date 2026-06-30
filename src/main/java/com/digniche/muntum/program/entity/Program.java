@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import java.time.LocalDateTime;
 /**
@@ -207,6 +208,10 @@ public class Program extends BaseEntity {
 
     public void updateStatus(ProgramStatus status) {
         this.status = status;
+    }
+    public void updateOperatingPeriod(List<LocalDate> dateList) {
+        this.startDate = dateList.get(0);
+        this.endDate = dateList.get(1);
     }
 }
 
