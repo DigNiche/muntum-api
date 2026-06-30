@@ -1,9 +1,12 @@
 package com.digniche.muntum.auth.dto.request;
 
+import com.digniche.muntum.user.dto.TermsAgreementRequest;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserRole;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * 회원가입 Req DTO
@@ -11,7 +14,9 @@ import jakarta.validation.constraints.NotBlank;
 public record SignUpRequest(
         @NotBlank @Email String email,
         @NotBlank String password,
-        UserRole role
+        UserRole role,
+
+        @Valid @NotNull TermsAgreementRequest termsAgreement
 ) {
 
     public SignUpRequest {
