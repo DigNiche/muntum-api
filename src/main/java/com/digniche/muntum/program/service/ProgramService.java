@@ -18,11 +18,8 @@ import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.program.dto.request.ProgramSortType;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import com.digniche.muntum.program.entity.ProgramImage;
-import com.digniche.muntum.program.repository.ProgramImageRepository;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -47,6 +44,8 @@ public class ProgramService {
         Program program = request.toEntity();
         Program savedProgram = programRepository.save(program);
 
+        programImageService.saveImages(savedProgram, request.imageUrls());
+
         List<String> imageUrls = request.imageUrls() != null ? request.imageUrls() : List.of();
         return ProgramResponse.from(savedProgram, imageUrls);
     }
@@ -67,7 +66,11 @@ public class ProgramService {
         );
         // ① 엔티티 페이지 (변환 전) - 이름: programPage, 타입: Page<Program>
         // 1. 프로그램 목록 조회 (쿼리 1번)
-        Page<Program> programPage = programRepository.findByDeletedAtIsNullAndStatus(ProgramStatus.ACTIVE, pageable);
+        Page<Program> programPage = programRepository.findProgramsEndedLast(
+                List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED),
+                LocalDate.now(),
+                pageable
+        );
 
         // 2. 이 페이지 프로그램들의 id 모으기
         List<UUID> programIds = programPage.getContent().stream()
@@ -159,7 +162,8 @@ public class ProgramService {
      * 삭제되지 않은 프로그램 조회
      */
     private Program getActiveProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNullAndStatus(programId, ProgramStatus.ACTIVE)
+        return programRepository.findByIdAndDeletedAtIsNullAndStatusIn(
+                        programId, List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED))
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 

@@ -17,10 +17,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.digniche.muntum.scrap.dto.request.ScrapSortType;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.springframework.data.jpa.repository.query.KeysetScrollSpecification.createSort;
 
 /**
  * 스크랩 비즈니스 로직 계층
@@ -77,23 +82,45 @@ public class ScrapService {
     /**
      * 내 스크랩 목록 조회
      */
-    public PageResponse<ProgramListResponse> getMyScraps(UUID userId, Pageable pageable) {
+    public PageResponse<ProgramListResponse> getMyScraps(
+            UUID userId,
+            ScrapSortType sort,
+            Sort.Direction order,
+            int page,
+            int size
+    ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                createSort(sort, order)
+        );
+
         Page<Scrap> scrapPage = scrapRepository.findMyScrapsWithProgram(userId, pageable);
 
-        // 스크랩된 프로그램들의 id 모으기
         List<UUID> programIds = scrapPage.getContent().stream()
                 .map(scrap -> scrap.getProgram().getId())
                 .toList();
 
-        // 썸네일 IN 조회 (N+1 방지) - 프로그램 목록과 동일 로직 재사용
         Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
 
-        Page<ProgramListResponse> page = scrapPage.map(scrap -> {
+        Page<ProgramListResponse> responsePage = scrapPage.map(scrap -> {
             Program program = scrap.getProgram();
             return ProgramListResponse.from(program, thumbnailMap.get(program.getId()));
         });
 
-        return PageResponse.from(page);
+        return PageResponse.from(responsePage);
+    }
+
+    private Sort createSort(ScrapSortType sort, Sort.Direction order) {
+        Sort primarySort = Sort.by(order, sort.getProperty());
+
+        if ("createdAt".equals(sort.getProperty())) {
+            return primarySort.and(Sort.by(Sort.Direction.DESC, "id"));
+        }
+
+        return primarySort
+                .and(Sort.by(Sort.Direction.DESC, "createdAt"))
+                .and(Sort.by(Sort.Direction.DESC, "id"));
     }
 
     private User getUser(UUID userId) {

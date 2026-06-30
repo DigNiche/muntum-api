@@ -26,13 +26,16 @@ public record ProgramListResponse(
         LocalDate startDate,
         LocalDate endDate,
         int viewCount,           // 조회순 정렬용 - 유지
-        String thumbnailUrl
+        String thumbnailUrl,
+        boolean ended
 ) {
     public static ProgramListResponse from(Program program) {
         return from(program, null);
     }
 
     public static ProgramListResponse from(Program program, String thumbnailUrl) {
+        boolean ended = program.getEndDate() != null
+                && program.getEndDate().isBefore(LocalDate.now());
         return new ProgramListResponse(
                 program.getId(),
                 program.getTitle(),
@@ -48,7 +51,8 @@ public record ProgramListResponse(
                 program.getStartDate(),
                 program.getEndDate(),
                 program.getViewCount(),
-                thumbnailUrl
+                thumbnailUrl,
+                ended
         );
     }
 }

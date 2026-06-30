@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
-                .body(ApiResponse.fail(errorCode.getStatus().value(), String.valueOf(errorCode), errorCode.getMessage()));
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), errorCode.getMessage()));
     }
 
     // @Valid 검증 실패 시 Spring이 throw하는 예외 처리
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
         return ResponseEntity
                 .status(errorCode.getStatus())
-                .body(ApiResponse.fail(errorCode.getStatus().value(), String.valueOf(errorCode), message));
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), message));
     }
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {

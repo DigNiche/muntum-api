@@ -6,11 +6,11 @@ import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.scrap.service.ScrapService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.digniche.muntum.scrap.dto.request.ScrapSortType;
+import org.springframework.data.domain.Sort;
 
 import java.util.UUID;
 
@@ -57,10 +57,19 @@ public class ScrapController {
     @GetMapping("/scraps")
     public ApiResponse<PageResponse<ProgramListResponse>> getMyScraps(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @PageableDefault(size = 20) Pageable pageable
+            @RequestParam(defaultValue = "SCRAPPED_AT") ScrapSortType sort,
+            @RequestParam(defaultValue = "DESC") Sort.Direction order,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         PageResponse<ProgramListResponse> response =
-                scrapService.getMyScraps(userPrincipal.getUserId(), pageable);
+                scrapService.getMyScraps(
+                        userPrincipal.getUserId(),
+                        sort,
+                        order,
+                        page,
+                        size
+                );
 
         return ApiResponse.success("스크랩 목록 조회에 성공했습니다.", response);
     }
