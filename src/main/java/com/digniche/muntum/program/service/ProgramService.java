@@ -11,6 +11,7 @@ import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramImage;
+import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,6 @@ public class ProgramService {
     private final ProgramRepository programRepository;
     private final ProgramImageRepository programImageRepository;
     private final GeocodingService geocodingService;
-    private final ImageStorageService imageStorageService;
     private final ProgramImageService programImageService;
 
     /**
@@ -77,7 +77,7 @@ public class ProgramService {
      * 프로그램 목록 조회
      */
     public Page<ProgramListResponse> getPrograms(Pageable pageable) {
-        return programRepository.findByDeletedAtIsNull(pageable)
+        return programRepository.findByStatusAndDeletedAtIsNull(ProgramStatus.ACTIVE, pageable)
                 .map(ProgramListResponse::from);
     }
 
@@ -88,10 +88,12 @@ public class ProgramService {
     @Transactional
     public ProgramResponse getProgram(UUID programId) {
         Program program = getActiveProgram(programId);
-
         program.increaseViewCount();
+        List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
 
-        return ProgramResponse.from(program, null);
+        // TODO: 키워드
+
+        return ProgramResponse.from(program, images);
     }
 
     /**
@@ -129,7 +131,8 @@ public class ProgramService {
                 request.inquiryContact()
         );
 
-        return ProgramResponse.from(program, null);
+        List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
+        return ProgramResponse.from(program, images);
     }
 
     /**

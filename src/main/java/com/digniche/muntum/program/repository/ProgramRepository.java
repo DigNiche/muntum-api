@@ -1,9 +1,13 @@
 package com.digniche.muntum.program.repository;
 
 import com.digniche.muntum.program.entity.Program;
+import com.digniche.muntum.program.entity.ProgramImage;
+import com.digniche.muntum.program.entity.ProgramStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -18,4 +22,6 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
 
     // 목록 조회 - 삭제되지 않은 프로그램만, 페이징 적용
     Page<Program> findByDeletedAtIsNull(Pageable pageable);
+    Page<Program> findByStatusAndDeletedAtIsNull(ProgramStatus status, Pageable pageable);
+
 }
