@@ -35,9 +35,7 @@ public class ProgramImageService {
 
     // 이미지 업로드
     @Transactional
-    public List<ProgramImageResponse> uploadImages(UUID programId, List<MultipartFile> files) {
-        Program program = getProgram(programId);
-
+    public void uploadImages(Program program, List<MultipartFile> files) {
         List<ProgramImage> images = new java.util.ArrayList<>();
 
         for (int i = 0; i < files.size(); i++) {
@@ -52,10 +50,7 @@ public class ProgramImageService {
                     .displayOrder(i + 1)
                     .build());
         }
-
-        return programImageRepository.saveAll(images).stream()
-                .map(ProgramImageResponse::from)
-                .toList();
+        programImageRepository.saveAll(images);
     }
 
     // 프로그램 별 이미지 목록 조회

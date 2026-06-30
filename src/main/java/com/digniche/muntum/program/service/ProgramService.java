@@ -2,9 +2,11 @@ package com.digniche.muntum.program.service;
 
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
+import com.digniche.muntum.global.storage.ImageStorageService;
 import com.digniche.muntum.program.dto.request.GeoCoordinate;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
+import com.digniche.muntum.program.dto.response.ProgramImageResponse;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
 import com.digniche.muntum.program.entity.Program;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,12 +38,14 @@ public class ProgramService {
     private final ProgramRepository programRepository;
     private final ProgramImageRepository programImageRepository;
     private final GeocodingService geocodingService;
+    private final ImageStorageService imageStorageService;
+    private final ProgramImageService programImageService;
 
     /**
      * 프로그램 등록
      */
     @Transactional
-    public ProgramResponse createProgram(ProgramCreateRequest request) {
+    public ProgramResponse createProgram(ProgramCreateRequest request, List<MultipartFile> files) {
         Program program = request.toEntity();
 
         if (request.operatingPeriod() != null) {
@@ -55,12 +60,17 @@ public class ProgramService {
         program.setLatitude(BigDecimal.valueOf(coord.latitude()));
         program.setLongitude(BigDecimal.valueOf(coord.longitude()));
 
-        // TODO: 키워드 설정
-        // TODO: 프로그램 이미지 저장
-
         Program savedProgram = programRepository.save(program);
 
-        return ProgramResponse.from(savedProgram);
+        // 이미지 저장
+        if (files != null && !files.isEmpty()) {
+            programImageService.uploadImages(savedProgram, files);
+        }
+        List<ProgramImageResponse> images = programImageService.getOrderedImages(program.getId());
+
+        // TODO: 키워드 설정
+
+        return ProgramResponse.from(savedProgram, images);
     }
 
     /**
@@ -81,7 +91,7 @@ public class ProgramService {
 
         program.increaseViewCount();
 
-        return ProgramResponse.from(program);
+        return ProgramResponse.from(program, null);
     }
 
     /**
@@ -119,7 +129,7 @@ public class ProgramService {
                 request.inquiryContact()
         );
 
-        return ProgramResponse.from(program);
+        return ProgramResponse.from(program, null);
     }
 
     /**

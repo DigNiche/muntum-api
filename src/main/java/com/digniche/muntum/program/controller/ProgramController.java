@@ -13,11 +13,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -34,11 +37,12 @@ public class ProgramController {
      * 프로그램 등록 (관리자)
      */
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @PostMapping("/admin/programs")
+    @PostMapping(value = "/admin/programs", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProgramResponse>> createProgram(
-            @Valid @RequestBody ProgramCreateRequest request
-    ) {
-        ProgramResponse response = programService.createProgram(request);
+//            @Valid @RequestBody ProgramCreateRequest request
+            @RequestPart("program") @Valid ProgramCreateRequest request,
+            @RequestPart(value="images", required=false) List<MultipartFile> files) {
+        ProgramResponse response = programService.createProgram(request, files);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("프로그램이 등록되었습니다.", response));
     }
