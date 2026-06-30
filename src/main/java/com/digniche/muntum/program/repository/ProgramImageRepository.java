@@ -12,6 +12,6 @@ import java.util.UUID;
 public interface ProgramImageRepository extends JpaRepository<ProgramImage, UUID> {
 
     List<ProgramImage> findByProgramIdOrderByDisplayOrderAsc(UUID programId);
-
+    List<ProgramImage> findByDisplayOrder(int displayOrder);
     void deleteByProgramId(UUID programId);
 }

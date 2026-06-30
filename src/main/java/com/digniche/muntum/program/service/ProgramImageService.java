@@ -66,6 +66,12 @@ public class ProgramImageService {
                 .toList();
     }
 
+    // 썸네일(display order = 1) 이미지 목록 조회
+    public List<ProgramImageResponse> getThumbnails() {
+        return programImageRepository.findByDisplayOrder(1)
+                .stream().map(ProgramImageResponse::from).toList();
+    }
+
     private void validateImageFile(MultipartFile file) {
         if (file.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE);
