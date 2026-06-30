@@ -111,8 +111,9 @@ public class ProgramService {
                 request.price(), request.venueName(), request.venueMeta(),
                 request.address(),
                 request.officialUrl(),
-                request.operatingPeriodMeta(), request.operatingHours(),
-                request.operatingHoursMeta(), request.inquiryContact()
+                request.operatingPeriodMeta(),
+                request.operatingHours(), //request.operatingHoursMeta(),
+                request.inquiryContact()
         );
 
         return ProgramResponse.from(program);
