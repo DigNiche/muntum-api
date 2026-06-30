@@ -47,7 +47,7 @@ public class Keyword extends BaseEntity {
     @Column(name = "type", length = 20)
     private KeywordType type;
 
-    @Column(name = "category", length = 100)
+    @Column(name = "categories", length = 100)
     private String categories;
 
     @Column(name = "deleted_at")
