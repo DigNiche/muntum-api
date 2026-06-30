@@ -62,9 +62,11 @@ public class UserService {
 
         if (request.agreed()) {
             terms.agreeTerm(request.termType());
-        } else {
-            terms.disagreeTerm(request.termType());
         }
+        else {
+            Boolean isOptOutAllowed = terms.disagreeTerm(request.termType());
+        }
+
     }
 
     // 회원 탈퇴

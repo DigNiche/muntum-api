@@ -9,5 +9,5 @@ import jakarta.validation.constraints.NotNull;
  */
 public record TermsConsentRequest(
         @NotNull UserTermsType termType,
-        @NotNull boolean agreed
+        boolean agreed
 ) {}
