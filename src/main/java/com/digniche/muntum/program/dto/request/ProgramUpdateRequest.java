@@ -1,5 +1,6 @@
 package com.digniche.muntum.program.dto.request;
 
+import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -49,9 +50,6 @@ public record ProgramUpdateRequest(
         @Size(max = 255, message = "주소는 255자를 넘을 수 없습니다.")
         String address,
 
-//        BigDecimal latitude,
-//        BigDecimal longitude,
-
         @Size(max = 500, message = "공식 URL은 500자를 넘을 수 없습니다.")
         String officialUrl,
 
@@ -74,4 +72,26 @@ public record ProgramUpdateRequest(
         String inquiryContact
 
 ) {
+        /**
+         * DTO -> 엔티티 변환
+         */
+        public Program toEntity() {
+                return Program.builder()
+                        .title(title)
+                        .programType(programType)
+                        .tagline(tagline)
+                        .curation(curation)
+                        .reserved(reserved)
+                        .free(free)
+                        .price(price)
+                        .venueName(venueName)
+                        .venueMeta(venueMeta)
+                        .address(address)
+                        .officialUrl(officialUrl)
+                        .operatingPeriodMeta(operatingPeriodMeta)
+                        .operatingHours(operatingHours)
+                        .operatingHoursMeta(operatingHoursMeta)
+                        .inquiryContact(inquiryContact)
+                        .build();
+        }
 }

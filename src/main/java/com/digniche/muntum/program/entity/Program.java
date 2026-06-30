@@ -172,36 +172,29 @@ public class Program extends BaseEntity {
             String venueName,
             String venueMeta,
             String address,
-            BigDecimal latitude,
-            BigDecimal longitude,
             String officialUrl,
-            LocalDate startDate,
-            LocalDate endDate,
             String operatingPeriodMeta,
             String operatingHours,
             String operatingHoursMeta,
             String inquiryContact
     ) {
-        this.title = title;
-        this.programType = programType;
-        this.tagline = tagline;
-        this.curation = curation;
-        this.reserved = reserved != null ? reserved : this.reserved;
-        this.free = free != null ? free : this.free;
-        this.price = price;
-        this.venueName = venueName;
-        this.venueMeta = venueMeta;
-        this.address = address;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.officialUrl = officialUrl;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.operatingPeriodMeta = operatingPeriodMeta;
-        this.operatingHours = operatingHours;
-        this.operatingHoursMeta = operatingHoursMeta;
-        this.inquiryContact = inquiryContact;
+        if (title != null) this.title = title;
+        if (programType != null) this.programType = programType;
+        if (tagline != null) this.tagline = tagline;
+        if (curation != null) this.curation = curation;
+        if (reserved != null) this.reserved = reserved;
+        if (free != null) this.free = free;
+        if (price != null) this.price = price;
+        if (venueName != null) this.venueName = venueName;
+        if (venueMeta != null) this.venueMeta = venueMeta;
+        if (address != null) this.address = address;
+        if (officialUrl != null) this.officialUrl = officialUrl;
+        if (operatingPeriodMeta != null) this.operatingPeriodMeta = operatingPeriodMeta;
+        if (operatingHours != null) this.operatingHours = operatingHours;
+        if (operatingHoursMeta != null) this.operatingHoursMeta = operatingHoursMeta;
+        if (inquiryContact != null) this.inquiryContact = inquiryContact;
     }
+
     public void increaseViewCount() {
         this.viewCount++;
     }

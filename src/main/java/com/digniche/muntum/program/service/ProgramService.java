@@ -52,6 +52,7 @@ public class ProgramService {
         program.setLatitude(BigDecimal.valueOf(coord.latitude()));
         program.setLongitude(BigDecimal.valueOf(coord.longitude()));
 
+        // TODO: 키워드 설정
         // TODO: 프로그램 이미지 저장
 
         Program savedProgram = programRepository.save(program);
@@ -85,28 +86,33 @@ public class ProgramService {
      */
     @Transactional
     public ProgramResponse updateProgram(UUID programId, ProgramUpdateRequest request) {
-        validateProgramPeriod(request.startDate(), request.endDate());
-
         Program program = getActiveProgram(programId);
 
+        if (request.operatingPeriod() != null) {
+            List<LocalDate> operatingPeriod = validateProgramPeriod(request.operatingPeriod());
+            program.updateOperatingPeriod(operatingPeriod);
+        }
+
+        // 프로그램 등록 시 주소 → 좌표 변환
+        if (request.address() != null) {
+            GeoCoordinate coord = geocodingService.getCoordinate(request.address())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
+
+            program.setLatitude(BigDecimal.valueOf(coord.latitude()));
+            program.setLongitude(BigDecimal.valueOf(coord.longitude()));
+        }
+
+        // TODO: 키워드 수정
+        // TODO: 프로그램 이미지 수정
+
         program.update(
-                request.title(),
-                request.programType(),
-                request.tagline(),
-                request.curation(),
-                request.reserved(),
-                request.free(),
-                request.price(),
-                request.venueName(),
-                request.venueMeta(),
+                request.title(), request.programType(), request.tagline(),
+                request.curation(), request.reserved(), request.free(),
+                request.price(), request.venueName(), request.venueMeta(),
                 request.address(),
                 request.officialUrl(),
-                request.startDate(),
-                request.endDate(),
-                request.operatingPeriodMeta(),
-                request.operatingHours(),
-                request.operatingHoursMeta(),
-                request.inquiryContact()
+                request.operatingPeriodMeta(), request.operatingHours(),
+                request.operatingHoursMeta(), request.inquiryContact()
         );
 
         return ProgramResponse.from(program);
@@ -151,5 +157,12 @@ public class ProgramService {
         dateList.add(startDate);
         dateList.add(endDate);
         return dateList;
+    }
+
+    private List<LocalDate> extractFromOperatingPeriod(String operatingPeriod) {
+        if (operatingPeriod != null) {
+            return validateProgramPeriod(operatingPeriod);
+        }
+        return null;
     }
 }
