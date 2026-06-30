@@ -118,4 +118,31 @@ public class UserTermsAgreement extends BaseEntity{
         this.thirdPartyOfferAt = thirdPartyOfferAt;
         this.version = version;
     }
+
+    public void agreeTerm(UserTermsType termType) {
+        LocalDateTime now = LocalDateTime.now();
+        switch (termType) {
+            case TERMS_OF_SERVICE   -> this.termsOfServiceAt = now;
+            case PRIVACY_POLICY     -> this.privacyPolicyAt = now;
+            case MARKETING_PUSH     -> this.marketingPushAt = now;
+            case MARKETING_EMAIL    -> this.marketingEmailAt = now;
+            case LOCATION_TERMS     -> this.locationTermsAt = now;
+            case THIRD_PARTY_OFFER  -> this.thirdPartyOfferAt = now;
+        }
+    }
+
+    public boolean disagreeTerm(UserTermsType termType) {
+        if (termType.isRequired()) {
+            return false;
+        }
+        switch (termType) {
+            case MARKETING_PUSH     -> this.marketingPushAt = null;
+            case MARKETING_EMAIL    -> this.marketingEmailAt = null;
+            case LOCATION_TERMS     -> this.locationTermsAt = null;
+            case THIRD_PARTY_OFFER  -> this.thirdPartyOfferAt = null;
+        }
+        return true;
+    }
+
+
 }
