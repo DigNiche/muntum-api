@@ -45,6 +45,12 @@ jwt:
   secret-key: ${JWT_SECRET_KEY}
 
 
+# Kakao Geocoding API
+kakao:
+  api:
+    key: ${KAKAO_APP_REST_API_KEY}
+    geocoding-url: https://dapi.kakao.com/v2/local/search/address.json
+
 # Observability
 management:
   endpoints:

@@ -2,6 +2,7 @@ package com.digniche.muntum.program.service;
 
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
+import com.digniche.muntum.program.dto.request.GeoCoordinate;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
@@ -14,8 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.UUID;
 public class ProgramService {
 
     private final ProgramRepository programRepository;
+    private final GeocodingService geocodingService;
 
     /**
      * 프로그램 등록
@@ -43,7 +45,14 @@ public class ProgramService {
             program.updateOperatingPeriod(operatingPeriod);
         }
 
-        // TODO : 위도 경도
+        // 프로그램 등록 시 주소 → 좌표 변환
+        GeoCoordinate coord = geocodingService.getCoordinate(request.address())
+                .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
+
+        program.setLatitude(BigDecimal.valueOf(coord.latitude()));
+        program.setLongitude(BigDecimal.valueOf(coord.longitude()));
+
+        // TODO: 프로그램 이미지 저장
 
         Program savedProgram = programRepository.save(program);
 

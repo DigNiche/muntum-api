@@ -214,5 +214,13 @@ public class Program extends BaseEntity {
         this.startDate = dateList.get(0);
         this.endDate = dateList.get(1);
     }
+
+    public void setLatitude(BigDecimal latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(BigDecimal longitude) {
+        this.longitude = longitude;
+    }
 }
 
