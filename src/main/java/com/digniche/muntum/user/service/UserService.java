@@ -4,6 +4,7 @@ import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.global.redis.RefreshTokenService;
+import com.digniche.muntum.user.dto.TermsConsentListRequest;
 import com.digniche.muntum.user.dto.TermsConsentRequest;
 import com.digniche.muntum.user.dto.UpdateNicknameRequest;
 import com.digniche.muntum.user.entity.User;
@@ -51,22 +52,22 @@ public class UserService {
 
     // 사용자 약관 정보 변경
     @Transactional
-    public void updateTermsConsent(UUID userId, TermsConsentRequest request) {
-        if (request.termType().isRequired()) {
-            throw new BusinessException(ErrorCode.REQUIRED_TERMS_CANNOT_DISAGREE);
-        }
-
+    public void updateTermsConsent(UUID userId, TermsConsentListRequest request) {
         UserTermsAgreement terms = userTermsAgreementRepository
                 .findTopByUserIdOrderByCreatedAtDesc(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TERMS_NOT_FOUND));
 
-        if (request.agreed()) {
-            terms.agreeTerm(request.termType());
+        for (TermsConsentRequest consent : request.terms()) {
+            if (consent.termType().isRequired()) {
+                throw new BusinessException(ErrorCode.REQUIRED_TERMS_CANNOT_DISAGREE);
+            }
+            if (consent.agreed()) {
+                terms.agreeTerm(consent.termType());
+            }
+            else {
+                Boolean isOptOutAllowed = terms.disagreeTerm(consent.termType());
+            }
         }
-        else {
-            Boolean isOptOutAllowed = terms.disagreeTerm(request.termType());
-        }
-
     }
 
     // 회원 탈퇴

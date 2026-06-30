@@ -3,12 +3,11 @@ package com.digniche.muntum.user.controller;
 import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
-import com.digniche.muntum.user.dto.TermsConsentRequest;
+import com.digniche.muntum.user.dto.TermsConsentListRequest;
 import com.digniche.muntum.user.dto.UpdateNicknameRequest;
 import com.digniche.muntum.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +31,7 @@ public class UserController {
 
     // 사용자 약관 동의
     @PatchMapping("/terms")
-    public ResponseEntity<ApiResponse<Void>> updateTermsConsent(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestBody @Valid TermsConsentRequest request) {
+    public ResponseEntity<ApiResponse<Void>> updateTermsConsent(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestBody @Valid TermsConsentListRequest request) {
         userService.updateTermsConsent(userPrincipal.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success("약관 동의 상태가 변경되었습니다.", null));
     }
