@@ -4,10 +4,13 @@ import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.global.redis.RefreshTokenService;
+import com.digniche.muntum.user.dto.TermsConsentRequest;
 import com.digniche.muntum.user.dto.UpdateNicknameRequest;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserStatus;
+import com.digniche.muntum.user.entity.UserTermsAgreement;
 import com.digniche.muntum.user.repository.UserRepository;
+import com.digniche.muntum.user.repository.UserTermsAgreementRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +30,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserTermsAgreementRepository userTermsAgreementRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
 
@@ -43,6 +47,24 @@ public class UserService {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.updateNickname(request.nickname());
+    }
+
+    // 사용자 약관 정보 변경
+    @Transactional
+    public void updateTermsConsent(UUID userId, TermsConsentRequest request) {
+        if (request.termType().isRequired()) {
+            throw new BusinessException(ErrorCode.REQUIRED_TERMS_CANNOT_DISAGREE);
+        }
+
+        UserTermsAgreement terms = userTermsAgreementRepository
+                .findTopByUserIdOrderByCreatedAtDesc(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TERMS_NOT_FOUND));
+
+        if (request.agreed()) {
+            terms.agreeTerm(request.termType());
+        } else {
+            terms.disagreeTerm(request.termType());
+        }
     }
 
     // 회원 탈퇴

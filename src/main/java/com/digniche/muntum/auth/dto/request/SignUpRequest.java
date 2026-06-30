@@ -14,9 +14,9 @@ import jakarta.validation.constraints.NotNull;
 public record SignUpRequest(
         @NotBlank @Email String email,
         @NotBlank String password,
-        UserRole role,
+        UserRole role
 
-        @Valid @NotNull TermsAgreementRequest termsAgreement
+//        @Valid @NotNull TermsAgreementRequest termsAgreement
 ) {
 
     public SignUpRequest {

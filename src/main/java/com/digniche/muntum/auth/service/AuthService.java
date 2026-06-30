@@ -12,7 +12,9 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserStatus;
+import com.digniche.muntum.user.entity.UserTermsAgreement;
 import com.digniche.muntum.user.repository.UserRepository;
+import com.digniche.muntum.user.repository.UserTermsAgreementRepository;
 import com.digniche.muntum.user.service.UserService;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,6 +36,7 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserTermsAgreementRepository userTermsAgreementRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
@@ -62,6 +66,16 @@ public class AuthService {
             // 신규 가입 로직
             user = userRepository.save(request.toEntity(encodedPassword));
         }
+
+        // 사용자 약관 동의 (필수)
+        LocalDateTime agreedAt = user.getCreatedAt();
+        // TODO : 버전관리
+        UserTermsAgreement temrs = UserTermsAgreement.builder()
+                .user(user)
+                .termsOfServiceAt(agreedAt)
+                .privacyPolicyAt(agreedAt)
+                .build();
+        userTermsAgreementRepository.save(temrs);
 
         return new SignupResponse(user.getId(), user.getEmail(), user.getCreatedAt());
     }
