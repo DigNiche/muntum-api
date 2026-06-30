@@ -12,6 +12,8 @@ public record SignUpRequest(
         @NotBlank @Email String email,
         @NotBlank String password,
         UserRole role
+
+//        @Valid @NotNull TermsAgreementRequest termsAgreement
 ) {
 
     public SignUpRequest {

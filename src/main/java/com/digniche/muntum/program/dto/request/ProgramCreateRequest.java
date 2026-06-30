@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -69,7 +70,11 @@ public record ProgramCreateRequest(
         String operatingHoursMeta,
 
         @Size(max = 255, message = "문의처는 255자를 넘을 수 없습니다.")
-        String inquiryContact
+        String inquiryContact,
+
+        @Size(max = 5, message = "이미지는 최대 5개까지 등록할 수 있습니다.")
+        List<@NotBlank(message = "이미지 URL은 비어 있을 수 없습니다.")
+                @Size(max = 500, message = "이미지 URL은 500자를 넘을 수 없습니다.") String> imageUrls
 
 ) {
     /**

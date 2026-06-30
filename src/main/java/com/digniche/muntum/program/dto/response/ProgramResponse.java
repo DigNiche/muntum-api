@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * 프로그램 단건 조회 응답 DTO (상세)
@@ -36,12 +37,13 @@ public record ProgramResponse(
         int viewCount,
         ProgramStatus status,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        List<String> imageUrls
 ) {
     /**
      * 엔티티 -> 응답 DTO 변환
      */
-    public static ProgramResponse from(Program program) {
+    public static ProgramResponse from(Program program, List<String> imageUrls) {
         return new ProgramResponse(
                 program.getId(),
                 program.getTitle(),
@@ -66,7 +68,8 @@ public record ProgramResponse(
                 program.getViewCount(),
                 program.getStatus(),
                 program.getCreatedAt(),
-                program.getUpdatedAt()
+                program.getUpdatedAt(),
+                imageUrls
         );
     }
 }
