@@ -54,4 +54,9 @@ public class ProgramImage extends BaseEntity {
         this.imageUrl = imageUrl;
         this.displayOrder = displayOrder;
     }
+
+
+    public void updateDisplayOrder(int displayOrder) {
+        this.displayOrder = displayOrder;
+    }
 }

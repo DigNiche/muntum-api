@@ -1,10 +1,13 @@
 package com.digniche.muntum.program.service;
 
+import com.digniche.muntum.global.exception.BusinessException;
+import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.global.storage.ImageStorageService;
 import com.digniche.muntum.program.dto.response.ProgramImageResponse;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramImage;
 import com.digniche.muntum.program.repository.ProgramImageRepository;
+import com.digniche.muntum.program.repository.ProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,7 @@ import java.util.UUID;
 public class ProgramImageService {
 
     private final ProgramImageRepository programImageRepository;
+    private final ProgramRepository programRepository;
     private final ImageStorageService imageStorageService;
 
     private static final String DIRECTORY = "program";
@@ -60,5 +64,19 @@ public class ProgramImageService {
                 .stream()
                 .map(ProgramImageResponse::from)
                 .toList();
+    }
+
+    private void validateImageFile(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE);
+        }
+        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE);
+        }
+    }
+
+    private Program getProgram(UUID programId) {
+        return programRepository.findByIdAndDeletedAtIsNull(programId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 }
