@@ -209,6 +209,7 @@ public class Program extends BaseEntity {
     public void updateStatus(ProgramStatus status) {
         this.status = status;
     }
+
     public void updateOperatingPeriod(List<LocalDate> dateList) {
         this.startDate = dateList.get(0);
         this.endDate = dateList.get(1);

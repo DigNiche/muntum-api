@@ -91,8 +91,6 @@ public class ProgramService {
                 request.venueName(),
                 request.venueMeta(),
                 request.address(),
-                request.latitude(),
-                request.longitude(),
                 request.officialUrl(),
                 request.startDate(),
                 request.endDate(),
