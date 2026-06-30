@@ -53,4 +53,12 @@ public class ProgramImageService {
                 .map(ProgramImageResponse::from)
                 .toList();
     }
+
+    // 프로그램 별 이미지 목록 조회
+    public List<ProgramImageResponse> getOrderedImages(UUID programId) {
+        return programImageRepository.findByProgramIdOrderByDisplayOrderAsc(programId)
+                .stream()
+                .map(ProgramImageResponse::from)
+                .toList();
+    }
 }
