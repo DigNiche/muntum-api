@@ -50,6 +50,10 @@ dependencies {
 //    testCompileOnly 'org.projectlombok:lombok'
 //    testAnnotationProcessor 'org.projectlombok:lombok'
 
+    // AWS S3
+    implementation platform('software.amazon.awssdk:bom:2.41.1')
+    implementation 'software.amazon.awssdk:s3'
+
     // Actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 //    testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
