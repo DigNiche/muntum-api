@@ -44,7 +44,7 @@ public enum ErrorCode {
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
 
     // 500~
-    SERVER_ERROR("5001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
+    SERVER_ERROR("G001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
 
 
     private final String code;

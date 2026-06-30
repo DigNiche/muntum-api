@@ -59,7 +59,13 @@ public class Scrap extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;
     }
-
+    /**
+     * 관심 등록 복구
+     */
+    public void restore() {
+        this.deletedAt = null;
+        this.deletedBy = null;
+    }
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

@@ -9,9 +9,9 @@ import com.digniche.muntum.program.dto.response.ProgramResponse;
 import com.digniche.muntum.program.service.ProgramService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.program.dto.request.ProgramSortType;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -44,10 +44,15 @@ public class ProgramController {
      * 프로그램 목록 조회 (누구나)
      */
     @GetMapping("/programs")
-    public ApiResponse<Page<ProgramListResponse>> getPrograms(
-            @PageableDefault(size = 20) Pageable pageable
+    public ApiResponse<PageResponse<ProgramListResponse>> getPrograms(
+            @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
+            @RequestParam(defaultValue = "DESC") Sort.Direction order,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        Page<ProgramListResponse> response = programService.getPrograms(pageable);
+        PageResponse<ProgramListResponse> response =
+                programService.getPrograms(sort, order, page, size);
+
         return ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response);
     }
 
