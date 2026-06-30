@@ -23,7 +23,7 @@ public enum KeywordCategory {
 
     // 키워드 등록 시, Literal 카테고리를 DISPLAY_CHAR 등을 이용하여 DB에 삽입 및 Display
     public static String validateCategories(String rawCategories) {
-        String splitChar = ", ";
+        String splitChar = ",";
         String concationChar = ", ";
 
         if (rawCategories == null || rawCategories.isBlank()) return "";
