@@ -68,7 +68,7 @@ public class ProgramImageService {
 
     // 썸네일(display order = 1) 이미지 목록 조회
     public List<ProgramImageResponse> getThumbnails() {
-        return programImageRepository.findByDisplayOrder(1)
+        return programImageRepository.findThumbnailsOfActivePrograms()
                 .stream().map(ProgramImageResponse::from).toList();
     }
 

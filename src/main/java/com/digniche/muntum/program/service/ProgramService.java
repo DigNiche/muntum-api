@@ -125,7 +125,7 @@ public class ProgramService {
     @Transactional
     public void deleteProgram(UUID programId, UUID deletedBy) {
         Program program = getActiveProgram(programId);
-
+        // TODO: 연관 삭제 (이미지, 키워드)
         program.softDelete(deletedBy);
     }
 
