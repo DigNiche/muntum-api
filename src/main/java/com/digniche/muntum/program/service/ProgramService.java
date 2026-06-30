@@ -8,6 +8,8 @@ import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
 import com.digniche.muntum.program.entity.Program;
+import com.digniche.muntum.program.entity.ProgramImage;
+import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,6 +33,7 @@ import java.util.UUID;
 public class ProgramService {
 
     private final ProgramRepository programRepository;
+    private final ProgramImageRepository programImageRepository;
     private final GeocodingService geocodingService;
 
     /**
@@ -125,7 +128,10 @@ public class ProgramService {
     @Transactional
     public void deleteProgram(UUID programId, UUID deletedBy) {
         Program program = getActiveProgram(programId);
-        // TODO: 연관 삭제 (이미지, 키워드)
+        programImageRepository.findByProgramIdOrderByDisplayOrderAsc(programId)
+                .forEach(image -> image.softDelete(deletedBy));
+        // TODO: 연관 삭제 (키워드)
+
         program.softDelete(deletedBy);
     }
 
