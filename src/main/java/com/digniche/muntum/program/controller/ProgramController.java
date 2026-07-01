@@ -4,8 +4,10 @@ import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
+import com.digniche.muntum.program.dto.response.ProgramImageResponse;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
+import com.digniche.muntum.program.service.ProgramImageService;
 import com.digniche.muntum.program.service.ProgramService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ import java.util.UUID;
 public class ProgramController {
 
     private final ProgramService programService;
+    private final ProgramImageService programImageService;
 
     /**
      * 프로그램 등록 (관리자)
@@ -109,4 +112,13 @@ public class ProgramController {
         programService.deleteProgram(programId, userPrincipal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("프로그램이 삭제되었습니다.", null));
     }
+
+    /**
+     * 프로그램 썸네일 이미지 목록 조회
+     */
+    @GetMapping("/programs/thumbnails")
+    public ResponseEntity<ApiResponse<List<ProgramImageResponse>>> getThumbnails() {
+        return ResponseEntity.ok(ApiResponse.success("썸네일 목록 조회에 성공했습니다.", programImageService.getThumbnails()));
+    }
+
 }

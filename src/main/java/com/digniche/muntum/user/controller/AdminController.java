@@ -73,6 +73,7 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("키워드가 삭제되었습니다.", null));
     }
 
+/*
     // 키워드 목록 조회
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
     @GetMapping("/taste/keywords")
@@ -89,6 +90,7 @@ public class AdminController {
         KeywordResponse response = keywordService.retrieveKeyword(keywordId);
         return ResponseEntity.ok(ApiResponse.success("키워드 조회에 성공했습니다.", response));
     }
+*/
 
 
 
