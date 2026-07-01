@@ -7,7 +7,7 @@ import com.digniche.muntum.global.redis.RefreshTokenService;
 import com.digniche.muntum.user.dto.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.TermsConsentListRequest;
 import com.digniche.muntum.user.dto.TermsConsentRequest;
-import com.digniche.muntum.user.dto.UpdateNicknameRequest;
+import com.digniche.muntum.user.dto.NicknameUpdateRequest;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.entity.UserTermsAgreement;

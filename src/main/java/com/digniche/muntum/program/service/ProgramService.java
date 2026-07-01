@@ -20,6 +20,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.digniche.muntum.program.dto.response.ProgramKeywordResponse;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,7 +42,7 @@ public class ProgramService {
     private final ProgramImageRepository programImageRepository;
     private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
-
+    private final ProgramKeywordService programKeywordService;   // 추가
     /**
      * 프로그램 등록
      */
@@ -69,8 +71,12 @@ public class ProgramService {
         List<ProgramImageResponse> images = programImageService.getOrderedImages(program.getId());
 
         // TODO: 키워드 설정
+        programKeywordService.saveKeywords(savedProgram, request.keywordIds());
 
-        return ProgramResponse.from(savedProgram, images);
+        List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(savedProgram.getId()).stream()
+                .map(ProgramKeywordResponse::from)
+                .toList();
+        return ProgramResponse.from(savedProgram, images, keywords);
     }
 
     /**
@@ -132,9 +138,10 @@ public class ProgramService {
         program.increaseViewCount();
         List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
 
-        // TODO: 키워드
-
-        return ProgramResponse.from(program, images);
+        List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(programId).stream()
+                .map(ProgramKeywordResponse::from)
+                .toList();
+        return ProgramResponse.from(program, images, keywords);
     }
 
     /**
@@ -173,7 +180,14 @@ public class ProgramService {
         );
 
         List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
-        return ProgramResponse.from(program, images);
+
+        if (request.keywordIds() != null) {
+            programKeywordService.replaceKeywords(program, request.keywordIds());
+        }
+        List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(programId).stream()
+                .map(ProgramKeywordResponse::from)
+                .toList();
+        return ProgramResponse.from(program, images, keywords);
     }
 
     /**
@@ -193,7 +207,8 @@ public class ProgramService {
      * 삭제되지 않은 프로그램 조회
      */
     private Program getActiveProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNullAndStatus(programId, ProgramStatus.ACTIVE)
+        return programRepository.findByIdAndDeletedAtIsNullAndStatusIn(
+                        programId, List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED))
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 
