@@ -7,8 +7,8 @@ import com.digniche.muntum.program.entity.ProgramType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 프로그램 단건 조회 응답 DTO (상세)
@@ -36,14 +36,14 @@ public record ProgramResponse(
         String inquiryContact,
         int viewCount,
         ProgramStatus status,
+        List<ProgramImageResponse> images,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        List<String> imageUrls
+        LocalDateTime updatedAt
 ) {
     /**
      * 엔티티 -> 응답 DTO 변환
      */
-    public static ProgramResponse from(Program program, List<String> imageUrls) {
+    public static ProgramResponse from(Program program, List<ProgramImageResponse> images) {
         return new ProgramResponse(
                 program.getId(),
                 program.getTitle(),
@@ -67,9 +67,9 @@ public record ProgramResponse(
                 program.getInquiryContact(),
                 program.getViewCount(),
                 program.getStatus(),
+                images,
                 program.getCreatedAt(),
-                program.getUpdatedAt(),
-                imageUrls
+                program.getUpdatedAt()
         );
     }
 }

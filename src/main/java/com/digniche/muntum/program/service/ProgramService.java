@@ -4,26 +4,24 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.program.dto.request.GeoCoordinate;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
+import com.digniche.muntum.program.dto.request.ProgramSortType;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
+import com.digniche.muntum.program.dto.response.ProgramImageResponse;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
+import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import com.digniche.muntum.global.PageResponse;
-import com.digniche.muntum.program.dto.request.ProgramSortType;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import java.util.List;
-import java.util.Map;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -39,6 +37,7 @@ import java.util.UUID;
 public class ProgramService {
 
     private final ProgramRepository programRepository;
+    private final ProgramImageRepository programImageRepository;
     private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
 
@@ -46,7 +45,7 @@ public class ProgramService {
      * 프로그램 등록
      */
     @Transactional
-    public ProgramResponse createProgram(ProgramCreateRequest request) {
+    public ProgramResponse createProgram(ProgramCreateRequest request, List<MultipartFile> files) {
         Program program = request.toEntity();
 
         if (request.operatingPeriod() != null) {
@@ -61,50 +60,55 @@ public class ProgramService {
         program.setLatitude(BigDecimal.valueOf(coord.latitude()));
         program.setLongitude(BigDecimal.valueOf(coord.longitude()));
 
-        // TODO: 키워드 설정
-        // TODO: 프로그램 이미지 저장
-
         Program savedProgram = programRepository.save(program);
 
-        programImageService.saveImages(savedProgram, request.imageUrls());
+        // 이미지 저장
+        if (files != null && !files.isEmpty()) {
+            programImageService.uploadImages(savedProgram, files);
+        }
+        List<ProgramImageResponse> images = programImageService.getOrderedImages(program.getId());
 
-        List<String> imageUrls = request.imageUrls() != null ? request.imageUrls() : List.of();
-        return ProgramResponse.from(savedProgram, imageUrls);
+        // TODO: 키워드 설정
+
+        return ProgramResponse.from(savedProgram, images);
     }
 
     /**
      * 프로그램 목록 조회
      */
-    public PageResponse<ProgramListResponse> getPrograms(
-            ProgramSortType sort,
-            Sort.Direction order,
-            int page,
-            int size
-    ) {
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                createSort(sort, order)
-        );
-        // ① 엔티티 페이지 (변환 전) - 이름: programPage, 타입: Page<Program>
-        // 1. 프로그램 목록 조회 (쿼리 1번)
-        Page<Program> programPage = programRepository.findProgramsEndedLast(
-                List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED),
-                LocalDate.now(),
-                pageable
-        );
-
-        // 2. 이 페이지 프로그램들의 id 모으기
-        List<UUID> programIds = programPage.getContent().stream()
-                .map(Program::getId)
-                .toList();
-
-        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
-
-        Page<ProgramListResponse> responsePage = programPage.map(program ->
-                ProgramListResponse.from(program, thumbnailMap.get(program.getId()))
-        );
-        return PageResponse.from(responsePage);
+    public Page<ProgramListResponse> getPrograms(Pageable pageable) {
+        return programRepository.findByStatusAndDeletedAtIsNull(ProgramStatus.ACTIVE, pageable)
+                .map(ProgramListResponse::from);
+//    public PageResponse<ProgramListResponse> getPrograms(
+//            ProgramSortType sort,
+//            Sort.Direction order,
+//            int page,
+//            int size
+//    ) {
+//        Pageable pageable = PageRequest.of(
+//                page,
+//                size,
+//                createSort(sort, order)
+//        );
+//        // ① 엔티티 페이지 (변환 전) - 이름: programPage, 타입: Page<Program>
+//        // 1. 프로그램 목록 조회 (쿼리 1번)
+//        Page<Program> programPage = programRepository.findProgramsEndedLast(
+//                List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED),
+//                LocalDate.now(),
+//                pageable
+//        );
+//
+//        // 2. 이 페이지 프로그램들의 id 모으기
+//        List<UUID> programIds = programPage.getContent().stream()
+//                .map(Program::getId)
+//                .toList();
+//
+//        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
+//
+//        Page<ProgramListResponse> responsePage = programPage.map(program ->
+//                ProgramListResponse.from(program, thumbnailMap.get(program.getId()))
+//        );
+//        return PageResponse.from(responsePage);
     }
 
     private Sort createSort(ProgramSortType sort, Sort.Direction order) {
@@ -125,10 +129,12 @@ public class ProgramService {
     @Transactional
     public ProgramResponse getProgram(UUID programId) {
         Program program = getActiveProgram(programId);
-
         program.increaseViewCount();
-        List<String> imageUrls = programImageService.getImageUrls(programId);
-        return ProgramResponse.from(program, imageUrls);
+        List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
+
+        // TODO: 키워드
+
+        return ProgramResponse.from(program, images);
     }
 
     /**
@@ -161,17 +167,13 @@ public class ProgramService {
                 request.price(), request.venueName(), request.venueMeta(),
                 request.address(),
                 request.officialUrl(),
-                request.operatingPeriodMeta(), request.operatingHours(),
-                request.operatingHoursMeta(), request.inquiryContact()
+                request.operatingPeriodMeta(),
+                request.operatingHours(), //request.operatingHoursMeta(),
+                request.inquiryContact()
         );
 
-        );
-        // imageUrls가 null이면 이미지 미변경, null이 아니면(빈 배열 포함) 교체
-        if (request.imageUrls() != null) {
-            programImageService.replaceImages(program, request.imageUrls());
-        }
-        List<String> imageUrls = programImageService.getImageUrls(programId);
-        return ProgramResponse.from(program, imageUrls);
+        List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
+        return ProgramResponse.from(program, images);
     }
 
     /**
@@ -180,6 +182,9 @@ public class ProgramService {
     @Transactional
     public void deleteProgram(UUID programId, UUID deletedBy) {
         Program program = getActiveProgram(programId);
+        programImageRepository.findByProgramIdOrderByDisplayOrderAsc(programId)
+                .forEach(image -> image.softDelete(deletedBy));
+        // TODO: 연관 삭제 (키워드)
 
         program.softDelete(deletedBy);
     }
@@ -188,8 +193,7 @@ public class ProgramService {
      * 삭제되지 않은 프로그램 조회
      */
     private Program getActiveProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNullAndStatusIn(
-                        programId, List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED))
+        return programRepository.findByIdAndDeletedAtIsNullAndStatus(programId, ProgramStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 

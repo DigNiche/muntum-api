@@ -66,8 +66,8 @@ public record ProgramCreateRequest(
         @Size(max = 500, message = "운영 시간은 500자를 넘을 수 없습니다.")
         String operatingHours,
 
-        @Size(max = 255, message = "운영 시간 부가 설명은 255자를 넘을 수 없습니다.")
-        String operatingHoursMeta,
+//        @Size(max = 255, message = "운영 시간 부가 설명은 255자를 넘을 수 없습니다.")
+//        String operatingHoursMeta,
 
         @Size(max = 255, message = "문의처는 255자를 넘을 수 없습니다.")
         String inquiryContact,
@@ -95,7 +95,7 @@ public record ProgramCreateRequest(
                 .officialUrl(officialUrl)
                 .operatingPeriodMeta(operatingPeriodMeta)
                 .operatingHours(operatingHours)
-                .operatingHoursMeta(operatingHoursMeta)
+//                .operatingHoursMeta(operatingHoursMeta)
                 .inquiryContact(inquiryContact)
                 .build();
     }

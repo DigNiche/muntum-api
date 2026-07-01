@@ -175,7 +175,7 @@ public class Program extends BaseEntity {
             String officialUrl,
             String operatingPeriodMeta,
             String operatingHours,
-            String operatingHoursMeta,
+//            String operatingHoursMeta,
             String inquiryContact
     ) {
         if (title != null) this.title = title;
@@ -191,7 +191,7 @@ public class Program extends BaseEntity {
         if (officialUrl != null) this.officialUrl = officialUrl;
         if (operatingPeriodMeta != null) this.operatingPeriodMeta = operatingPeriodMeta;
         if (operatingHours != null) this.operatingHours = operatingHours;
-        if (operatingHoursMeta != null) this.operatingHoursMeta = operatingHoursMeta;
+//        if (operatingHoursMeta != null) this.operatingHoursMeta = operatingHoursMeta;
         if (inquiryContact != null) this.inquiryContact = inquiryContact;
     }
 

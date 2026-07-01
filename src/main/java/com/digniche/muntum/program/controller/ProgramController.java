@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.program.dto.request.ProgramSortType;
@@ -21,7 +22,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -38,11 +41,12 @@ public class ProgramController {
      * 프로그램 등록 (관리자)
      */
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @PostMapping("/admin/program")
+    @PostMapping(value = "/admin/programs", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProgramResponse>> createProgram(
-            @Valid @RequestBody ProgramCreateRequest request
-    ) {
-        ProgramResponse response = programService.createProgram(request);
+//            @Valid @RequestBody ProgramCreateRequest request
+            @RequestPart("program") @Valid ProgramCreateRequest request,
+            @RequestPart(value="images", required=false) List<MultipartFile> files) {
+        ProgramResponse response = programService.createProgram(request, files);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("프로그램이 등록되었습니다.", response));
     }
@@ -51,29 +55,28 @@ public class ProgramController {
      * 프로그램 목록 조회 (누구나)
      */
     @GetMapping("/programs")
+     public ResponseEntity<ApiResponse<Page<ProgramListResponse>>> getPrograms(
+             @PageableDefault(size = 20) Pageable pageable
+     ) {
+         Page<ProgramListResponse> response = programService.getPrograms(pageable);
+         return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
 
-//     public ResponseEntity<ApiResponse<Page<ProgramListResponse>>> getPrograms(
-//             @PageableDefault(size = 20) Pageable pageable
-//     ) {
-//         Page<ProgramListResponse> response = programService.getPrograms(pageable);
-//         return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
-
-    public ApiResponse<PageResponse<ProgramListResponse>> getPrograms(
-            @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
-            @RequestParam(defaultValue = "DESC") Sort.Direction order,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        PageResponse<ProgramListResponse> response =
-                programService.getPrograms(sort, order, page, size);
-
-        return ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response);
+//    public ApiResponse<PageResponse<ProgramListResponse>> getPrograms(
+//            @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
+//            @RequestParam(defaultValue = "DESC") Sort.Direction order,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "20") int size
+//    ) {
+//        PageResponse<ProgramListResponse> response =
+//                programService.getPrograms(sort, order, page, size);
+//
+//        return ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response);
     }
 
     /**
      * 프로그램 단건 조회 (누구나)
      */
-    @GetMapping("/program/{program_id}")
+    @GetMapping("/programs/{program_id}")
     public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(
             @PathVariable("program_id") UUID programId
     ) {
@@ -85,7 +88,7 @@ public class ProgramController {
      * 프로그램 수정 (관리자)
      */
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @PutMapping("/program/{program_id}")
+    @PutMapping("/programs/{program_id}")
     public ResponseEntity<ApiResponse<ProgramResponse>> updateProgram(
             @PathVariable("program_id") UUID programId,
             @Valid @RequestBody ProgramUpdateRequest request
@@ -98,7 +101,7 @@ public class ProgramController {
      * 프로그램 삭제 (관리자, Soft Delete)
      */
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @DeleteMapping("/program/{program_id}")
+    @DeleteMapping("/programs/{program_id}")
     public ResponseEntity<ApiResponse<Void>> deleteProgram(
             @PathVariable("program_id") UUID programId,
             @AuthenticationPrincipal UserPrincipal userPrincipal

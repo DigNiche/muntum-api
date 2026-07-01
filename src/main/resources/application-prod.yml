@@ -26,13 +26,25 @@ spring:
 
 # JWT
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
+  secret-key: ${jwt.secret-key}
 
 # Kakao Geocoding API
 kakao:
   api:
-    key: ${KAKAO_APP_REST_API_KEY}
+    key: ${kakao.api.rest.api.key}
     geocoding-url: https://dapi.kakao.com/v2/local/search/address.json
+
+
+# AWS S3
+aws:
+  s3:
+    access-key: ${aws.s3.access-key}
+    secret-key: ${aws.s3.secret-key}
+    region: ${aws.s3.region}
+    bucket: ${aws.s3.bucket}
+  cloudfront:
+    domain: ${aws.cloudfront.domain}
+
 
 
 # Observability

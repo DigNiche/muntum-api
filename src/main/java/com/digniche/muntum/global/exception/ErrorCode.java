@@ -35,6 +35,11 @@ public enum ErrorCode {
     PROGRAM_NOT_FOUND("P001", "존재하지 않는 프로그램입니다", HttpStatus.NOT_FOUND),
     INVALID_PROGRAM_PERIOD("P002", "프로그램 종료일은 시작일보다 빠를 수 없습니다.", HttpStatus.BAD_REQUEST),
 
+    // 프로그램 이미지
+    PROGRAM_IMAGE_NOT_FOUND("I001", "존재하지 않는 이미지입니다", HttpStatus.NOT_FOUND),
+    IMAGE_UPLOAD_FAILED("I002", "이미지 업로드에 실패했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_IMAGE_FILE("I003", "유효하지 않은 이미지 파일입니다", HttpStatus.BAD_REQUEST),
+
     // 카카오 GeoCoordinate
     ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 
