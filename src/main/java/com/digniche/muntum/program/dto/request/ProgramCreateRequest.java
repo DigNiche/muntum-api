@@ -7,10 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 /**
  * 프로그램 등록 요청 DTO
@@ -74,8 +71,11 @@ public record ProgramCreateRequest(
 
         @Size(max = 5, message = "이미지는 최대 5개까지 등록할 수 있습니다.")
         List<@NotBlank(message = "이미지 URL은 비어 있을 수 없습니다.")
-                @Size(max = 500, message = "이미지 URL은 500자를 넘을 수 없습니다.") String> imageUrls
+                @Size(max = 500, message = "이미지 URL은 500자를 넘을 수 없습니다.")
+                String> imageUrls,
 
+        @Size(max = 3, message = "키워드는 최대 3개까지 선택할 수 있습니다.")
+                List<@NotNull(message = "키워드 ID는 비어 있을 수 없습니다.") UUID> keywordIds
 ) {
     /**
      * DTO -> 엔티티 변환

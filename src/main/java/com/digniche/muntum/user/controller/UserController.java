@@ -6,7 +6,6 @@ import com.digniche.muntum.global.security.UserPrincipal;
 
 import com.digniche.muntum.user.dto.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.TermsConsentListRequest;
-import com.digniche.muntum.user.dto.UpdateNicknameRequest;
 import com.digniche.muntum.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

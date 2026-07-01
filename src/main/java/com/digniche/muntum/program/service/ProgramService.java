@@ -15,6 +15,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.digniche.muntum.program.dto.response.ProgramKeywordResponse;
+import com.digniche.muntum.program.entity.ProgramKeyword;
 
 
 import java.math.BigDecimal;
@@ -27,7 +29,6 @@ import java.util.Map;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -41,7 +42,7 @@ public class ProgramService {
     private final ProgramRepository programRepository;
     private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
-
+    private final ProgramKeywordService programKeywordService;   // 추가
     /**
      * 프로그램 등록
      */
@@ -55,21 +56,23 @@ public class ProgramService {
         }
 
         // 프로그램 등록 시 주소 → 좌표 변환
-        GeoCoordinate coord = geocodingService.getCoordinate(request.address())
-                .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
+         GeoCoordinate coord = geocodingService.getCoordinate(request.address())
+                 .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
 
-        program.setLatitude(BigDecimal.valueOf(coord.latitude()));
-        program.setLongitude(BigDecimal.valueOf(coord.longitude()));
+         program.setLatitude(BigDecimal.valueOf(coord.latitude()));
+         program.setLongitude(BigDecimal.valueOf(coord.longitude()));
 
-        // TODO: 키워드 설정
-        // TODO: 프로그램 이미지 저장
 
         Program savedProgram = programRepository.save(program);
 
         programImageService.saveImages(savedProgram, request.imageUrls());
+        programKeywordService.saveKeywords(savedProgram, request.keywordIds());
 
         List<String> imageUrls = request.imageUrls() != null ? request.imageUrls() : List.of();
-        return ProgramResponse.from(savedProgram, imageUrls);
+        List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(savedProgram.getId()).stream()
+                .map(ProgramKeywordResponse::from)
+                .toList();
+        return ProgramResponse.from(savedProgram, imageUrls, keywords);
     }
 
     /**
@@ -128,7 +131,10 @@ public class ProgramService {
 
         program.increaseViewCount();
         List<String> imageUrls = programImageService.getImageUrls(programId);
-        return ProgramResponse.from(program, imageUrls);
+        List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(programId).stream()
+                .map(ProgramKeywordResponse::from)
+                .toList();
+        return ProgramResponse.from(program, imageUrls, keywords);
     }
 
     /**
@@ -143,17 +149,11 @@ public class ProgramService {
             program.updateOperatingPeriod(operatingPeriod);
         }
 
-        // 프로그램 등록 시 주소 → 좌표 변환
-        if (request.address() != null) {
-            GeoCoordinate coord = geocodingService.getCoordinate(request.address())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
+        GeoCoordinate coord = geocodingService.getCoordinate(request.address())
+                 .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
 
-            program.setLatitude(BigDecimal.valueOf(coord.latitude()));
-            program.setLongitude(BigDecimal.valueOf(coord.longitude()));
-        }
-
-        // TODO: 키워드 수정
-        // TODO: 프로그램 이미지 수정
+        program.setLatitude(BigDecimal.valueOf(coord.latitude()));
+        program.setLongitude(BigDecimal.valueOf(coord.longitude()));
 
         program.update(
                 request.title(), request.programType(), request.tagline(),
@@ -164,14 +164,18 @@ public class ProgramService {
                 request.operatingPeriodMeta(), request.operatingHours(),
                 request.operatingHoursMeta(), request.inquiryContact()
         );
-
-        );
         // imageUrls가 null이면 이미지 미변경, null이 아니면(빈 배열 포함) 교체
         if (request.imageUrls() != null) {
             programImageService.replaceImages(program, request.imageUrls());
         }
+        if (request.keywordIds() != null) {
+            programKeywordService.replaceKeywords(program, request.keywordIds());
+        }
         List<String> imageUrls = programImageService.getImageUrls(programId);
-        return ProgramResponse.from(program, imageUrls);
+        List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(programId).stream()
+                .map(ProgramKeywordResponse::from)
+                .toList();
+        return ProgramResponse.from(program, imageUrls, keywords);
     }
 
     /**

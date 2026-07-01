@@ -38,12 +38,13 @@ public record ProgramResponse(
         ProgramStatus status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        List<String> imageUrls
+        List<String> imageUrls,
+        List<ProgramKeywordResponse> keywords
 ) {
     /**
      * 엔티티 -> 응답 DTO 변환
      */
-    public static ProgramResponse from(Program program, List<String> imageUrls) {
+    public static ProgramResponse from(Program program, List<String> imageUrls, List<ProgramKeywordResponse> keywords) {
         return new ProgramResponse(
                 program.getId(),
                 program.getTitle(),
@@ -69,7 +70,8 @@ public record ProgramResponse(
                 program.getStatus(),
                 program.getCreatedAt(),
                 program.getUpdatedAt(),
-                imageUrls
+                imageUrls,
+                keywords
         );
     }
 }
