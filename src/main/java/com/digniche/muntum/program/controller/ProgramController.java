@@ -55,23 +55,22 @@ public class ProgramController {
      * 프로그램 목록 조회 (누구나)
      */
     @GetMapping("/programs")
+     public ResponseEntity<ApiResponse<Page<ProgramListResponse>>> getPrograms(
+             @PageableDefault(size = 20) Pageable pageable
+     ) {
+         Page<ProgramListResponse> response = programService.getPrograms(pageable);
+         return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
 
-//     public ResponseEntity<ApiResponse<Page<ProgramListResponse>>> getPrograms(
-//             @PageableDefault(size = 20) Pageable pageable
-//     ) {
-//         Page<ProgramListResponse> response = programService.getPrograms(pageable);
-//         return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
-
-    public ApiResponse<PageResponse<ProgramListResponse>> getPrograms(
-            @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
-            @RequestParam(defaultValue = "DESC") Sort.Direction order,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        PageResponse<ProgramListResponse> response =
-                programService.getPrograms(sort, order, page, size);
-
-        return ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response);
+//    public ApiResponse<PageResponse<ProgramListResponse>> getPrograms(
+//            @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
+//            @RequestParam(defaultValue = "DESC") Sort.Direction order,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "20") int size
+//    ) {
+//        PageResponse<ProgramListResponse> response =
+//                programService.getPrograms(sort, order, page, size);
+//
+//        return ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response);
     }
 
     /**

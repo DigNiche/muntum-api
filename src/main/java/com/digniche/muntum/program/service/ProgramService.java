@@ -4,16 +4,22 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.program.dto.request.GeoCoordinate;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
+import com.digniche.muntum.program.dto.request.ProgramSortType;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
+import com.digniche.muntum.program.dto.response.ProgramImageResponse;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
 import com.digniche.muntum.program.entity.Program;
+import com.digniche.muntum.program.entity.ProgramStatus;
+import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,13 +37,15 @@ import java.util.UUID;
 public class ProgramService {
 
     private final ProgramRepository programRepository;
+    private final ProgramImageRepository programImageRepository;
     private final GeocodingService geocodingService;
+    private final ProgramImageService programImageService;
 
     /**
      * 프로그램 등록
      */
     @Transactional
-    public ProgramResponse createProgram(ProgramCreateRequest request) {
+    public ProgramResponse createProgram(ProgramCreateRequest request, List<MultipartFile> files) {
         Program program = request.toEntity();
 
         if (request.operatingPeriod() != null) {
@@ -185,7 +193,7 @@ public class ProgramService {
      * 삭제되지 않은 프로그램 조회
      */
     private Program getActiveProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNull(programId)
+        return programRepository.findByIdAndDeletedAtIsNullAndStatus(programId, ProgramStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 
