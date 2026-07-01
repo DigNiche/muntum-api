@@ -153,11 +153,11 @@ public class Program extends BaseEntity {
     /**
      * 논리 삭제 처리
      */
-    public void softDelete(UUID deletedBy) {
-        this.status = ProgramStatus.DELETED;
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
-    }
+//    public void softDelete(UUID deletedBy) {
+//        this.status = ProgramStatus.DELETED;
+//        this.deletedAt = LocalDateTime.now();
+//        this.deletedBy = deletedBy;
+//    }
     /**
      * 프로그램 정보 수정 (PUT - 전체 교체)
      */

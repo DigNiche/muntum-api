@@ -2,7 +2,9 @@ package com.digniche.muntum.program.repository;
 
 import com.digniche.muntum.program.entity.ProgramImage;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,6 +18,10 @@ public interface ProgramImageRepository extends JpaRepository<ProgramImage, UUID
 
     @Query("SELECT pi FROM ProgramImage pi JOIN pi.program p WHERE pi.displayOrder = 1 AND p.status = 'ACTIVE' AND p.deletedAt IS NULL")
     List<ProgramImage> findThumbnailsOfActivePrograms();
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ProgramImage pi WHERE pi.program.id = :programId")
+    void deleteAllByProgramId(@Param("programId") UUID programId);
 
     void deleteByProgramId(UUID programId);
 }

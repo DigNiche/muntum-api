@@ -39,4 +39,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     Page<Program> findByDeletedAtIsNull(Pageable pageable);
     Page<Program> findByStatusAndDeletedAtIsNull(ProgramStatus status, Pageable pageable);
 
+    // 프로그램 삭제
+
+
 }
