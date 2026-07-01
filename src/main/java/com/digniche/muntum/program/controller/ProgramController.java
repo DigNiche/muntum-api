@@ -34,17 +34,17 @@ import java.util.UUID;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/programs")
 public class ProgramController {
 
     private final ProgramService programService;
     private final ProgramImageService programImageService;
 
     /**
-     * 프로그램 등록 (관리자)
+     * 프로그램 등록 (큐레이터, 관리자)
      */
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @PostMapping(value = "/admin/programs", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProgramResponse>> createProgram(
 //            @Valid @RequestBody ProgramCreateRequest request
             @RequestPart("program") @Valid ProgramCreateRequest request,
@@ -55,9 +55,9 @@ public class ProgramController {
     }
 
     /**
-     * 프로그램 목록 조회 (누구나)
+     * 프로그램 목록 조회
      */
-    @GetMapping("/programs")
+    @GetMapping("")
      public ResponseEntity<ApiResponse<Page<ProgramListResponse>>> getPrograms(
              @PageableDefault(size = 20) Pageable pageable
      ) {
@@ -77,9 +77,9 @@ public class ProgramController {
     }
 
     /**
-     * 프로그램 단건 조회 (누구나)
+     * 프로그램 단건 조회
      */
-    @GetMapping("/programs/{program_id}")
+    @GetMapping("/{program_id}")
     public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(
             @PathVariable("program_id") UUID programId
     ) {
@@ -88,10 +88,10 @@ public class ProgramController {
     }
 
     /**
-     * 프로그램 수정 (관리자)
+     * 프로그램 수정 (큐레이터, 관리자)
      */
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @PutMapping("/programs/{program_id}")
+    @PutMapping("/{program_id}")
     public ResponseEntity<ApiResponse<ProgramResponse>> updateProgram(
             @PathVariable("program_id") UUID programId,
             @Valid @RequestBody ProgramUpdateRequest request
@@ -101,10 +101,10 @@ public class ProgramController {
     }
 
     /**
-     * 프로그램 삭제 (관리자, Soft Delete)
+     * 프로그램 삭제 (관리자)
      */
-    @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @DeleteMapping("/programs/{program_id}")
+    @PreAuthorize("hasAnyRole('MANAGER')")
+    @DeleteMapping("/{program_id}")
     public ResponseEntity<ApiResponse<Void>> deleteProgram(
             @PathVariable("program_id") UUID programId,
             @AuthenticationPrincipal UserPrincipal userPrincipal
@@ -116,7 +116,7 @@ public class ProgramController {
     /**
      * 프로그램 썸네일 이미지 목록 조회
      */
-    @GetMapping("/programs/thumbnails")
+    @GetMapping("/thumbnails")
     public ResponseEntity<ApiResponse<List<ProgramImageResponse>>> getThumbnails() {
         return ResponseEntity.ok(ApiResponse.success("썸네일 목록 조회에 성공했습니다.", programImageService.getThumbnails()));
     }
