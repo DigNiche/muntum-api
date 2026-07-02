@@ -45,7 +45,7 @@ public class ProgramKeywordService {
     @Transactional
     public void replaceKeywords(Program program, List<UUID> keywordIds) {
         List<Keyword> keywords = validateAndGetKeywords(keywordIds);   // ← 삭제 전에 검증
-        programKeywordRepository.deleteByProgramId(program.getId());
+        programKeywordRepository.deleteAllByProgramId(program.getId());
         programKeywordRepository.flush();
         saveLinks(program, keywords);
     }

@@ -14,16 +14,17 @@ import java.util.UUID;
  * Progrma - keyword Repository
  */
 public interface ProgramKeywordRepository extends JpaRepository<ProgramKeyword, UUID> {
-    @Modifying
+    // Keyword ID로 모두 삭제
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ProgramKeyword pk WHERE pk.keyword.id = :keywordId")
     void deleteAllByKeywordId(@Param("keywordId") UUID keywordId);
 
-    //이 프로그램의 연결 전부 삭제 (PUT 교체용)
+    // Program ID로 모두 삭제
     @Modifying
     @Query("DELETE FROM ProgramKeyword pk WHERE pk.program.id = :programId")
-    void deleteByProgramId(@Param("programId") UUID programId);
+    void deleteAllByProgramId(@Param("programId") UUID programId);
 
-    //이 프로그램에 붙은 연결 조회 (상세에서 키워드 태그 노출용)
+    // Program ID로 모두 조회 (상세에서 키워드 태그 노출용)
     @Query("""
     SELECT pk
     FROM ProgramKeyword pk

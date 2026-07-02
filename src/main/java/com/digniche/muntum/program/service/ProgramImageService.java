@@ -13,8 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 프로그램 이미지 서비스
@@ -28,6 +31,7 @@ public class ProgramImageService {
     private final ProgramRepository programRepository;
     private final ImageStorageService imageStorageService;
 
+    private static final int THUMBNAIL_ORDER = 1;
     private static final String DIRECTORY = "program";
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
             "image/jpeg", "image/png", "image/webp", "image/gif"
@@ -65,6 +69,31 @@ public class ProgramImageService {
     public List<ProgramImageResponse> getThumbnails() {
         return programImageRepository.findThumbnailsOfActivePrograms()
                 .stream().map(ProgramImageResponse::from).toList();
+    }
+
+    public String getThumbnail(UUID programId) {
+        ProgramImage img = programImageRepository.findByProgramIdAndDisplayOrder(programId, THUMBNAIL_ORDER).orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_IMAGE_NOT_FOUND));
+        return img.getImageUrl();
+    }
+
+
+    /**
+     * 여러 프로그램의 썸네일(displayOrder=1) Map 생성 - N+1 방지용 IN 조회
+     * key = programId, value = 썸네일 URL
+     */
+    public Map<UUID, String> getThumbnailMap(Collection<UUID> programIds) {
+        if (programIds == null || programIds.isEmpty()) {
+            return Map.of();
+        }
+        return programImageRepository
+                .findByProgramIdInAndDisplayOrder(programIds, THUMBNAIL_ORDER)
+                .stream()
+                .collect(Collectors.toMap(
+                        img -> img.getProgram().getId(),
+                        ProgramImage::getImageUrl,
+                        (existing, replacement) -> existing
+                    )
+                );
     }
 
     private void validateImageFile(MultipartFile file) {

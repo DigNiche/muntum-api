@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -64,10 +65,10 @@ public class ProgramImage extends BaseEntity {
     }
 
     // 소프트 삭제
-    public void softDelete(UUID deletedBy) {
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
-    }
+//    public void softDelete(UUID deletedBy) {
+//        this.deletedAt = LocalDateTime.now();
+//        this.deletedBy = deletedBy;
+//    }
 
 
     public void updateDisplayOrder(int displayOrder) {

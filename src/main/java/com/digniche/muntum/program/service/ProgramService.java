@@ -2,6 +2,7 @@ package com.digniche.muntum.program.service;
 
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
+import com.digniche.muntum.keyword.repository.ProgramKeywordRepository;
 import com.digniche.muntum.program.dto.request.GeoCoordinate;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
 import com.digniche.muntum.program.dto.request.ProgramSortType;
@@ -40,6 +41,7 @@ public class ProgramService {
 
     private final ProgramRepository programRepository;
     private final ProgramImageRepository programImageRepository;
+    private final ProgramKeywordRepository programKeywordRepository;
     private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
     private final ProgramKeywordService programKeywordService;   // 추가
@@ -70,7 +72,6 @@ public class ProgramService {
         }
         List<ProgramImageResponse> images = programImageService.getOrderedImages(program.getId());
 
-        // TODO: 키워드 설정
         programKeywordService.saveKeywords(savedProgram, request.keywordIds());
 
         List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(savedProgram.getId()).stream()
@@ -196,11 +197,9 @@ public class ProgramService {
     @Transactional
     public void deleteProgram(UUID programId, UUID deletedBy) {
         Program program = getActiveProgram(programId);
-        programImageRepository.findByProgramIdOrderByDisplayOrderAsc(programId)
-                .forEach(image -> image.softDelete(deletedBy));
-        // TODO: 연관 삭제 (키워드)
-
-        program.softDelete(deletedBy);
+        programImageRepository.deleteAllByProgramId(programId);
+        programKeywordRepository.deleteAllByProgramId(programId);
+        programRepository.delete(program);
     }
 
     /**
