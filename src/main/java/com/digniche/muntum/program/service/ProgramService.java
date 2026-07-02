@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -140,6 +141,42 @@ public class ProgramService {
 //        return PageResponse.from(responsePage);
 //    }
 
+    // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
+    public PageResponse<ProgramCardResponse> getProgramsByClosestEndDate(Pageable pageable) {
+        LocalDate today = LocalDate.now();
+        LocalDate monthEnd = today.with(TemporalAdjusters.lastDayOfMonth());
+
+        Page<Program> programPage = programRepository.findByStatusOrderByClosestEndDate(
+                ProgramStatus.ACTIVE,
+                today,
+                monthEnd,
+                pageable
+        );
+
+        List<UUID> programIds = programPage.getContent().stream()
+                .map(Program::getId)
+                .toList();
+
+        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
+
+        Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
+                .findByProgramIdIn(programIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        pk -> pk.getProgram().getId(),
+                        Collectors.mapping(ProgramKeywordResponse::from, Collectors.toList())
+                ));
+
+        Page<ProgramCardResponse> responsePage = programPage.map(program ->
+                ProgramCardResponse.from(
+                        program,
+                        thumbnailMap.get(program.getId()),
+                        keywordMap.getOrDefault(program.getId(), List.of())
+                )
+        );
+
+        return PageResponse.from(responsePage);
+    }
     private Sort createSort(ProgramSortType sort, Sort.Direction order) {
         Sort primarySort = Sort.by(order, sort.getProperty());
         // 1차 정렬이 createdAt이면 보조 키로 createdAt을 또 넣으면 중복이라, id만 붙인다.

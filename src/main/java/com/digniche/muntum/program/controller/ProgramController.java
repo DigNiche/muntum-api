@@ -74,6 +74,15 @@ public class ProgramController {
 //        return ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response);
     }
 
+    // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
+    @GetMapping("/closing-soon")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getProgramsByClosestEndDate(
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        PageResponse<ProgramCardResponse> response = programService.getProgramsByClosestEndDate(pageable);
+        return ResponseEntity.ok(ApiResponse.success("마감 임박 프로그램 목록 조회에 성공했습니다.", response));
+    }
+
 
 
     /**
