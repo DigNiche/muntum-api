@@ -12,6 +12,7 @@ import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -137,6 +138,15 @@ public class KeywordService {
     public List<KeywordResponse> retrieveSelectedKeywords(UUID userId) {
         return userKeywordRepository.findAllByUserId(userId).stream()
                 .map(uk -> KeywordResponse.from(uk.getKeyword()))
+                .toList();
+    }
+
+    // 인기 키워드 목록 조회
+    @Transactional(readOnly = true)
+    public List<KeywordResponse> getHotKeywords(int topN) {
+        return userKeywordRepository.findTopKeywords(PageRequest.of(0, topN))
+                .stream()
+                .map(KeywordResponse::from)
                 .toList();
     }
 
