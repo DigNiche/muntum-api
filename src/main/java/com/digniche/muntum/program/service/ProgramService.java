@@ -4,6 +4,7 @@ import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.keyword.repository.ProgramKeywordRepository;
+import com.digniche.muntum.keyword.repository.UserKeywordRepository;
 import com.digniche.muntum.program.dto.request.GeoCoordinate;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
 import com.digniche.muntum.program.dto.request.ProgramSortType;
@@ -16,6 +17,7 @@ import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -44,6 +46,7 @@ public class ProgramService {
     private final ProgramRepository programRepository;
     private final ProgramImageRepository programImageRepository;
     private final ProgramKeywordRepository programKeywordRepository;
+    private final UserKeywordRepository userKeywordRepository;
     private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
     private final ProgramKeywordService programKeywordService;
@@ -177,6 +180,43 @@ public class ProgramService {
 
         return PageResponse.from(responsePage);
     }
+
+    // 인기 키워드를 많이 가진 프로그램 순으로 정렬
+    public PageResponse<ProgramCardResponse> getProgramsByPopularKeywords(int rank, Pageable pageable) {
+        List<UUID> topKeywordIds = userKeywordRepository.findTopKeywordIds(PageRequest.of(0, rank));
+
+        if (topKeywordIds.isEmpty()) {
+            return PageResponse.from(Page.empty(pageable));
+        }
+
+        Page<Program> programPage = programRepository.findProgramsByKeywordIds(
+                ProgramStatus.ACTIVE, topKeywordIds, pageable);
+
+        List<UUID> programIds = programPage.getContent().stream()
+                .map(Program::getId)
+                .toList();
+
+        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
+
+        Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
+                .findByProgramIdIn(programIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        pk -> pk.getProgram().getId(),
+                        Collectors.mapping(ProgramKeywordResponse::from, Collectors.toList())
+                ));
+
+        Page<ProgramCardResponse> responsePage = programPage.map(program ->
+                ProgramCardResponse.from(
+                        program,
+                        thumbnailMap.get(program.getId()),
+                        keywordMap.getOrDefault(program.getId(), List.of())
+                )
+        );
+
+        return PageResponse.from(responsePage);
+    }
+
     private Sort createSort(ProgramSortType sort, Sort.Direction order) {
         Sort primarySort = Sort.by(order, sort.getProperty());
         // 1차 정렬이 createdAt이면 보조 키로 createdAt을 또 넣으면 중복이라, id만 붙인다.
