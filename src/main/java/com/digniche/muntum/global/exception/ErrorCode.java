@@ -34,6 +34,7 @@ public enum ErrorCode {
     // 프로그램
     PROGRAM_NOT_FOUND("P001", "존재하지 않는 프로그램입니다", HttpStatus.NOT_FOUND),
     INVALID_PROGRAM_PERIOD("P002", "프로그램 종료일은 시작일보다 빠를 수 없습니다.", HttpStatus.BAD_REQUEST),
+    INVALID_SEARCH_CONDITION("P003", "검색어 검색과 키워드 검색은 동시에 사용할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // 프로그램 이미지
     PROGRAM_IMAGE_NOT_FOUND("I001", "존재하지 않는 이미지입니다", HttpStatus.NOT_FOUND),

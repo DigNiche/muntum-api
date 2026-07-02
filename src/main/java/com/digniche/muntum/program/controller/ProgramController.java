@@ -3,11 +3,13 @@ package com.digniche.muntum.program.controller;
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
+import com.digniche.muntum.program.dto.request.ProgramSortType;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
 import com.digniche.muntum.program.dto.response.ProgramCardResponse;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.dto.response.ProgramImageResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
+import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.program.service.ProgramImageService;
 import com.digniche.muntum.program.service.ProgramService;
 import jakarta.validation.Valid;
@@ -15,6 +17,7 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,13 +59,24 @@ public class ProgramController {
     }
 
     /**
-     * 프로그램 목록 조회
+     * 프로그램 목록 조회 + 검색 (텍스트 / 키워드) 통합 진입점
+     * - search : 텍스트 검색 (프로그램명/한줄소개/큐레이션) — 다음 단계 구현
+     * - keywordIds : 키워드 검색 (칩 복수 선택)
+     * - 둘 다 없으면 일반 목록 (sort/order 적용)
+     * - search와 keywordIds 동시 사용 불가 (서비스에서 가드)
+     * - 주의: keywordIds 검색 시 정렬은 고정이라 sort/order는 무시됨
      */
     @GetMapping("")
      public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getPrograms(
-             @PageableDefault(size = 20) Pageable pageable
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<UUID> keywordIds,
+            @RequestParam(required = false) ProgramType type,
+            @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
+            @RequestParam(defaultValue = "DESC") Sort.Direction order,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
      ) {
-        PageResponse<ProgramCardResponse> response = programService.getPrograms(pageable);
+        PageResponse<ProgramCardResponse> response = programService.getPrograms(search, keywordIds, type, sort, order, page, size);
          return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
 
 //    public ApiResponse<PageResponse<ProgramListResponse>> getPrograms(

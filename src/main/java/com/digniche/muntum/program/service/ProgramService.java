@@ -4,6 +4,7 @@ import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.keyword.entity.Keyword;
+import com.digniche.muntum.keyword.repository.KeywordRepository;
 import com.digniche.muntum.keyword.repository.ProgramKeywordRepository;
 import com.digniche.muntum.keyword.repository.UserKeywordRepository;
 import com.digniche.muntum.program.dto.request.GeoCoordinate;
@@ -14,8 +15,10 @@ import com.digniche.muntum.program.dto.response.*;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramKeyword;
 import com.digniche.muntum.program.entity.ProgramStatus;
+import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
+import com.digniche.muntum.keyword.repository.KeywordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,7 +27,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -51,6 +53,7 @@ public class ProgramService {
     private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
     private final ProgramKeywordService programKeywordService;
+    private final KeywordRepository keywordRepository;
 
     /**
      * 프로그램 등록
@@ -88,28 +91,41 @@ public class ProgramService {
     }
 
     /**
-     * 프로그램 목록 조회
+     * 프로그램 목록 조회 + 검색 통합 진입점 (합의 1: 서비스 최상단 디스패치)
+     * - 텍스트 검색(search)과 키워드 검색(keywordIds)은 동시 사용 불가
+     * - 텍스트 검색은 다음 단계에서 구현 (현재는 일반 목록으로 흐름)
      */
-    public PageResponse<ProgramCardResponse> getPrograms(Pageable pageable) {
-        Page<Program> programPage = programRepository.findByStatusAndDeletedAtIsNull(ProgramStatus.ACTIVE, pageable);
-        List<UUID> programIds = programPage.getContent().stream().map(Program::getId).toList();
-        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
-        Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
-                .findByProgramIdIn(programIds)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        pk -> pk.getProgram().getId(),
-                        Collectors.mapping(ProgramKeywordResponse::from, Collectors.toList())
-                ));
+    public PageResponse<ProgramCardResponse> getPrograms(
+            String search,
+            List<UUID> keywordIds,
+            ProgramType type,
+            ProgramSortType sort,
+            Sort.Direction order,
+            int page,
+            int size
+    ) {
+        boolean hasSearch = search != null && !search.isBlank();
+        boolean hasKeywords = keywordIds != null && !keywordIds.isEmpty();
 
-        Page<ProgramCardResponse> responsePage = programPage.map(program ->
-                ProgramCardResponse.from(
-                        program,
-                        thumbnailMap.get(program.getId()),
-                        keywordMap.getOrDefault(program.getId(), List.of())
-                )
-        );
-        return PageResponse.from(responsePage);
+        // 상호배제 가드: 텍스트 검색과 키워드 검색 동시 사용 불가
+        if (hasSearch && hasKeywords) {
+            throw new BusinessException(ErrorCode.INVALID_SEARCH_CONDITION);
+        }
+
+        // 분기: 키워드 검색
+        if (hasKeywords) {
+            return searchProgramsByKeywords(keywordIds, page, size);
+        }
+
+        // 분기: 텍스트 검색
+        if (hasSearch) {
+            return searchProgramsByText(search, page, size);
+        }
+
+        // 기본: 일반 목록 (위 분기 다 안걸리면 일반 목록. 정렬 파라미터 적용)
+        Pageable pageable = PageRequest.of(page, size, createSort(sort, order));
+        Page<Program> programPage = programRepository.findByStatusAndDeletedAtIsNull(ProgramStatus.ACTIVE, pageable);
+        return PageResponse.from(toCardResponsePage(programPage));
 
     }
 //    public PageResponse<ProgramListResponse> getPrograms(Pageable pageable)
@@ -157,29 +173,7 @@ public class ProgramService {
                 pageable
         );
 
-        List<UUID> programIds = programPage.getContent().stream()
-                .map(Program::getId)
-                .toList();
-
-        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
-
-        Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
-                .findByProgramIdIn(programIds)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        pk -> pk.getProgram().getId(),
-                        Collectors.mapping(ProgramKeywordResponse::from, Collectors.toList())
-                ));
-
-        Page<ProgramCardResponse> responsePage = programPage.map(program ->
-                ProgramCardResponse.from(
-                        program,
-                        thumbnailMap.get(program.getId()),
-                        keywordMap.getOrDefault(program.getId(), List.of())
-                )
-        );
-
-        return PageResponse.from(responsePage);
+        return PageResponse.from(toCardResponsePage(programPage));
     }
 
     // 인기 키워드를 많이 가진 프로그램 순으로 정렬
@@ -194,29 +188,7 @@ public class ProgramService {
         Page<Program> programPage = programRepository.findProgramsByKeywordIds(
                 ProgramStatus.ACTIVE, topKeywordIds, pageable);
 
-        List<UUID> programIds = programPage.getContent().stream()
-                .map(Program::getId)
-                .toList();
-
-        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
-
-        Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
-                .findByProgramIdIn(programIds)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        pk -> pk.getProgram().getId(),
-                        Collectors.mapping(ProgramKeywordResponse::from, Collectors.toList())
-                ));
-
-        Page<ProgramCardResponse> responsePage = programPage.map(program ->
-                ProgramCardResponse.from(
-                        program,
-                        thumbnailMap.get(program.getId()),
-                        keywordMap.getOrDefault(program.getId(), List.of())
-                )
-        );
-
-        return PageResponse.from(responsePage);
+        return PageResponse.from(toCardResponsePage(programPage));
     }
 
     private Sort createSort(ProgramSortType sort, Sort.Direction order) {
@@ -340,5 +312,82 @@ public class ProgramService {
             return validateProgramPeriod(operatingPeriod);
         }
         return null;
+    }
+
+    //헬퍼
+    private Page<ProgramCardResponse> toCardResponsePage(Page<Program> programPage) {
+        List<UUID> programIds = programPage.getContent().stream().map(Program::getId).toList();
+        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
+        Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
+                .findByProgramIdIn(programIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        pk -> pk.getProgram().getId(),
+                        Collectors.mapping(ProgramKeywordResponse::from, Collectors.toList())
+                ));
+
+        return programPage.map(program ->
+                ProgramCardResponse.from(
+                        program,
+                        thumbnailMap.get(program.getId()),
+                        keywordMap.getOrDefault(program.getId(), List.of())
+                        )
+                );
+    }
+
+    //키워드 검색(사용자가 칩으로 직접 선택한 keywordIds 기반)
+    public PageResponse<ProgramCardResponse> searchProgramsByKeywords(
+            List<UUID> keywordIds, int page, int size) {
+        //1. 입력 정리: dedupe + 빈값 가드
+        List<UUID> distinctIds = keywordIds.stream().distinct().toList();
+        if (distinctIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        //2. 키워드 검증: 없거나 비활성인 UUID 섞였으면 입력단에서 거절
+        List<Keyword> found = keywordRepository.findAllByIdInAndActiveTrue(distinctIds);
+        if (found.size() != distinctIds.size()) {
+            throw new BusinessException(ErrorCode.KEYWORD_NOT_FOUND);
+        }
+
+        //3. 정렬은 쿼리에 하드코딩 -> Pagable엔 page/size만, sort는 버림
+        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+
+        //4. 조회 + 공통 후처리
+        Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
+                ProgramStatus.ACTIVE, distinctIds, LocalDate.now(), pageable);
+
+        return PageResponse.from(toCardResponsePage(programPage));
+    }
+
+    // 텍스트 검색 (프로그램명/한줄소개/큐레이션 LIKE)
+    public PageResponse<ProgramCardResponse> searchProgramsByText(
+            String search, int page, int size) {
+
+        // 1. 방어적 가드 (디스패치에서 이미 hasSearch로 걸러지지만 안전하게)
+        String trimmed = search.trim();
+        if (trimmed.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        // 2. LIKE 패턴: 특수문자 이스케이프 후 %...%로 감쌈
+        String pattern = "%" + escapeLike(trimmed) + "%";
+
+        // 3. 정렬은 쿼리에 하드코딩 → sort 버림
+        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+
+        // 4. 조회 + 공통 후처리
+        Page<Program> programPage = programRepository.searchProgramsByText(
+                ProgramStatus.ACTIVE, pattern, LocalDate.now(), pageable);
+
+        return PageResponse.from(toCardResponsePage(programPage));
+    }
+
+    // LIKE 특수문자 이스케이프 (\ % _)
+    private String escapeLike(String keyword) {
+        return keyword
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
     }
 }

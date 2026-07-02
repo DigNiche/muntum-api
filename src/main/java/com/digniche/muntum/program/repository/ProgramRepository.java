@@ -77,4 +77,68 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             Pageable pageable
     );
 
+    // 키워드 검색: 사용자가 직접 선택한 keywordIds와 많이 매칭된 프로그램 순
+    // 정렬: 매칭 수 DESC → 안 끝난 것 먼저(마감임박순) → 끝난 것(최근 종료순) → 미입력 맨 뒤
+    @Query(
+            value = """
+        SELECT p
+        FROM Program p
+        JOIN ProgramKeyword pk ON pk.program = p
+        WHERE p.status = :status
+        AND p.deletedAt IS NULL
+        AND pk.keyword.id IN :keywordIds
+        GROUP BY p
+        ORDER BY COUNT(pk) DESC,
+                 CASE
+                     WHEN p.endDate IS NULL THEN 2
+                     WHEN p.endDate < :today THEN 1
+                     ELSE 0
+                 END ASC,
+                 CASE
+                     WHEN p.endDate >= :today THEN p.endDate
+                 END ASC,
+                 p.endDate DESC
+    """,
+            countQuery = """
+        SELECT COUNT(DISTINCT p)
+        FROM Program p
+        JOIN ProgramKeyword pk ON pk.program = p
+        WHERE p.status = :status
+        AND p.deletedAt IS NULL
+        AND pk.keyword.id IN :keywordIds
+    """
+    )
+    Page<Program> searchProgramsByKeywordIds(
+            @Param("status") ProgramStatus status,
+            @Param("keywordIds") List<UUID> keywordIds,
+            @Param("today") LocalDate today,
+            Pageable pageable
+    );
+
+    // 텍스트 검색: title/tagline/curation LIKE 매칭
+    // 정렬: 필드 우선순위(title→tagline→curation) → (안 끝난 것 먼저, 마감임박 → 끝난 것 최근순 → null 맨 뒤)
+    @Query("""
+        SELECT p FROM Program p
+        WHERE p.status = :status
+        AND p.deletedAt IS NULL
+        AND (p.title LIKE :keyword ESCAPE '\\'
+             OR p.tagline LIKE :keyword ESCAPE '\\'
+             OR p.curation LIKE :keyword ESCAPE '\\')
+        ORDER BY
+            CASE WHEN p.title LIKE :keyword ESCAPE '\\' THEN 0
+                 WHEN p.tagline LIKE :keyword ESCAPE '\\' THEN 1
+                 WHEN p.curation LIKE :keyword ESCAPE '\\' THEN 2
+                 ELSE 3 END ASC,
+            CASE WHEN p.endDate IS NULL THEN 2
+                 WHEN p.endDate < :today THEN 1
+                 ELSE 0 END ASC,
+            CASE WHEN p.endDate >= :today THEN p.endDate END ASC,
+            p.endDate DESC
+    """)
+    Page<Program> searchProgramsByText(
+            @Param("status") ProgramStatus status,
+            @Param("keyword") String keyword,
+            @Param("today") LocalDate today,
+            Pageable pageable
+    );
 }
