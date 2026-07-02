@@ -11,7 +11,7 @@ public record ProgramImageResponse(
         UUID id,
         String imageUrl,
         int displayOrder,
-        UUID program_id
+        UUID programId
 ) {
     public static ProgramImageResponse from(ProgramImage image) {
         return new ProgramImageResponse(

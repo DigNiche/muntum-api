@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.springframework.data.jpa.repository.query.KeysetScrollSpecification.createSort;
-
 /**
  * 스크랩 비즈니스 로직 계층
  */

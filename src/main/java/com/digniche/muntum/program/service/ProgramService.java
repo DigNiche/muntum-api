@@ -1,5 +1,6 @@
 package com.digniche.muntum.program.service;
 
+import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.keyword.repository.ProgramKeywordRepository;
@@ -7,10 +8,9 @@ import com.digniche.muntum.program.dto.request.GeoCoordinate;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
 import com.digniche.muntum.program.dto.request.ProgramSortType;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
-import com.digniche.muntum.program.dto.response.ProgramImageResponse;
-import com.digniche.muntum.program.dto.response.ProgramListResponse;
-import com.digniche.muntum.program.dto.response.ProgramResponse;
+import com.digniche.muntum.program.dto.response.*;
 import com.digniche.muntum.program.entity.Program;
+import com.digniche.muntum.program.entity.ProgramKeyword;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
@@ -21,7 +21,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import com.digniche.muntum.program.dto.response.ProgramKeywordResponse;
 
 
 import java.math.BigDecimal;
@@ -29,7 +28,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 프로그램 비즈니스 로직 계층
@@ -44,7 +45,8 @@ public class ProgramService {
     private final ProgramKeywordRepository programKeywordRepository;
     private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
-    private final ProgramKeywordService programKeywordService;   // 추가
+    private final ProgramKeywordService programKeywordService;
+
     /**
      * 프로그램 등록
      */
@@ -66,7 +68,7 @@ public class ProgramService {
 
         Program savedProgram = programRepository.save(program);
 
-        // 이미지 저장
+        // 이미지 및 키워드 저장
         if (files != null && !files.isEmpty()) {
             programImageService.uploadImages(savedProgram, files);
         }
@@ -83,15 +85,35 @@ public class ProgramService {
     /**
      * 프로그램 목록 조회
      */
-    public Page<ProgramListResponse> getPrograms(Pageable pageable) {
-        return programRepository.findByStatusAndDeletedAtIsNull(ProgramStatus.ACTIVE, pageable)
-                .map(ProgramListResponse::from);
-//    public PageResponse<ProgramListResponse> getPrograms(
+    public PageResponse<ProgramCardResponse> getPrograms(Pageable pageable) {
+        Page<Program> programPage = programRepository.findByStatusAndDeletedAtIsNull(ProgramStatus.ACTIVE, pageable);
+        List<UUID> programIds = programPage.getContent().stream().map(Program::getId).toList();
+        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
+        Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
+                .findByProgramIdIn(programIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        pk -> pk.getProgram().getId(),
+                        Collectors.mapping(ProgramKeywordResponse::from, Collectors.toList())
+                ));
+
+        Page<ProgramCardResponse> responsePage = programPage.map(program ->
+                ProgramCardResponse.from(
+                        program,
+                        thumbnailMap.get(program.getId()),
+                        keywordMap.getOrDefault(program.getId(), List.of())
+                )
+        );
+        return PageResponse.from(responsePage);
+
+    }
+//    public PageResponse<ProgramListResponse> getPrograms(Pageable pageable)
 //            ProgramSortType sort,
 //            Sort.Direction order,
 //            int page,
 //            int size
-//    ) {
+//    )
+//    {
 //        Pageable pageable = PageRequest.of(
 //                page,
 //                size,
@@ -116,7 +138,7 @@ public class ProgramService {
 //                ProgramListResponse.from(program, thumbnailMap.get(program.getId()))
 //        );
 //        return PageResponse.from(responsePage);
-    }
+//    }
 
     private Sort createSort(ProgramSortType sort, Sort.Direction order) {
         Sort primarySort = Sort.by(order, sort.getProperty());

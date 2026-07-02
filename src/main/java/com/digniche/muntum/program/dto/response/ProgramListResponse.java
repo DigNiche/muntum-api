@@ -5,6 +5,7 @@ import com.digniche.muntum.program.entity.ProgramType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,13 +29,10 @@ public record ProgramListResponse(
         LocalDate endDate,
         int viewCount,           // 조회순 정렬용 - 유지
         String thumbnailUrl,
+//        List<ProgramKeywordResponse> keywords,
         boolean ended
 ) {
-    public static ProgramListResponse from(Program program) {
-        return from(program, null);
-    }
-
-    public static ProgramListResponse from(Program program, String thumbnailUrl) {
+    public static ProgramListResponse from(Program program, String thumbnailUrl, List<ProgramKeywordResponse> keywords) {
         boolean ended = program.getEndDate() != null
                 && program.getEndDate().isBefore(LocalDate.now());
         return new ProgramListResponse(
@@ -56,4 +54,5 @@ public record ProgramListResponse(
                 ended
         );
     }
+
 }
