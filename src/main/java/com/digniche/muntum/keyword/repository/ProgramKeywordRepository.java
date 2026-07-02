@@ -1,12 +1,12 @@
 package com.digniche.muntum.keyword.repository;
 
-import com.digniche.muntum.keyword.entity.Keyword;
 import com.digniche.muntum.program.entity.ProgramKeyword;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +32,15 @@ public interface ProgramKeywordRepository extends JpaRepository<ProgramKeyword, 
     WHERE pk.program.id = :programId
 """)
     List<ProgramKeyword> findByProgramId(@Param("programId") UUID programId);
+
+    @Query("""
+    SELECT pk
+    FROM ProgramKeyword pk
+    JOIN FETCH pk.keyword
+    WHERE pk.program.id IN :programIds
+""")
+    List<ProgramKeyword> findByProgramIdIn(@Param("programIds") Collection<UUID> programIds);
+
 
 }
 

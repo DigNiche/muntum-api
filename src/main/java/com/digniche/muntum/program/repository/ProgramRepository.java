@@ -39,7 +39,17 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     Page<Program> findByDeletedAtIsNull(Pageable pageable);
     Page<Program> findByStatusAndDeletedAtIsNull(ProgramStatus status, Pageable pageable);
 
-    // 프로그램 삭제
+    // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
+    @Query("""
+    SELECT p FROM Program p
+    WHERE p.status = :status
+    AND p.deletedAt IS NULL
+    AND p.endDate IS NOT NULL
+    AND p.endDate >= :today
+    AND p.endDate <= :monthEnd
+    ORDER BY ABS(DATEDIFF(p.endDate, :today)) ASC
+""")
+    Page<Program> findByStatusOrderByClosestEndDate(@Param("status") ProgramStatus status, @Param("today") LocalDate today, @Param("monthEnd") LocalDate monthEnd, Pageable pageable);
 
 
 }

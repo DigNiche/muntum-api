@@ -8,12 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * 프로그램 목록 응답 DTO
- * 목록 카드에 필요한 요약 정보만 반환한다.
- */
-public record ProgramListResponse(
-
+public record ProgramCardResponse(
         UUID id,
         String title,
         ProgramType programType,
@@ -23,19 +18,19 @@ public record ProgramListResponse(
         String price,
         String venueName,
         String address,
-        BigDecimal latitude,    // 지도 핀용 - 유지
-        BigDecimal longitude,   // 지도 핀용 - 유지
+        BigDecimal latitude,
+        BigDecimal longitude,
         LocalDate startDate,
         LocalDate endDate,
-        int viewCount,           // 조회순 정렬용 - 유지
+        int viewCount,
         String thumbnailUrl,
-//        List<ProgramKeywordResponse> keywords,
+        List<ProgramKeywordResponse> keywords,   // 키워드 이름 목록
         boolean ended
 ) {
-    public static ProgramListResponse from(Program program, String thumbnailUrl) {
+    public static ProgramCardResponse from(Program program, String thumbnailUrl, List<ProgramKeywordResponse> keywords) {
         boolean ended = program.getEndDate() != null
                 && program.getEndDate().isBefore(LocalDate.now());
-        return new ProgramListResponse(
+        return new ProgramCardResponse(
                 program.getId(),
                 program.getTitle(),
                 program.getProgramType(),
@@ -51,8 +46,8 @@ public record ProgramListResponse(
                 program.getEndDate(),
                 program.getViewCount(),
                 thumbnailUrl,
+                keywords,
                 ended
         );
     }
-
 }

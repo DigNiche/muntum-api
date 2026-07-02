@@ -3,6 +3,7 @@ package com.digniche.muntum.scrap.service;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
+import com.digniche.muntum.program.dto.response.ProgramCardResponse;
 import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
@@ -24,8 +25,6 @@ import org.springframework.data.domain.Sort;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import static org.springframework.data.jpa.repository.query.KeysetScrollSpecification.createSort;
 
 /**
  * 스크랩 비즈니스 로직 계층
