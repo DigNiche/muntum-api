@@ -11,6 +11,7 @@ import com.digniche.muntum.program.dto.response.ProgramResponse;
 import com.digniche.muntum.program.service.ProgramImageService;
 import com.digniche.muntum.program.service.ProgramService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import com.digniche.muntum.global.PageResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +33,7 @@ import java.util.UUID;
  * 프로그램 API 컨트롤러
  */
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/programs")
 public class ProgramController {
@@ -81,6 +84,15 @@ public class ProgramController {
     ) {
         PageResponse<ProgramCardResponse> response = programService.getProgramsByClosestEndDate(pageable);
         return ResponseEntity.ok(ApiResponse.success("마감 임박 프로그램 목록 조회에 성공했습니다.", response));
+    }
+
+    @GetMapping("/hot")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getProgramsByPopularKeywords(
+            @RequestParam(defaultValue = "5") @Min(1) int topN,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        PageResponse<ProgramCardResponse> response = programService.getProgramsByPopularKeywords(topN, pageable);
+        return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
     }
 
 

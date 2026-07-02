@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,5 +52,29 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
 """)
     Page<Program> findByStatusOrderByClosestEndDate(@Param("status") ProgramStatus status, @Param("today") LocalDate today, @Param("monthEnd") LocalDate monthEnd, Pageable pageable);
 
+    // 인기 키워드를 많이 가진 프로그램 순으로 정렬
+    @Query(
+            value = """
+        SELECT p FROM Program p
+        JOIN ProgramKeyword pk ON pk.program = p
+        WHERE p.status = :status
+        AND p.deletedAt IS NULL
+        AND pk.keyword.id IN :keywordIds
+        GROUP BY p
+        ORDER BY COUNT(pk) DESC
+    """,
+            countQuery = """
+        SELECT COUNT(DISTINCT p) FROM Program p
+        JOIN ProgramKeyword pk ON pk.program = p
+        WHERE p.status = :status
+        AND p.deletedAt IS NULL
+        AND pk.keyword.id IN :keywordIds
+    """
+    )
+    Page<Program> findProgramsByKeywordIds(
+            @Param("status") ProgramStatus status,
+            @Param("keywordIds") List<UUID> keywordIds,
+            Pageable pageable
+    );
 
 }
