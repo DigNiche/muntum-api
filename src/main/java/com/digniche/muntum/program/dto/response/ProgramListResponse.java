@@ -32,7 +32,7 @@ public record ProgramListResponse(
 //        List<ProgramKeywordResponse> keywords,
         boolean ended
 ) {
-    public static ProgramListResponse from(Program program, String thumbnailUrl, List<ProgramKeywordResponse> keywords) {
+    public static ProgramListResponse from(Program program, String thumbnailUrl) {
         boolean ended = program.getEndDate() != null
                 && program.getEndDate().isBefore(LocalDate.now());
         return new ProgramListResponse(
