@@ -72,7 +72,6 @@ public class ProgramService {
         }
         List<ProgramImageResponse> images = programImageService.getOrderedImages(program.getId());
 
-        // TODO: 키워드 설정
         programKeywordService.saveKeywords(savedProgram, request.keywordIds());
 
         List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(savedProgram.getId()).stream()

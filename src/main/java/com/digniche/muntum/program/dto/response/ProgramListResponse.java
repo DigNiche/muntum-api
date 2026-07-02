@@ -12,6 +12,7 @@ import java.util.UUID;
  * 목록 카드에 필요한 요약 정보만 반환한다.
  */
 public record ProgramListResponse(
+
         UUID id,
         String title,
         ProgramType programType,
