@@ -86,12 +86,13 @@ public class ProgramController {
         return ResponseEntity.ok(ApiResponse.success("마감 임박 프로그램 목록 조회에 성공했습니다.", response));
     }
 
+    // 인기 키워드를 가진 프로그램 목록 정렬
     @GetMapping("/hot")
-    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getProgramsByPopularKeywords(
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getHotPrograms(
             @RequestParam(defaultValue = "5") @Min(1) int topN,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        PageResponse<ProgramCardResponse> response = programService.getProgramsByPopularKeywords(topN, pageable);
+        PageResponse<ProgramCardResponse> response = programService.getProgramsByHotKeywords(topN, pageable);
         return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
     }
 

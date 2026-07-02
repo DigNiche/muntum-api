@@ -1,6 +1,7 @@
 package com.digniche.muntum.keyword.repository;
 
 
+import com.digniche.muntum.keyword.entity.Keyword;
 import com.digniche.muntum.keyword.entity.UserKeyword;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,12 +26,13 @@ public interface UserKeywordRepository extends JpaRepository<UserKeyword, UUID> 
 
     List<UserKeyword> findAllByUserId(UUID userId);
 
+
     // 가장 많이 집계된 = 사용자의 인기 키워드
     @Query("""
-    SELECT uk.keyword.id FROM UserKeyword uk
+    SELECT uk.keyword FROM UserKeyword uk
     WHERE uk.deletedAt IS NULL
-    GROUP BY uk.keyword.id
+    GROUP BY uk.keyword
     ORDER BY COUNT(uk) DESC
 """)
-    List<UUID> findTopKeywordIds(Pageable pageable);
+    List<Keyword> findTopKeywords(Pageable pageable);
 }

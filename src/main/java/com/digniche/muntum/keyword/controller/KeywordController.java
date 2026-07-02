@@ -7,6 +7,7 @@ import com.digniche.muntum.keyword.dto.SelectKeywordsRequest;
 import com.digniche.muntum.keyword.dto.SelectedKeywordsResponse;
 import com.digniche.muntum.keyword.service.KeywordService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,5 +45,15 @@ public class KeywordController {
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         List<KeywordResponse> keywords = keywordService.retrieveSelectedKeywords(userPrincipal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("내 취향 키워드 목록을 조회했습니다.", new SelectedKeywordsResponse(keywords)));
+    }
+
+
+    // 인기 키워드 목록 정렬
+    @GetMapping("/keywords/hot")
+    public ResponseEntity<ApiResponse<List<KeywordResponse>>> getPopularKeywords(
+            @RequestParam(defaultValue = "6") @Min(1) int topN
+    ) {
+        List<KeywordResponse> keywords = keywordService.getHotKeywords(topN);
+        return ResponseEntity.ok(ApiResponse.success("인기 키워드 목록을 조회했습니다.", keywords));
     }
 }

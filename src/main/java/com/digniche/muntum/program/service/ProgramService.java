@@ -3,6 +3,7 @@ package com.digniche.muntum.program.service;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
+import com.digniche.muntum.keyword.entity.Keyword;
 import com.digniche.muntum.keyword.repository.ProgramKeywordRepository;
 import com.digniche.muntum.keyword.repository.UserKeywordRepository;
 import com.digniche.muntum.program.dto.request.GeoCoordinate;
@@ -182,8 +183,9 @@ public class ProgramService {
     }
 
     // 인기 키워드를 많이 가진 프로그램 순으로 정렬
-    public PageResponse<ProgramCardResponse> getProgramsByPopularKeywords(int rank, Pageable pageable) {
-        List<UUID> topKeywordIds = userKeywordRepository.findTopKeywordIds(PageRequest.of(0, rank));
+    public PageResponse<ProgramCardResponse> getProgramsByHotKeywords(int topN, Pageable pageable) {
+        List<UUID> topKeywordIds = userKeywordRepository.findTopKeywords(PageRequest.of(0, topN))
+                .stream().map(Keyword::getId).toList();
 
         if (topKeywordIds.isEmpty()) {
             return PageResponse.from(Page.empty(pageable));
