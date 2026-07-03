@@ -31,6 +31,7 @@ public interface UserKeywordRepository extends JpaRepository<UserKeyword, UUID> 
     @Query("""
     SELECT uk.keyword FROM UserKeyword uk
     WHERE uk.deletedAt IS NULL
+    AND uk.keyword.active = true
     GROUP BY uk.keyword
     ORDER BY COUNT(uk) DESC
 """)

@@ -1,3 +1,4 @@
+/*
 package com.digniche.muntum.search.entity;
 
 import com.digniche.muntum.user.entity.User;
@@ -61,4 +62,4 @@ public class SearchHistory extends BaseEntity {
     public void updateLastSearchedAt() {
         this.lastSearchedAt = LocalDateTime.now();
     }
-}
+}*/
