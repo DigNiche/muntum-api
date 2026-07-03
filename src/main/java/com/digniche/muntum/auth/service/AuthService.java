@@ -69,11 +69,11 @@ public class AuthService {
 
         // 사용자 약관 동의 (필수)
         LocalDateTime agreedAt = user.getCreatedAt();
-        // TODO : 버전관리
         UserTermsAgreement temrs = UserTermsAgreement.builder()
                 .user(user)
                 .termsOfServiceAt(agreedAt)
                 .privacyPolicyAt(agreedAt)
+                .version(request.userTermsAgreementVersion())
                 .build();
         userTermsAgreementRepository.save(temrs);
 
@@ -156,5 +156,11 @@ public class AuthService {
         );
 
     }
+
+    // AccessToken 만료까지 남은 시간 계산
+    public long calculateTokenTtl(String accessToken) {
+        return jwtProvider.getRemainingMillis(accessToken);
+    }
+
 
 }

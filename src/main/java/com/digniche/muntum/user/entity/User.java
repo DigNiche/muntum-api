@@ -126,11 +126,11 @@ public class User extends BaseEntity {
     /**
      * 사용자 소프트삭제
      */
-    public void softDelete(UUID deletedBy) {
-        this.status = UserStatus.DELETED;
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
-    }
+//    public void softDelete(UUID deletedBy) {
+//        this.status = UserStatus.DELETED;
+//        this.deletedAt = LocalDateTime.now();
+//        this.deletedBy = deletedBy;
+//    }
 
     public void maskDeletedUserInfo(String addMaskingLetter, String withdrawalNicknamePrefix) {
         this.email = this.email + addMaskingLetter;

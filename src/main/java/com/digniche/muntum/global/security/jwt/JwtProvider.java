@@ -119,4 +119,10 @@ public class JwtProvider {
         return claims;
     }
 
+    // 잔여 만료 시간 메서드 추가
+    public long getRemainingMillis(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        return expiration.getTime() - System.currentTimeMillis();
+    }
+
 }
