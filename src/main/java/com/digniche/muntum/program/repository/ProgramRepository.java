@@ -141,4 +141,40 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("today") LocalDate today,
             Pageable pageable
     );
+
+    // 입력 좌표로부터 반경 radiusMeters 내의 프로그램 목록 조회
+    @Query(value = """
+    SELECT * FROM programs
+    WHERE status = 'ACTIVE' AND deleted_at IS NULL
+    AND latitude IS NOT NULL AND longitude IS NOT NULL
+    AND ST_Distance_Sphere(POINT(longitude, latitude), POINT(:lng, :lat)) <= :radiusMeters
+    ORDER BY ST_Distance_Sphere(POINT(longitude, latitude), POINT(:lng, :lat)) ASC
+    """,
+            countQuery = """
+    SELECT COUNT(*) FROM programs
+    WHERE status = 'ACTIVE' AND deleted_at IS NULL
+    AND latitude IS NOT NULL AND longitude IS NOT NULL
+    AND ST_Distance_Sphere(POINT(longitude, latitude), POINT(:lng, :lat)) <= :radiusMeters
+    """, nativeQuery = true)
+    Page<Program> findNearbyPrograms(
+            @Param("lat") double lat, @Param("lng") double lng,
+            @Param("radiusMeters") double radiusMeters,
+            Pageable pageable
+    );
+
+    // 바운딩 박스 4개 좌표 내에 있는 프로그램 목록 조회
+    @Query("""
+    SELECT p FROM Program p
+    WHERE p.status = 'ACTIVE' AND p.deletedAt IS NULL
+    AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL
+    AND p.latitude BETWEEN :swLat AND :neLat
+    AND p.longitude BETWEEN :swLng AND :neLng
+    ORDER BY p.createdAt DESC
+    """)
+    Page<Program> findProgramsInBounds(
+            @Param("swLat") double swLat, @Param("swLng") double swLng,
+            @Param("neLat") double neLat, @Param("neLng") double neLng,
+            Pageable pageable
+    );
+
 }
