@@ -73,9 +73,12 @@ public class ProgramController {
             @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
             @RequestParam(defaultValue = "DESC") Sort.Direction order,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
      ) {
-        PageResponse<ProgramCardResponse> response = programService.getPrograms(search, keywordIds, type, sort, order, page, size);
+        UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
+
+        PageResponse<ProgramCardResponse> response = programService.getPrograms(userId, search, keywordIds, type, sort, order, page, size);
          return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
 
 //    public ApiResponse<PageResponse<ProgramListResponse>> getPrograms(
@@ -179,5 +182,6 @@ public class ProgramController {
     public ResponseEntity<ApiResponse<List<ProgramImageResponse>>> getThumbnails() {
         return ResponseEntity.ok(ApiResponse.success("썸네일 목록 조회에 성공했습니다.", programImageService.getThumbnails()));
     }
+
 
 }

@@ -13,12 +13,11 @@ import com.digniche.muntum.program.dto.request.ProgramSortType;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
 import com.digniche.muntum.program.dto.response.*;
 import com.digniche.muntum.program.entity.Program;
-import com.digniche.muntum.program.entity.ProgramKeyword;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
-import com.digniche.muntum.keyword.repository.KeywordRepository;
+import com.digniche.muntum.search.service.RecentSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,6 +53,7 @@ public class ProgramService {
     private final ProgramImageService programImageService;
     private final ProgramKeywordService programKeywordService;
     private final KeywordRepository keywordRepository;
+    private final RecentSearchService recentSearchService;
 
     /**
      * 프로그램 등록
@@ -96,6 +96,7 @@ public class ProgramService {
      * - 텍스트 검색은 다음 단계에서 구현 (현재는 일반 목록으로 흐름)
      */
     public PageResponse<ProgramCardResponse> getPrograms(
+            UUID userId,
             String search,
             List<UUID> keywordIds,
             ProgramType type,
@@ -119,7 +120,7 @@ public class ProgramService {
 
         // 분기: 텍스트 검색
         if (hasSearch) {
-            return searchProgramsByText(search, page, size);
+            return searchProgramsByText(userId, search, page, size);
         }
 
         // 기본: 일반 목록 (위 분기 다 안걸리면 일반 목록. 정렬 파라미터 적용)
@@ -381,7 +382,7 @@ public class ProgramService {
 
     // 텍스트 검색 (프로그램명/한줄소개/큐레이션 LIKE)
     public PageResponse<ProgramCardResponse> searchProgramsByText(
-            String search, int page, int size) {
+            UUID userId, String search, int page, int size) {
 
         // 1. 방어적 가드 (디스패치에서 이미 hasSearch로 걸러지지만 안전하게)
         String trimmed = search.trim();
@@ -398,7 +399,10 @@ public class ProgramService {
         // 4. 조회 + 공통 후처리
         Page<Program> programPage = programRepository.searchProgramsByText(
                 ProgramStatus.ACTIVE, pattern, LocalDate.now(), pageable);
-
+        // 로그인 유저면 최근 검색어 저장 (trimmed 재사용, 게스트=null 제외)
+        if (userId != null) {
+            recentSearchService.save(userId, trimmed);
+        }
         return PageResponse.from(toCardResponsePage(programPage));
     }
 
