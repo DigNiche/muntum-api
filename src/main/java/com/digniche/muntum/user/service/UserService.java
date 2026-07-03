@@ -162,4 +162,6 @@ public class UserService {
         // 탈퇴 후 DATA_RETENTION_DISPOSAL_YEAR 기간이 지났고, 여전히 DELETED 상태인 유저들만 완전 삭제
         userRepository.deleteByStatusAndDeletedAtBefore(UserStatus.DELETED, ago);
     }
+
+    // deploy
 }
