@@ -11,13 +11,17 @@ import jakarta.validation.constraints.NotBlank;
 public record SignUpRequest(
         @NotBlank @Email String email,
         @NotBlank String password,
-        UserRole role
+        UserRole role,
+        String userTermsAgreementVersion
 
 //        @Valid @NotNull TermsAgreementRequest termsAgreement
 ) {
 
     public SignUpRequest {
         if (role == null) role = UserRole.AUDIENCE;
+        if (userTermsAgreementVersion == null) {
+            userTermsAgreementVersion = "1.0";
+        }
     }
 
     // TODO: Presentation 계층이 Domain 침범하지 않도록 추후 수정 예정

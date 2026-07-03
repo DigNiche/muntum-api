@@ -7,6 +7,7 @@ import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.user.dto.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.TermsConsentListRequest;
 import com.digniche.muntum.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -43,8 +44,10 @@ public class UserController {
     @PostMapping("")
     public ResponseEntity<ApiResponse<Void>> withdraw(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestBody @Valid WithdrawRequest request) {
-        userService.withdraw(userPrincipal.getUserId(), request);
+            @RequestBody @Valid WithdrawRequest request,
+            HttpServletRequest httpRequest) {
+        String accessToken = httpRequest.getHeader("Authorization").substring(7);
+        userService.withdraw(userPrincipal.getUserId(), request, accessToken);
 
         return ResponseEntity.ok(ApiResponse.success("회원탈퇴가 완료되었습니다.", null));
     }

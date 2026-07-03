@@ -4,6 +4,7 @@ import com.digniche.muntum.scrap.entity.Scrap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -39,4 +40,13 @@ public interface ScrapRepository extends JpaRepository<Scrap, UUID> {
                     "AND p.deletedAt IS NULL"
     )
     Page<Scrap> findMyScrapsWithProgram(@Param("userId") UUID userId, Pageable pageable);
+
+    /**
+     * 사용자의 스크랩 모두 삭제
+     */
+    @Modifying
+    @Query("DELETE FROM Scrap s WHERE s.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") UUID userId);
+
+
 }

@@ -1,6 +1,9 @@
 package com.digniche.muntum.global.security.jwt;
 
+import com.digniche.muntum.auth.service.AccessTokenService;
+import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,6 +34,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String TOKEN_PREFIX = "Bearer ";
 
     private final JwtProvider jwtProvider;
+    private final AccessTokenService accessTokenService;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -38,6 +43,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token)) {
             Claims claims = jwtProvider.validateToken(token); // 토큰 검증 및 파싱
+
+            if (accessTokenService.isWithdrawn(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(objectMapper.writeValueAsString(
+                        ApiResponse.fail(401, "WITHDRAWN_TOKEN", "탈퇴된 사용자의 토큰입니다.")
+                ));
+                return;
+            }
 
             UUID userId = UUID.fromString(claims.getSubject());
             String userRole = claims.get(JwtProvider.CLAIM_ROLE, String.class);

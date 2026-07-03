@@ -16,7 +16,7 @@ import java.util.UUID;
 @Component
 public class AuditorAwareImpl implements AuditorAware<UUID> {
 
-    private static final UUID SYSTEM_UUID =
+    public static final UUID SYSTEM_UUID =
         UUID.fromString("99999999-9999-9999-9999-999999999999");
 
     @Override

@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Collection;
+
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
@@ -176,5 +178,20 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("neLat") double neLat, @Param("neLng") double neLng,
             Pageable pageable
     );
+
+    // 생성자: System UUID로 채우기
+    @Modifying
+    @Query(value = "UPDATE programs SET created_by = :systemUuid WHERE created_by = :userId", nativeQuery = true)
+    void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+
+    // 수정자: Null 처리
+    @Modifying
+    @Query(value = "UPDATE programs SET updated_by = NULL WHERE updated_by = :userId", nativeQuery = true)
+    void nullifyUpdatedBy(@Param("userId") UUID userId);
+
+    // 삭제자: Null 처리
+    @Modifying
+    @Query("UPDATE Program p SET p.deletedBy = null WHERE p.deletedBy = :userId")
+    void nullifyDeletedBy(@Param("userId") UUID userId);
 
 }
