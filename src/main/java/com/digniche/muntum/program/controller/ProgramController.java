@@ -110,6 +110,30 @@ public class ProgramController {
         return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
     }
 
+    // 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
+    @GetMapping("/nearby")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getNearbyPrograms(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam double radiusMeters,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        PageResponse<ProgramCardResponse> response = programService.getNearbyPrograms(lat, lng, radiusMeters, pageable);
+        return ResponseEntity.ok(ApiResponse.success("근처 프로그램 목록 조회에 성공했습니다.", response));
+    }
+
+    // 지도 뷰포트 바운딩 박스 기반 프로그램 조회
+    @GetMapping("/map")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getProgramsInBounds(
+            @RequestParam double swLat,
+            @RequestParam double swLng,
+            @RequestParam double neLat,
+            @RequestParam double neLng,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        PageResponse<ProgramCardResponse> response = programService.getProgramsInBounds(swLat, swLng, neLat, neLng, pageable);
+        return ResponseEntity.ok(ApiResponse.success("지도 영역 프로그램 목록 조회에 성공했습니다.", response));
+    }
 
 
     /**

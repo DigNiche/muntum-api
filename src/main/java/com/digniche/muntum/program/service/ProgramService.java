@@ -202,6 +202,25 @@ public class ProgramService {
                 .and(Sort.by(Sort.Direction.DESC, "createdAt"))
                 .and(Sort.by(Sort.Direction.DESC, "id"));
     }
+
+    /**
+     * 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
+     */
+    public PageResponse<ProgramCardResponse> getNearbyPrograms(double lat, double lng, double radiusMeters, Pageable pageable) {
+        Page<Program> programPage = programRepository.findNearbyPrograms(lat, lng, radiusMeters,pageable);
+        return PageResponse.from(toCardResponsePage(programPage));
+    }
+
+    /**
+     * 지도 뷰포트 바운딩 박스 기반 프로그램 조회
+     */
+    public PageResponse<ProgramCardResponse> getProgramsInBounds(
+            double swLat, double swLng, double neLat, double neLng, Pageable pageable) {
+        Page<Program> programPage = programRepository.findProgramsInBounds(swLat, swLng, neLat, neLng, pageable);
+        return PageResponse.from(toCardResponsePage(programPage));
+    }
+
+
     /**
      * 프로그램 단건 조회
      * 조회수 증가가 있으므로 readOnly 트랜잭션이 아니다.
