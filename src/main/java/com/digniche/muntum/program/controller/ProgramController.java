@@ -3,12 +3,12 @@ package com.digniche.muntum.program.controller;
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
+import com.digniche.muntum.program.dto.request.ProgramFilterChip;
 import com.digniche.muntum.program.dto.request.ProgramSortType;
 import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
 import com.digniche.muntum.program.dto.response.ProgramCardResponse;
 import com.digniche.muntum.program.dto.response.ProgramImageResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
-import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.program.service.ProgramImageService;
 import com.digniche.muntum.program.service.ProgramService;
 import jakarta.validation.Valid;
@@ -69,7 +69,7 @@ public class ProgramController {
      public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getPrograms(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) List<UUID> keywordIds,
-            @RequestParam(required = false) ProgramType type,
+            @RequestParam(required = false) ProgramFilterChip chip,
             @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
             @RequestParam(defaultValue = "DESC") Sort.Direction order,
             @RequestParam(defaultValue = "0") int page,
@@ -78,7 +78,7 @@ public class ProgramController {
      ) {
         UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
 
-        PageResponse<ProgramCardResponse> response = programService.getPrograms(userId, search, keywordIds, type, sort, order, page, size);
+        PageResponse<ProgramCardResponse> response = programService.getPrograms(userId, search, keywordIds, chip, sort, order, page, size);
          return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
 
 //    public ApiResponse<PageResponse<ProgramListResponse>> getPrograms(

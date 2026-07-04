@@ -35,5 +35,15 @@ public interface UserKeywordRepository extends JpaRepository<UserKeyword, UUID> 
     GROUP BY uk.keyword
     ORDER BY COUNT(uk) DESC
 """)
+
     List<Keyword> findTopKeywords(Pageable pageable);
+
+    @Query("""
+    SELECT uk.keyword.id
+    FROM UserKeyword uk
+    WHERE uk.user.id = :userId
+    AND uk.deletedAt IS NULL
+    AND uk.keyword.active = true
+""")
+    List<UUID> findActiveKeywordIdsByUserId(@Param("userId") UUID userId);
 }

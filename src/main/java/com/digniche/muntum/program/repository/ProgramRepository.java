@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Collection;
-
+import com.digniche.muntum.program.entity.ProgramType;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -83,64 +83,130 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     // 정렬: 매칭 수 DESC → 안 끝난 것 먼저(마감임박순) → 끝난 것(최근 종료순) → 미입력 맨 뒤
     @Query(
             value = """
-        SELECT p
-        FROM Program p
-        JOIN ProgramKeyword pk ON pk.program = p
-        WHERE p.status = :status
-        AND p.deletedAt IS NULL
-        AND pk.keyword.id IN :keywordIds
-        GROUP BY p
-        ORDER BY COUNT(pk) DESC,
-                 CASE
-                     WHEN p.endDate IS NULL THEN 2
-                     WHEN p.endDate < :today THEN 1
-                     ELSE 0
-                 END ASC,
-                 CASE
-                     WHEN p.endDate >= :today THEN p.endDate
-                 END ASC,
-                 p.endDate DESC
-    """,
+    SELECT p
+    FROM Program p
+    JOIN ProgramKeyword pk ON pk.program = p
+    WHERE p.status = :status
+    AND p.deletedAt IS NULL
+    AND pk.keyword.id IN :keywordIds
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+    GROUP BY p
+    ORDER BY COUNT(pk) DESC,
+             CASE
+                 WHEN p.endDate IS NULL THEN 2
+                 WHEN p.endDate < :today THEN 1
+                 ELSE 0
+             END ASC,
+             CASE
+                 WHEN p.endDate >= :today THEN p.endDate
+             END ASC,
+             p.endDate DESC
+""",
             countQuery = """
-        SELECT COUNT(DISTINCT p)
-        FROM Program p
-        JOIN ProgramKeyword pk ON pk.program = p
-        WHERE p.status = :status
-        AND p.deletedAt IS NULL
-        AND pk.keyword.id IN :keywordIds
-    """
+    SELECT COUNT(DISTINCT p)
+    FROM Program p
+    JOIN ProgramKeyword pk ON pk.program = p
+    WHERE p.status = :status
+    AND p.deletedAt IS NULL
+    AND pk.keyword.id IN :keywordIds
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+"""
     )
     Page<Program> searchProgramsByKeywordIds(
             @Param("status") ProgramStatus status,
             @Param("keywordIds") List<UUID> keywordIds,
             @Param("today") LocalDate today,
+            @Param("freeOnly") Boolean freeOnly,
+            @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("programType") ProgramType programType,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
             Pageable pageable
     );
 
     // 텍스트 검색: title/tagline/curation LIKE 매칭
     // 정렬: 필드 우선순위(title→tagline→curation) → (안 끝난 것 먼저, 마감임박 → 끝난 것 최근순 → null 맨 뒤)
-    @Query("""
-        SELECT p FROM Program p
-        WHERE p.status = :status
-        AND p.deletedAt IS NULL
-        AND (p.title LIKE :keyword ESCAPE '\\'
-             OR p.tagline LIKE :keyword ESCAPE '\\'
-             OR p.curation LIKE :keyword ESCAPE '\\')
-        ORDER BY
-            CASE WHEN p.title LIKE :keyword ESCAPE '\\' THEN 0
-                 WHEN p.tagline LIKE :keyword ESCAPE '\\' THEN 1
-                 WHEN p.curation LIKE :keyword ESCAPE '\\' THEN 2
-                 ELSE 3 END ASC,
-            CASE WHEN p.endDate IS NULL THEN 2
-                 WHEN p.endDate < :today THEN 1
-                 ELSE 0 END ASC,
-            CASE WHEN p.endDate >= :today THEN p.endDate END ASC,
-            p.endDate DESC
-    """)
+    @Query(
+            value = """
+    SELECT p
+    FROM Program p
+    WHERE p.status = :status
+    AND p.deletedAt IS NULL
+    AND (
+        p.title LIKE :keyword ESCAPE '\\'
+        OR p.tagline LIKE :keyword ESCAPE '\\'
+        OR p.curation LIKE :keyword ESCAPE '\\'
+    )
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+    ORDER BY
+        CASE WHEN p.title LIKE :keyword ESCAPE '\\' THEN 0
+             WHEN p.tagline LIKE :keyword ESCAPE '\\' THEN 1
+             WHEN p.curation LIKE :keyword ESCAPE '\\' THEN 2
+             ELSE 3 END ASC,
+        CASE WHEN p.endDate IS NULL THEN 2
+             WHEN p.endDate < :today THEN 1
+             ELSE 0 END ASC,
+        CASE WHEN p.endDate >= :today THEN p.endDate END ASC,
+        p.endDate DESC
+""",
+            countQuery = """
+    SELECT COUNT(p)
+    FROM Program p
+    WHERE p.status = :status
+    AND p.deletedAt IS NULL
+    AND (
+        p.title LIKE :keyword ESCAPE '\\'
+        OR p.tagline LIKE :keyword ESCAPE '\\'
+        OR p.curation LIKE :keyword ESCAPE '\\'
+    )
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+"""
+    )
     Page<Program> searchProgramsByText(
             @Param("status") ProgramStatus status,
             @Param("keyword") String keyword,
             @Param("today") LocalDate today,
+            @Param("freeOnly") Boolean freeOnly,
+            @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("programType") ProgramType programType,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
             Pageable pageable
     );
 
@@ -194,4 +260,48 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     @Query("UPDATE Program p SET p.deletedBy = null WHERE p.deletedBy = :userId")
     void nullifyDeletedBy(@Param("userId") UUID userId);
 
+    // 일반 목록 필터용 메서드 추가
+    @Query(
+            value = """
+    SELECT p
+    FROM Program p
+    WHERE p.status = :status
+    AND p.deletedAt IS NULL
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+""",
+            countQuery = """
+    SELECT COUNT(p)
+    FROM Program p
+    WHERE p.status = :status
+    AND p.deletedAt IS NULL
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+"""
+    )
+    Page<Program> findProgramsWithFilter(
+            @Param("status") ProgramStatus status,
+            @Param("freeOnly") Boolean freeOnly,
+            @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("programType") ProgramType programType,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
+            Pageable pageable
+    );
 }
