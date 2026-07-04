@@ -1,5 +1,5 @@
 server:
-  port: ${service.port}
+  port: 8080
 
 
 # 애플리케이션 정보
@@ -18,15 +18,32 @@ spring:
 
   # MySQL DB
   datasource:
-    url:
-    driver-class-name:
-    username:
-    password:
+    url: jdbc:mysql://${db.aws-rds.endpoint}:3306/${db.name}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${db.user}
+    password: ${db.password}
+
+  # Redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${redis.password}
+
+  # Batch
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
 
 
 # JWT
 jwt:
   secret-key: ${jwt.secret-key}
+
+
+
 
 # Kakao Geocoding API
 kakao:

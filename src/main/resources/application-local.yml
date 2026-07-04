@@ -1,5 +1,5 @@
 server:
-  port: ${service.port}
+  port: 8080
 
 
 # 애플리케이션 정보
@@ -24,6 +24,12 @@ spring:
     username: ${db.user}
     password: ${db.password}
 
+  # Redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${redis.password}
 
   # Batch
   batch:
@@ -33,12 +39,6 @@ spring:
       initialize-schema: always
 
 
-  # Redis
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password: ${redis.password}
 
 # JWT
 jwt:
