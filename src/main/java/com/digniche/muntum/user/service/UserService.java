@@ -113,6 +113,7 @@ public class UserService {
             programRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
             programRepository.nullifyUpdatedBy(userId);
             programRepository.nullifyDeletedBy(userId);
+            // 공지의 생성자/수정자
         } else if (role == UserRole.CURATOR) {
             // 제보의 생성자/수정자/제보자 Null 처리 및 시스템 UUID 처리
             spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);

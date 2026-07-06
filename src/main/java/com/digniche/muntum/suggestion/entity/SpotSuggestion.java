@@ -12,21 +12,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "spot_suggestions",
-        indexes = {
-                @Index(
-                        name = "idx_suggestions_user_id",
-                        columnList = "informer"
-                ),
-                @Index(
-                        name = "idx_suggestions_status",
-                        columnList = "status"
-                ),
-                @Index(
-                        name = "idx_suggestions_created_at",
-                        columnList = "created_at"
-                )
+@Table(name = "spot_suggestions", indexes = {
+                @Index(name = "idx_suggestions_user_id", columnList = "informer"),
+                @Index(name = "idx_suggestions_status", columnList = "status"),
+                @Index(name = "idx_suggestions_created_at", columnList = "created_at")
         }
 )
 @Getter
@@ -35,16 +24,11 @@ public class SpotSuggestion extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "informer") //제보한 사용자
+    @JoinColumn(name = "informer")    //제보한 사용자
     private User informer;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -81,7 +65,13 @@ public class SpotSuggestion extends BaseEntity {
         this.reason = reason;
         this.status = SuggestionStatus.PENDING;
     }
-    //3
+
+    public void update(String programName, String address, String reason) {
+        this.programName = programName;
+        this.address = address;
+        this.reason = reason;
+    }
+
     public void startReview(User reviewer) {
         this.reviewedBy = reviewer;
         this.status = SuggestionStatus.REVIEWING;
