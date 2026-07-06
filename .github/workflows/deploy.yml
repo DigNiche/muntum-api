@@ -49,4 +49,4 @@ jobs:
           ssh -i ~/.ssh/muntum-key.pem \
             -o StrictHostKeyChecking=no \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "sudo systemctl restart muntum && sudo systemctl status muntum"
+            "sudo systemctl restart muntum; sleep 5; sudo systemctl status muntum; sudo journalctl -u muntum -n 80 --no-pager"
