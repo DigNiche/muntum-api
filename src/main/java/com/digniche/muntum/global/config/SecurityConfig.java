@@ -64,7 +64,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/programs", "/api/v1/programs/**", "/api/v1/search/top_keyword").permitAll() // 명세상 단건/목록 조회는 게스트도 봐야 하니 추가함
+                        .requestMatchers(HttpMethod.GET, "/api/v1/programs", "/api/v1/programs/**", "/api/v1/announcements", "/api/v1/announcements/**", "/api/v1/search/top_keyword").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

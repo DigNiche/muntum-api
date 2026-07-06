@@ -49,6 +49,10 @@ public enum ErrorCode {
     KEYWORD_ALREADY_EXISTS("K002", "이미 존재하는 키워드입니다", HttpStatus.CONFLICT),
     INVALID_KEYWORD_TYPE("K003", "유효하지 않은 키워드 타입입니다", HttpStatus.BAD_REQUEST),
 
+    // 공지
+    // 공지사항
+    ANNOUNCEMENT_NOT_FOUND("AN001", "존재하지 않는 공지사항입니다", HttpStatus.NOT_FOUND),
+
     // 유효하지 않은 요청
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
 
