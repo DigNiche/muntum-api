@@ -26,8 +26,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.digniche.muntum.program.dto.request.ProgramFilterChip;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -99,7 +101,7 @@ public class ProgramService {
             UUID userId,
             String search,
             List<UUID> keywordIds,
-            ProgramType type,
+            ProgramFilterChip chip,
             ProgramSortType sort,
             Sort.Direction order,
             int page,
@@ -108,6 +110,8 @@ public class ProgramService {
         boolean hasSearch = search != null && !search.isBlank();
         boolean hasKeywords = keywordIds != null && !keywordIds.isEmpty();
 
+        ProgramFilterCondition filter = createFilterCondition(chip);
+
         // 상호배제 가드: 텍스트 검색과 키워드 검색 동시 사용 불가
         if (hasSearch && hasKeywords) {
             throw new BusinessException(ErrorCode.INVALID_SEARCH_CONDITION);
@@ -115,17 +119,27 @@ public class ProgramService {
 
         // 분기: 키워드 검색
         if (hasKeywords) {
-            return searchProgramsByKeywords(keywordIds, page, size);
+            return searchProgramsByKeywords(keywordIds, filter, page, size);
         }
 
         // 분기: 텍스트 검색
         if (hasSearch) {
-            return searchProgramsByText(userId, search, page, size);
+            return searchProgramsByText(userId, search, filter, page, size);
         }
 
-        // 기본: 일반 목록 (위 분기 다 안걸리면 일반 목록. 정렬 파라미터 적용)
+        // 기본: 일반 분기 목록 (위 분기 다 안걸리면 일반 목록. 정렬 파라미터 적용) + chip 조건 적용, 기존 sort/order도 유지
         Pageable pageable = PageRequest.of(page, size, createSort(sort, order));
-        Page<Program> programPage = programRepository.findByStatusAndDeletedAtIsNull(ProgramStatus.ACTIVE, pageable);
+
+        Page<Program> programPage = programRepository.findProgramsWithFilter(
+                ProgramStatus.ACTIVE,
+                filter.freeOnly(),
+                filter.noReservationOnly(),
+                filter.programType(),
+                filter.weekStart(),
+                filter.weekEnd(),
+                pageable
+        );
+
         return PageResponse.from(toCardResponsePage(programPage));
 
     }
@@ -191,7 +205,35 @@ public class ProgramService {
 
         return PageResponse.from(toCardResponsePage(programPage));
     }
+    /**
+     * 내 취향 프로그램 목록
+     * - 유저가 선택한 활성 키워드에 매칭되는 프로그램을, 매칭 개수 많은 순으로
+     * - 정렬/필터는 키워드 검색(searchProgramsByKeywordIds)과 동일 로직 재사용
+     */
+    public PageResponse<ProgramCardResponse> getTastePrograms(
+            UUID userId, ProgramFilterChip chip, int page, int size) {
 
+        // 1. 유저의 활성 취향 키워드 ID (비활성/삭제는 SQL에서 이미 제외)
+        List<UUID> keywordIds = userKeywordRepository.findActiveKeywordIdsByUserId(userId);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+
+        // 2. 취향 키워드 없으면 빈 페이지 (hot과 동일 방어)
+        if (keywordIds.isEmpty()) {
+            return PageResponse.from(Page.empty(pageable));
+        }
+
+        // 3. 칩 → 필터 조건 (검색/일반목록과 동일 변환)
+        ProgramFilterCondition filter = createFilterCondition(chip);
+
+        Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
+                ProgramStatus.ACTIVE, keywordIds, LocalDate.now(),
+                filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
+                filter.weekStart(), filter.weekEnd(),
+                pageable                                                    // ← 여기도 같은 거
+        );
+        return PageResponse.from(toCardResponsePage(programPage));
+    }
     private Sort createSort(ProgramSortType sort, Sort.Direction order) {
         Sort primarySort = Sort.by(order, sort.getProperty());
         // 1차 정렬이 createdAt이면 보조 키로 createdAt을 또 넣으면 중복이라, id만 붙인다.
@@ -357,7 +399,7 @@ public class ProgramService {
 
     //키워드 검색(사용자가 칩으로 직접 선택한 keywordIds 기반)
     public PageResponse<ProgramCardResponse> searchProgramsByKeywords(
-            List<UUID> keywordIds, int page, int size) {
+            List<UUID> keywordIds, ProgramFilterCondition filter, int page, int size) {
         //1. 입력 정리: dedupe + 빈값 가드
         List<UUID> distinctIds = keywordIds.stream().distinct().toList();
         if (distinctIds.isEmpty()) {
@@ -375,14 +417,14 @@ public class ProgramService {
 
         //4. 조회 + 공통 후처리
         Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
-                ProgramStatus.ACTIVE, distinctIds, LocalDate.now(), pageable);
+                ProgramStatus.ACTIVE, distinctIds, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
 
         return PageResponse.from(toCardResponsePage(programPage));
     }
 
     // 텍스트 검색 (프로그램명/한줄소개/큐레이션 LIKE)
     public PageResponse<ProgramCardResponse> searchProgramsByText(
-            UUID userId, String search, int page, int size) {
+            UUID userId, String search, ProgramFilterCondition filter, int page, int size) {
 
         // 1. 방어적 가드 (디스패치에서 이미 hasSearch로 걸러지지만 안전하게)
         String trimmed = search.trim();
@@ -398,7 +440,7 @@ public class ProgramService {
 
         // 4. 조회 + 공통 후처리
         Page<Program> programPage = programRepository.searchProgramsByText(
-                ProgramStatus.ACTIVE, pattern, LocalDate.now(), pageable);
+                ProgramStatus.ACTIVE, pattern, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
         // 로그인 유저면 최근 검색어 저장 (trimmed 재사용, 게스트=null 제외)
         if (userId != null) {
             recentSearchService.save(userId, trimmed);
@@ -412,5 +454,22 @@ public class ProgramService {
                 .replace("\\", "\\\\")
                 .replace("%", "\\%")
                 .replace("_", "\\_");
+    }
+
+    private ProgramFilterCondition createFilterCondition(ProgramFilterChip chip) {
+        if (chip == null) {
+            return new ProgramFilterCondition(null, null, null, null, null);
+        }
+        return switch (chip) {
+            case FREE           -> new ProgramFilterCondition(true, null, null, null, null);
+            case NO_RESERVATION -> new ProgramFilterCondition(null, true, null, null, null);
+            case THIS_WEEK -> {
+                LocalDate today = LocalDate.now();
+                LocalDate weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+                yield new ProgramFilterCondition(null, null, null, today, weekEnd);
+            }
+            case EXHIBITION, PERFORMANCE, CLASS_EXPERIENCE, FAIR ->
+                    new ProgramFilterCondition(null, null, ProgramType.valueOf(chip.name()), null, null);
+        };
     }
 }
