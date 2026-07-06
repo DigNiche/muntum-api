@@ -57,6 +57,7 @@ storage:
   local:
     base-path: ./uploads                               # dirPath
     base-url: http://localhost:${server.port}/uploads
+# secrets 파일 적용
 
 # Observability
 management:
