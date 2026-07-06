@@ -37,11 +37,18 @@ jobs:
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
             "echo '${{ secrets.SECRETS_PROD_YML }}' | base64 -d > /home/ubuntu/muntum/app/secrets-prod.yml"
 
+      - name: Stop service before upload
+        run: |
+          ssh -i ~/.ssh/muntum-key.pem \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "sudo systemctl stop muntum"
+
       - name: Upload JAR to EC2
         run: |
           scp -i ~/.ssh/muntum-key.pem \
             -o StrictHostKeyChecking=no \
-            build/libs/muntum-*.jar \
+            build/libs/muntum-0.0.1-SNAPSHOT.jar \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/muntum/app/muntum.jar
 
       - name: Deploy on EC2
@@ -49,4 +56,4 @@ jobs:
           ssh -i ~/.ssh/muntum-key.pem \
             -o StrictHostKeyChecking=no \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "sudo systemctl restart muntum; sleep 5; sudo systemctl status muntum; sudo journalctl -u muntum -n 80 --no-pager"
+            "sudo systemctl start muntum && sleep 10 && sudo journalctl -u muntum -n 50 --no-pager"
