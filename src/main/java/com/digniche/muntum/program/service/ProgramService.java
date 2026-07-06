@@ -7,10 +7,7 @@ import com.digniche.muntum.keyword.entity.Keyword;
 import com.digniche.muntum.keyword.repository.KeywordRepository;
 import com.digniche.muntum.keyword.repository.ProgramKeywordRepository;
 import com.digniche.muntum.keyword.repository.UserKeywordRepository;
-import com.digniche.muntum.program.dto.request.GeoCoordinate;
-import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
-import com.digniche.muntum.program.dto.request.ProgramSortType;
-import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
+import com.digniche.muntum.program.dto.request.*;
 import com.digniche.muntum.program.dto.response.*;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
@@ -24,8 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.digniche.muntum.program.dto.request.ProgramFilterChip;
@@ -58,6 +55,7 @@ public class ProgramService {
     private final ProgramKeywordService programKeywordService;
     private final KeywordRepository keywordRepository;
     private final RecentSearchService recentSearchService;
+    private static final int MAP_MAX_RESULTS = 200;
 
     /**
      * 프로그램 등록
@@ -263,15 +261,53 @@ public class ProgramService {
     }
 
     /**
-     * 지도 뷰포트 바운딩 박스 기반 프로그램 조회
+     * 지도 뷰포트 바운딩 박스 기반 프로그램 조회 (필터칩 적용)
+     * - 페이지네이션 없음: 핀 + 바텀시트가 같은 데이터셋 공유, 상한 200건
      */
-    @Transactional(readOnly = true)
-    public PageResponse<ProgramCardResponse> getProgramsInBounds(
-            double swLat, double swLng, double neLat, double neLng, Pageable pageable) {
-        Page<Program> programPage = programRepository.findProgramsInBounds(swLat, swLng, neLat, neLng, pageable);
-        return PageResponse.from(toCardResponsePage(programPage));
+    public List<ProgramCardResponse> getProgramsInBounds(MapBoundsRequest bounds, ProgramFilterChip chip) {
+        List<Program> programs;
+
+        if (chip == ProgramFilterChip.HOT) {
+            programs = programRepository.findHotProgramsInBounds(
+                    ProgramStatus.ACTIVE,
+                    bounds.swLat(), bounds.swLng(), bounds.neLat(), bounds.neLng(),
+                    Limit.of(MAP_MAX_RESULTS));
+        } else {
+            ProgramFilterCondition filter = createFilterCondition(chip);
+            programs = programRepository.findProgramsInBounds(
+                    ProgramStatus.ACTIVE,
+                    bounds.swLat(), bounds.swLng(), bounds.neLat(), bounds.neLng(),
+                    filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
+                    filter.weekStart(), filter.weekEnd(),
+                    Limit.of(MAP_MAX_RESULTS));
+        }
+        return toCardResponseList(programs);
     }
 
+
+    // 헬퍼: toCardResponsePage의 List 버전 (썸네일/키워드 배치 조회 동일)
+    private List<ProgramCardResponse> toCardResponseList(List<Program> programs) {
+        if (programs.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> programIds = programs.stream().map(Program::getId).toList();
+        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
+        Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
+                .findByProgramIdIn(programIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        pk -> pk.getProgram().getId(),
+                        Collectors.mapping(ProgramKeywordResponse::from, Collectors.toList())
+                ));
+
+        return programs.stream()
+                .map(program -> ProgramCardResponse.from(
+                        program,
+                        thumbnailMap.get(program.getId()),
+                        keywordMap.getOrDefault(program.getId(), List.of())
+                ))
+                .toList();
+    }
 
     /**
      * 프로그램 단건 조회
@@ -454,7 +490,7 @@ public class ProgramService {
                 ProgramStatus.ACTIVE, pattern, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
         // 로그인 유저면 최근 검색어 저장 (trimmed 재사용, 게스트=null 제외)
         if (userId != null) {
-                recentSearchService.save(userId, trimmed);
+            recentSearchService.save(userId, trimmed);
         }
         return PageResponse.from(toCardResponsePage(programPage));
     }
@@ -472,6 +508,7 @@ public class ProgramService {
             return new ProgramFilterCondition(null, null, null, null, null);
         }
         return switch (chip) {
+            case HOT -> throw new BusinessException(ErrorCode.INVALID_SEARCH_CONDITION);
             case FREE           -> new ProgramFilterCondition(true, null, null, null, null);
             case NO_RESERVATION -> new ProgramFilterCondition(null, true, null, null, null);
             case THIS_WEEK -> {
