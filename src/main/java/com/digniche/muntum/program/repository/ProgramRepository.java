@@ -2,6 +2,7 @@ package com.digniche.muntum.program.repository;
 
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -230,19 +231,35 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             Pageable pageable
     );
 
-    // 바운딩 박스 4개 좌표 내에 있는 프로그램 목록 조회
+    // 바운딩 박스 내 프로그램 조회 (지도탭) — 필터칩 적용, 상한 있는 List 반환
     @Query("""
     SELECT p FROM Program p
-    WHERE p.status = 'ACTIVE' AND p.deletedAt IS NULL
+    WHERE p.status = :status AND p.deletedAt IS NULL
     AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL
     AND p.latitude BETWEEN :swLat AND :neLat
     AND p.longitude BETWEEN :swLng AND :neLng
-    ORDER BY p.createdAt DESC
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+    ORDER BY p.createdAt DESC, p.id DESC
     """)
-    Page<Program> findProgramsInBounds(
+    List<Program> findProgramsInBounds(
+            @Param("status") ProgramStatus status,
             @Param("swLat") double swLat, @Param("swLng") double swLng,
             @Param("neLat") double neLat, @Param("neLng") double neLng,
-            Pageable pageable
+            @Param("freeOnly") Boolean freeOnly,
+            @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("programType") ProgramType programType,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
+            Limit limit
     );
 
     // 생성자: System UUID로 채우기
@@ -303,5 +320,25 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
             Pageable pageable
+    );
+
+    // 바운딩 박스 내 프로그램 — 스크랩 수(지금핫한) 정렬. 단일선택이라 HOT일 땐 다른 필터 없음
+    @Query("""
+    SELECT p FROM Program p
+    LEFT JOIN Scrap s ON s.program = p AND s.deletedAt IS NULL
+    WHERE p.status = :status AND p.deletedAt IS NULL
+    AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL
+    AND p.latitude BETWEEN :swLat AND :neLat
+    AND p.longitude BETWEEN :swLng AND :neLng
+    GROUP BY p
+    ORDER BY COUNT(s) DESC, p.createdAt DESC, p.id DESC
+    """)
+    List<Program> findHotProgramsInBounds(
+            @Param("status") ProgramStatus status,
+            @Param("swLat") double swLat,
+            @Param("swLng") double swLng,
+            @Param("neLat") double neLat,
+            @Param("neLng") double neLng,
+            Limit limit
     );
 }
