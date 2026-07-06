@@ -2,10 +2,7 @@ package com.digniche.muntum.program.controller;
 
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
-import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
-import com.digniche.muntum.program.dto.request.ProgramFilterChip;
-import com.digniche.muntum.program.dto.request.ProgramSortType;
-import com.digniche.muntum.program.dto.request.ProgramUpdateRequest;
+import com.digniche.muntum.program.dto.request.*;
 import com.digniche.muntum.program.dto.response.ProgramCardResponse;
 import com.digniche.muntum.program.dto.response.ProgramImageResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
@@ -124,16 +121,13 @@ public class ProgramController {
         return ResponseEntity.ok(ApiResponse.success("근처 프로그램 목록 조회에 성공했습니다.", response));
     }
 
-    // 지도 뷰포트 바운딩 박스 기반 프로그램 조회
+    // 지도 뷰포트 바운딩 박스 기반 프로그램 조회 (필터칩 적용, 페이지네이션 없음·최대 200건)
     @GetMapping("/map")
-    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getProgramsInBounds(
-            @RequestParam double swLat,
-            @RequestParam double swLng,
-            @RequestParam double neLat,
-            @RequestParam double neLng,
-            @PageableDefault(size = 20) Pageable pageable
+    public ResponseEntity<ApiResponse<List<ProgramCardResponse>>> getProgramsInBounds(
+            @Valid @ModelAttribute MapBoundsRequest bounds,
+            @RequestParam(required = false) ProgramFilterChip chip
     ) {
-        PageResponse<ProgramCardResponse> response = programService.getProgramsInBounds(swLat, swLng, neLat, neLng, pageable);
+        List<ProgramCardResponse> response = programService.getProgramsInBounds(bounds, chip);
         return ResponseEntity.ok(ApiResponse.success("지도 영역 프로그램 목록 조회에 성공했습니다.", response));
     }
 

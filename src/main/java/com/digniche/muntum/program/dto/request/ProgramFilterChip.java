@@ -17,5 +17,7 @@ public enum ProgramFilterChip {
     EXHIBITION,
     PERFORMANCE,
     CLASS_EXPERIENCE,
-    FAIR;
+    FAIR,
+    // 지금핫한 (스크랩 수 정렬 — 필터 아님, 지도탭 전용)
+    HOT;
 }
