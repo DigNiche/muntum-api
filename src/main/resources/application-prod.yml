@@ -5,7 +5,7 @@ server:
 # 애플리케이션 정보
 spring:
   config:
-    import: secrets-prod.yml
+    import: "file:/home/ubuntu/muntum/app/secrets-prod.yml" # secrets-prod.yml EC2 내부 경로
 
   # JPA
   jpa:
