@@ -5,7 +5,7 @@ server:
 # 애플리케이션 정보
 spring:
   application:
-    name: Muntum
+    name: deepcuration
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
 
@@ -14,14 +14,8 @@ spring:
     timeout-per-shutdown-phase: 30s
 
 
-# JWT
-jwt:
-  access-token-validity-time: 3600000      # 1h = 3600000
-  refresh-token-validity-time: 1209600000  # 14d * 24h = 1209600000
-
-
 # Observability
 management:
   metrics:
     tags:
-      application: Muntum
+      application: deepcuration

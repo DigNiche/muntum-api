@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${service.port}
 
 
 # 애플리케이션 정보
@@ -24,40 +24,6 @@ spring:
     username: ${db.user}
     password: ${db.password}
 
-  # Redis
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password: ${redis.password}
-
-  # Batch
-  batch:
-    job:
-      enabled: true
-    jdbc:
-      initialize-schema: always
-
-
-
-# JWT
-jwt:
-  secret-key: ${jwt.secret-key}
-
-
-# Kakao Geocoding API
-kakao:
-  api:
-    key: ${kakao.api.rest.api.key}
-    geocoding-url: https://dapi.kakao.com/v2/local/search/address.json
-
-
-# AWS S3
-storage:
-  local:
-    base-path: ./uploads                               # dirPath
-    base-url: http://localhost:${server.port}/uploads
-# secrets 파일 적용
 
 # Observability
 management:
@@ -80,7 +46,7 @@ management:
 logging:
   level:
     root: INFO
-    com.digniche.muntum: DEBUG
+    com.art.deepcuration: DEBUG
     org.springframework.web: WARN
     org.springframework.security: DEBUG # ['DEBUG', 'INFO'] 인증 흐름 디버깅 시 -> DEBUG
     org.hibernate.SQL: DEBUG
