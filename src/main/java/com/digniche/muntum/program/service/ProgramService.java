@@ -19,11 +19,13 @@ import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import com.digniche.muntum.search.service.RecentSearchService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.digniche.muntum.program.dto.request.ProgramFilterChip;
@@ -42,9 +44,9 @@ import java.util.stream.Collectors;
 /**
  * 프로그램 비즈니스 로직 계층
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class ProgramService {
 
     private final ProgramRepository programRepository;
@@ -97,6 +99,7 @@ public class ProgramService {
      * - 텍스트 검색(search)과 키워드 검색(keywordIds)은 동시 사용 불가
      * - 텍스트 검색은 다음 단계에서 구현 (현재는 일반 목록으로 흐름)
      */
+    @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getPrograms(
             UUID userId,
             String search,
@@ -177,6 +180,7 @@ public class ProgramService {
 //    }
 
     // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
+    @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getProgramsByClosestEndDate(Pageable pageable) {
         LocalDate today = LocalDate.now();
         LocalDate monthEnd = today.with(TemporalAdjusters.lastDayOfMonth());
@@ -192,6 +196,7 @@ public class ProgramService {
     }
 
     // 인기 키워드를 많이 가진 프로그램 순으로 정렬
+    @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getProgramsByHotKeywords(int topN, Pageable pageable) {
         List<UUID> topKeywordIds = userKeywordRepository.findTopKeywords(PageRequest.of(0, topN))
                 .stream().map(Keyword::getId).toList();
@@ -210,6 +215,7 @@ public class ProgramService {
      * - 유저가 선택한 활성 키워드에 매칭되는 프로그램을, 매칭 개수 많은 순으로
      * - 정렬/필터는 키워드 검색(searchProgramsByKeywordIds)과 동일 로직 재사용
      */
+    @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getTastePrograms(
             UUID userId, ProgramFilterChip chip, int page, int size) {
 
@@ -234,6 +240,7 @@ public class ProgramService {
         );
         return PageResponse.from(toCardResponsePage(programPage));
     }
+
     private Sort createSort(ProgramSortType sort, Sort.Direction order) {
         Sort primarySort = Sort.by(order, sort.getProperty());
         // 1차 정렬이 createdAt이면 보조 키로 createdAt을 또 넣으면 중복이라, id만 붙인다.
@@ -249,6 +256,7 @@ public class ProgramService {
     /**
      * 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
      */
+    @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getNearbyPrograms(double lat, double lng, double radiusMeters, Pageable pageable) {
         Page<Program> programPage = programRepository.findNearbyPrograms(lat, lng, radiusMeters,pageable);
         return PageResponse.from(toCardResponsePage(programPage));
@@ -257,6 +265,7 @@ public class ProgramService {
     /**
      * 지도 뷰포트 바운딩 박스 기반 프로그램 조회
      */
+    @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getProgramsInBounds(
             double swLat, double swLng, double neLat, double neLng, Pageable pageable) {
         Page<Program> programPage = programRepository.findProgramsInBounds(swLat, swLng, neLat, neLng, pageable);
@@ -398,6 +407,7 @@ public class ProgramService {
     }
 
     //키워드 검색(사용자가 칩으로 직접 선택한 keywordIds 기반)
+    @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> searchProgramsByKeywords(
             List<UUID> keywordIds, ProgramFilterCondition filter, int page, int size) {
         //1. 입력 정리: dedupe + 빈값 가드
@@ -423,6 +433,7 @@ public class ProgramService {
     }
 
     // 텍스트 검색 (프로그램명/한줄소개/큐레이션 LIKE)
+    @Transactional(readOnly=true)
     public PageResponse<ProgramCardResponse> searchProgramsByText(
             UUID userId, String search, ProgramFilterCondition filter, int page, int size) {
 
@@ -443,7 +454,7 @@ public class ProgramService {
                 ProgramStatus.ACTIVE, pattern, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
         // 로그인 유저면 최근 검색어 저장 (trimmed 재사용, 게스트=null 제외)
         if (userId != null) {
-            recentSearchService.save(userId, trimmed);
+                recentSearchService.save(userId, trimmed);
         }
         return PageResponse.from(toCardResponsePage(programPage));
     }

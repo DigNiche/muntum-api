@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -23,41 +24,37 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Announcement extends BaseEntity {
 
-    /**
-     * 공지 ID
-     */
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
-    /**
-     * 공지 제목
-     */
-    @Column(
-            name = "title",
-            nullable = false,
-            length = 100
-    )
+    @Column(name = "title", nullable = false, length = 100)
     private String title;
 
-    /**
-     * 공지 내용
-     */
-    @Column(
-            name = "contents",
-            nullable = false,
-            columnDefinition = "TEXT"
-    )
+    @Column(name = "contents", nullable = false, columnDefinition = "TEXT")
     private String contents;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by", columnDefinition = "BINARY(16)")
+    private UUID deletedBy;
+
+
+    /**
+     * 공지 Builder
+     * @param title
+     * @param contents
+     */
     @Builder
-    public Announcement(
+    public Announcement(String title, String contents) {
+        this.title = title;
+        this.contents = contents;
+    }
+
+    // 제목 및 내용 수정
+    public void update(
             String title,
             String contents
     ) {
@@ -65,14 +62,9 @@ public class Announcement extends BaseEntity {
         this.contents = contents;
     }
 
-    /**
-     * 공지 수정
-     */
-    public void update(
-            String title,
-            String contents
-    ) {
-        this.title = title;
-        this.contents = contents;
+    // 소프트 삭제 구현
+    public void softDelete(UUID deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
     }
 }
