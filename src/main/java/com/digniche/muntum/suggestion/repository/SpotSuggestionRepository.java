@@ -26,25 +26,22 @@ public interface SpotSuggestionRepository extends JpaRepository<SpotSuggestion, 
 
     /**
      * 사용자 삭제 시
+     * - 생성자 / 수정자 / 제보자 / 검토자 System UUID로 채우기
      */
 
-    // 생성자: System UUID로 채우기
     @Modifying
-    @Query(value = "UPDATE spot_suggestions SET created_by = :systemUuid WHERE created_by = :userId", nativeQuery = true)
+    @Query("UPDATE SpotSuggestion s SET s.createdBy = :systemUuid WHERE s.createdBy = :userId")
     void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 
-    // 수정자: Null 처리
     @Modifying
-    @Query(value = "UPDATE spot_suggestions SET updated_by = NULL WHERE updated_by = :userId", nativeQuery = true)
-    void nullifyUpdatedBy(@Param("userId") UUID userId);
+    @Query("UPDATE SpotSuggestion s SET s.updatedBy = NULL WHERE s.updatedBy = :userId")
+    void replaceUpdatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 
-    // 제보자: Null 처리
     @Modifying
     @Query("UPDATE SpotSuggestion s SET s.informer = null WHERE s.informer.id = :userId")
-    void nullifyInformerByUserId(@Param("userId") UUID userId);
+    void replaceInformerWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 
-    // 검토자: Null 처리
     @Modifying
     @Query("UPDATE SpotSuggestion s SET s.reviewedBy = null WHERE s.reviewedBy.id = :userId")
-    void nullifyReviewedByUserId(@Param("userId") UUID userId);
+    void replaceReviewedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 }
