@@ -8,21 +8,11 @@ import com.digniche.muntum.Announcement.repository.AnnouncementRepository;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
-import com.digniche.muntum.program.dto.request.GeoCoordinate;
-import com.digniche.muntum.program.dto.request.ProgramCreateRequest;
-import com.digniche.muntum.program.dto.response.ProgramImageResponse;
-import com.digniche.muntum.program.dto.response.ProgramKeywordResponse;
-import com.digniche.muntum.program.dto.response.ProgramResponse;
-import com.digniche.muntum.program.entity.Program;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -30,7 +20,6 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
@@ -64,6 +53,7 @@ public class AnnouncementService {
         );
     }
 
+    // 관리자용 조회 - deleted 된 것까지 조회
     @Transactional(readOnly = true)
     public PageResponse<AnnouncementForManagerResponse> getAnnouncementsForManager(Pageable pageable) {
         return PageResponse.from(
@@ -74,13 +64,8 @@ public class AnnouncementService {
 
     @Transactional(readOnly = true)
     public AnnouncementResponse getAnnouncement(UUID id) {
-        return AnnouncementResponse.from(findAnnouncement(id));  // ← 아래 헬퍼와 이름 충돌, 주의
+        return AnnouncementResponse.from(findAnnouncement(id));
     }
-
-
-
-
-
 
     private Announcement findAnnouncement(UUID id) {
         return announcementRepository.findByIdAndDeletedAtIsNull(id)
