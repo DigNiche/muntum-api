@@ -1,5 +1,6 @@
 package com.digniche.muntum.keyword.repository;
 
+import com.digniche.muntum.keyword.entity.Keyword;
 import com.digniche.muntum.program.entity.ProgramKeyword;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Progrma - keyword Repository
+ * Program - keyword Repository
  */
 public interface ProgramKeywordRepository extends JpaRepository<ProgramKeyword, UUID> {
     // Keyword ID로 모두 삭제
@@ -40,6 +41,10 @@ public interface ProgramKeywordRepository extends JpaRepository<ProgramKeyword, 
     WHERE pk.program.id IN :programIds
 """)
     List<ProgramKeyword> findByProgramIdIn(@Param("programIds") Collection<UUID> programIds);
+
+    // Program과 연결된 키워드 목록 조회
+    @Query("SELECT DISTINCT pk.keyword FROM ProgramKeyword pk")
+    List<Keyword> findAllKeywords();
 
 
 }

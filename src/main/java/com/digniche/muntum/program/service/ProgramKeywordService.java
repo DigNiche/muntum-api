@@ -56,6 +56,10 @@ public class ProgramKeywordService {
         return programKeywordRepository.findByProgramId(programId);
     }
 
+    public List<Keyword> retrieveProgramsKeywords() {
+        return programKeywordRepository.findAllKeywords();
+    }
+
     /**
      * 검증 + 활성 키워드 조회 (등록/수정 공통)
      */
