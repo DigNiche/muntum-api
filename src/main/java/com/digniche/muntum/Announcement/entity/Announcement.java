@@ -43,9 +43,7 @@ public class Announcement extends BaseEntity {
 
 
     /**
-     * 공지 Builder
-     * @param title
-     * @param contents
+     * 공지사항 Builder
      */
     @Builder
     public Announcement(String title, String contents) {
@@ -54,10 +52,7 @@ public class Announcement extends BaseEntity {
     }
 
     // 제목 및 내용 수정
-    public void update(
-            String title,
-            String contents
-    ) {
+    public void update(String title,String contents) {
         this.title = title;
         this.contents = contents;
     }

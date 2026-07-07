@@ -55,9 +55,9 @@ public enum ErrorCode {
     SUGGESTION_NOT_EDITABLE("S003", "검토가 시작된 제보는 수정할 수 없습니다", HttpStatus.CONFLICT),
     INVALID_SUGGESTION_STATUS_TRANSITION("S004", "허용되지 않는 상태 변경입니다", HttpStatus.BAD_REQUEST),
 
-    // 공지
     // 공지사항
     ANNOUNCEMENT_NOT_FOUND("AN001", "존재하지 않는 공지사항입니다", HttpStatus.NOT_FOUND),
+    ANNOUNCEMENT_ACCESS_DENIED("S002", "공지사항에 접근할 권한이 없습니다", HttpStatus.FORBIDDEN),
 
     // 유효하지 않은 요청
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
