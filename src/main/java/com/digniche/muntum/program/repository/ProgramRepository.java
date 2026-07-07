@@ -262,20 +262,6 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             Limit limit
     );
 
-    // 생성자: System UUID로 채우기
-    @Modifying
-    @Query(value = "UPDATE programs SET created_by = :systemUuid WHERE created_by = :userId", nativeQuery = true)
-    void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
-
-    // 수정자: Null 처리
-    @Modifying
-    @Query(value = "UPDATE programs SET updated_by = NULL WHERE updated_by = :userId", nativeQuery = true)
-    void nullifyUpdatedBy(@Param("userId") UUID userId);
-
-    // 삭제자: Null 처리
-    @Modifying
-    @Query("UPDATE Program p SET p.deletedBy = null WHERE p.deletedBy = :userId")
-    void nullifyDeletedBy(@Param("userId") UUID userId);
 
     // 일반 목록 필터용 메서드 추가
     @Query(
@@ -341,4 +327,22 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("neLng") double neLng,
             Limit limit
     );
+
+    /**
+     * 사용자 삭제 시
+     * - 생성자, 수정자, 삭제자 System UUID로 채우기
+     */
+
+    @Modifying
+    @Query("UPDATE Program p SET p.createdBy = :systemUuid WHERE p.createdBy = :userId")
+    void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+
+    @Modifying
+    @Query("UPDATE Program p SET p.updatedBy = NULL WHERE p.updatedBy = :userId")
+    void replaceUpdatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+
+    @Modifying
+    @Query("UPDATE Program p SET p.deletedBy = :systemUuid WHERE p.deletedBy = :userId")
+    void replaceDeletedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+
 }

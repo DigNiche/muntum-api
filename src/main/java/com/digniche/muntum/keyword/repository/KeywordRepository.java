@@ -19,18 +19,20 @@ public interface KeywordRepository extends JpaRepository<Keyword, UUID> {
     boolean existsByNameAndIdNot(String name, UUID keywordId);
     List<Keyword> findAllByIdInAndActiveTrue(List<UUID> ids);
 
-    // 생성자: System UUID로 채우기
+    /**
+     * 사용자 삭제 시
+     * - 생성자, 수정자, 삭제자 System UUID로 채우기
+     */
+
     @Modifying
-    @Query(value = "UPDATE keywords SET created_by = :systemUuid WHERE created_by = :userId", nativeQuery = true)
+    @Query("UPDATE Keyword k SET k.createdBy = :systemUuid WHERE k.createdBy = :userId")
     void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 
-    // 수정자: Null 처리
     @Modifying
-    @Query(value = "UPDATE keywords SET updated_by = NULL WHERE updated_by = :userId", nativeQuery = true)
-    void nullifyUpdatedBy(@Param("userId") UUID userId);
+    @Query("UPDATE Keyword k SET k.updatedBy = :systemUuid WHERE k.updatedBy = :userId")
+    void replaceUpdatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 
-    // 삭제자: Null 처리
     @Modifying
-    @Query("UPDATE Keyword k SET k.deletedBy = null WHERE k.deletedBy = :userId")
-    void nullifyDeletedBy(@Param("userId") UUID userId);
+    @Query("UPDATE Keyword k SET k.deletedBy = :systemUuid WHERE k.deletedBy = :userId")
+    void replaceDeletedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 }

@@ -1,5 +1,6 @@
 package com.digniche.muntum.user.service;
 
+import com.digniche.muntum.Announcement.repository.AnnouncementRepository;
 import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.auth.service.AccessTokenService;
 import com.digniche.muntum.auth.service.AuthService;
@@ -45,6 +46,7 @@ public class UserService {
     private final KeywordRepository keywordRepository;
     private final ProgramRepository programRepository;
     private final UserTermsAgreementRepository userTermsAgreementRepository;
+    private final AnnouncementRepository announcementRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final AccessTokenService accessTokenService;
@@ -100,33 +102,37 @@ public class UserService {
         UserRole role = user.getRole();
 
         if (role == UserRole.MANAGER) {
-            // 제보의 생성/수정/검토자/제보자 Null 및 시스템 UUID 처리
+            // 제보의 생성/수정/검토자/제보자 시스템 UUID 처리
             spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.nullifyUpdatedBy(userId);
-            spotSuggestionRepository.nullifyReviewedByUserId(userId);
-            spotSuggestionRepository.nullifyInformerByUserId(userId);
-            // 키워드의 생성/수정/삭제자 Null 처리 및 시스템 UUID 처리
+            spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.replaceReviewedByWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.replaceInformerWithSystem(userId, SYSTEM_UUID);
+            // 키워드의 생성/수정/삭제자 시스템 UUID 처리
             keywordRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            keywordRepository.nullifyUpdatedBy(userId);
-            keywordRepository.nullifyDeletedBy(userId);
-            // 프로그램의 생성자/수정자 Null 처리 및 시스템 UUID 처리
+            keywordRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            keywordRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
+            // 프로그램의 생성자/수정자/삭제자 시스템 UUID 처리
             programRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            programRepository.nullifyUpdatedBy(userId);
-            programRepository.nullifyDeletedBy(userId);
+            programRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            programRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
+            // 공지의 생성자/수정자/삭제자
+            announcementRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            announcementRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            announcementRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
         } else if (role == UserRole.CURATOR) {
-            // 제보의 생성자/수정자/제보자 Null 처리 및 시스템 UUID 처리
+            // 제보의 생성자/수정자/제보자 시스템 UUID 처리
             spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.nullifyUpdatedBy(userId);
-            spotSuggestionRepository.nullifyInformerByUserId(userId);
+            spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.replaceInformerWithSystem(userId, SYSTEM_UUID);
             // 프로그램의 생성자/수정자 Null 처리 및 시스템 UUID 처리
             programRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            programRepository.nullifyUpdatedBy(userId);
+            programRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
 
         } else { // AUDIENCE
             // 제보의 생성자/수정자/제보자 Null 처리 및 시스템 UUID 처리
             spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.nullifyUpdatedBy(userId);
-            spotSuggestionRepository.nullifyInformerByUserId(userId);
+            spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.replaceInformerWithSystem(userId, SYSTEM_UUID);
         }
 
         // 사용자 데이터 삭제 : 약관 동의 이력, 스크랩, 취향 키어드

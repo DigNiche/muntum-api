@@ -46,26 +46,6 @@ public class Scrap extends BaseEntity {
     )
     private UUID id;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
-
-    /**
-     * 논리 삭제 처리
-     */
-    public void softDelete(UUID deletedBy) {
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
-    }
-    /**
-     * 관심 등록 복구
-     */
-    public void restore() {
-        this.deletedAt = null;
-        this.deletedBy = null;
-    }
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -74,9 +54,34 @@ public class Scrap extends BaseEntity {
     @JoinColumn(name = "program_id", nullable = false)
     private Program program;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
+
+
     @Builder
     public Scrap(User user, Program program) {
         this.user = user;
         this.program = program;
+    }
+
+    /**
+     * 논리 삭제 처리
+     */
+    public void softDelete(UUID deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
+
+
+    /**
+     * 관심 등록 복구
+     */
+    public void restore() {
+        this.deletedAt = null;
+        this.deletedBy = null;
     }
 }
