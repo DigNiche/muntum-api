@@ -191,18 +191,19 @@ public class ProgramService {
     }
 
     /**
-     * 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
+     * 지도
      */
+
+    // 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
     @Transactional(readOnly = true)
-    public PageResponse<ProgramCardResponse> getNearbyPrograms(double lat, double lng, double radiusMeters, Pageable pageable) {
-        Page<Program> programPage = programRepository.findNearbyPrograms(lat, lng, radiusMeters,pageable);
+    public PageResponse<ProgramCardResponse> getNearbyPrograms(double lat, double lng, double radiusKm, Pageable pageable) {
+        double radiusMeters = radiusKm * 1000;
+        Page<Program> programPage = programRepository.findNearbyPrograms(lat, lng, radiusMeters, pageable);
         return PageResponse.from(toCardResponsePage(programPage));
     }
 
-    /**
-     * 지도 뷰포트 바운딩 박스 기반 프로그램 조회 (필터칩 적용)
-     * - 페이지네이션 없음: 핀 + 바텀시트가 같은 데이터셋 공유, 상한 200건
-     */
+    // 지도 뷰포트 바운딩 박스 기반 프로그램 조회 (필터칩 적용)
+        // 페이지네이션 없음: 핀 + 바텀시트가 같은 데이터셋 공유, 상한 200건
     public List<ProgramCardResponse> getProgramsInBounds(MapBoundsRequest bounds, ProgramFilterChip chip) {
         List<Program> programs;
 

@@ -125,15 +125,19 @@ public class ProgramController {
         return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
     }
 
-    // 지도 : 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
+    /**
+     * 지도
+     */
+
+    // 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
     @GetMapping("/nearby")
     public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getNearbyPrograms(
             @RequestParam double lat,
             @RequestParam double lng,
-            @RequestParam double radiusMeters,
+            @RequestParam(defaultValue = "5") double radiusKm,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        PageResponse<ProgramCardResponse> response = programService.getNearbyPrograms(lat, lng, radiusMeters, pageable);
+        PageResponse<ProgramCardResponse> response = programService.getNearbyPrograms(lat, lng, radiusKm, pageable);
         return ResponseEntity.ok(ApiResponse.success("근처 프로그램 목록 조회에 성공했습니다.", response));
     }
 
@@ -150,7 +154,7 @@ public class ProgramController {
     /**
      * 프로그램 단건 조회
      */
-    @GetMapping("/{prograㅂm_id}")
+    @GetMapping("/{program_id}")
     public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(
             @PathVariable("program_id") UUID programId
     ) {
