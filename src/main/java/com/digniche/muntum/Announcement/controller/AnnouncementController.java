@@ -29,7 +29,7 @@ public class AnnouncementController {
     // 공지 작성
     @PreAuthorize("hasRole('MANAGER')")
     @PostMapping
-    public ResponseEntity<ApiResponse<AnnouncementResponse>> createAnnouncement(
+    public ResponseEntity<ApiResponse<AnnouncementResponse>> registerAnnouncement(
             @Valid @RequestBody AnnouncementRequest request) {
         AnnouncementResponse response = announcementService.createAnnouncement(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -38,27 +38,27 @@ public class AnnouncementController {
 
     // 공지 수정
     @PreAuthorize("hasRole('MANAGER')")
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<AnnouncementResponse>> updateAnnouncement(
-            @PathVariable UUID id,
+    @PutMapping("/{announcement_id}")
+    public ResponseEntity<ApiResponse<AnnouncementResponse>> rewriteAnnouncement(
+            @PathVariable("announcement_id") UUID announcmentId,
             @Valid @RequestBody AnnouncementRequest request) {
-        AnnouncementResponse response = announcementService.updateAnnouncement(id, request);
+        AnnouncementResponse response = announcementService.updateAnnouncement(announcmentId, request);
         return ResponseEntity.ok(ApiResponse.success("공지사항이 수정되었습니다.", response));
     }
 
     // 공지 삭제
     @PreAuthorize("hasRole('MANAGER')")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{announcement_id}")
     public ResponseEntity<ApiResponse<Void>> deleteAnnouncement(
-            @PathVariable UUID id,
+            @PathVariable("announcement_id") UUID announcmentId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        announcementService.deleteAnnouncement(id, userPrincipal.getUserId());
+        announcementService.softDeleteAnnouncement(announcmentId, userPrincipal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("공지사항이 삭제되었습니다.", null));
     }
 
     // 공지 목록 조회
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<AnnouncementResponse>>> getAnnouncements(
+    public ResponseEntity<ApiResponse<PageResponse<AnnouncementResponse>>> listAnnouncements(
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("공지사항 목록이 조회되었습니다", announcementService.getAnnouncements(pageable)));
     }
@@ -66,17 +66,17 @@ public class AnnouncementController {
     // 삭제된 공지까지 모두 조회
     @PreAuthorize("hasRole('MANAGER')")
     @GetMapping("/manager")
-    public ResponseEntity<ApiResponse<PageResponse<AnnouncementForManagerResponse>>> getAnnouncementsForManager(
+    public ResponseEntity<ApiResponse<PageResponse<AnnouncementForManagerResponse>>> listAnnouncementsForManager(
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("공지사항 목록이 삭제된 것까지 모두 조회되었습니다.", announcementService.getAnnouncementsForManager(pageable)));
     }
 
     // 공지 단건 조회
-    @GetMapping("/{id}")
+    @GetMapping("/{announcement_id}")
     public ResponseEntity<ApiResponse<AnnouncementResponse>> getAnnouncement(
-            @PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success("공지사항이 조회되었습니다.", announcementService.getAnnouncement(id)));
+            @PathVariable("announcement_id") UUID announcmentId) {
+        return ResponseEntity.ok(ApiResponse.success("공지사항이 조회되었습니다.", announcementService.getAnnouncement(announcmentId)));
     }
-
+// 4. 공지 컨트롤러 수정 (사용자 삭제되었을 때 by가 null처리 되면 어떻게 할지 다시 생각하기)
 
 }
