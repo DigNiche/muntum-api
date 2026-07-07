@@ -4,6 +4,7 @@ import com.digniche.muntum.suggestion.entity.SpotSuggestion;
 import com.digniche.muntum.suggestion.entity.SuggestionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,11 +19,16 @@ public interface SpotSuggestionRepository extends JpaRepository<SpotSuggestion, 
      */
 
     // 내 제보 목록 조회
+    @EntityGraph(attributePaths = {"informer", "reviewedBy"})
     Page<SpotSuggestion> findByInformer_Id(UUID informerId, Pageable pageable);
 
     // 관리자용 전체 목록 조회 - 상태 필터
+    @EntityGraph(attributePaths = {"informer", "reviewedBy"})
     Page<SpotSuggestion> findByStatus(SuggestionStatus status, Pageable pageable);
 
+    // 관리자용 전체 목록 조회 - 상태 필터 없음 (N+1 방지용 fetch join)
+    @EntityGraph(attributePaths = {"informer", "reviewedBy"})
+    Page<SpotSuggestion> findAllBy(Pageable pageable);
 
     /**
      * 사용자 삭제 시

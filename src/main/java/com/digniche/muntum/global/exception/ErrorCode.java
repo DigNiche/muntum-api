@@ -50,7 +50,6 @@ public enum ErrorCode {
     INVALID_KEYWORD_TYPE("K003", "유효하지 않은 키워드 타입입니다", HttpStatus.BAD_REQUEST),
 
     // 제보
-    // 제보 (SpotSuggestion)
     SUGGESTION_NOT_FOUND("S001", "존재하지 않는 제보입니다", HttpStatus.NOT_FOUND),
     SUGGESTION_ACCESS_DENIED("S002", "해당 제보에 접근할 권한이 없습니다", HttpStatus.FORBIDDEN),
     SUGGESTION_NOT_EDITABLE("S003", "검토가 시작된 제보는 수정할 수 없습니다", HttpStatus.CONFLICT),
