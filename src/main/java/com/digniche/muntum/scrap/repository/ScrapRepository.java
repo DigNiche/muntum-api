@@ -22,7 +22,7 @@ public interface ScrapRepository extends JpaRepository<Scrap, UUID> {
      * (restore 대상을 잡아야 하므로 deletedAt 조건을 넣지 않는다.)
      */
     Optional<Scrap> findByUserIdAndProgramId(UUID userId, UUID programId);
-
+    Optional<Scrap> findByUserIdAndProgramIdAndDeletedAtIsNull(UUID userId, UUID programId);
     /**
      * 내 스크랩 목록 조회
      * Program을 fetch join하여 N+1 문제를 방지한다.

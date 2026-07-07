@@ -49,6 +49,9 @@ public enum ErrorCode {
     KEYWORD_ALREADY_EXISTS("K002", "이미 존재하는 키워드입니다", HttpStatus.CONFLICT),
     INVALID_KEYWORD_TYPE("K003", "유효하지 않은 키워드 타입입니다", HttpStatus.BAD_REQUEST),
 
+    // 스크랩
+    SCRAP_NOT_FOUND("C001", "존재하지 않는 스크랩입니다", HttpStatus.NOT_FOUND),
+
     // 제보
     SUGGESTION_NOT_FOUND("S001", "존재하지 않는 제보입니다", HttpStatus.NOT_FOUND),
     SUGGESTION_ACCESS_DENIED("S002", "해당 제보에 접근할 권한이 없습니다", HttpStatus.FORBIDDEN),

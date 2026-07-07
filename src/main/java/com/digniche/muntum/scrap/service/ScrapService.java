@@ -72,13 +72,15 @@ public class ScrapService {
 
     /**
      * 스크랩 해제
-     * 멱등 처리: 활성 스크랩이 있을 때만 soft delete, 없거나 이미 삭제됐으면 그냥 성공.
+     * 이미 스크랩한 것만 삭제 가능
      */
     @Transactional
     public void deleteScrap(UUID userId, UUID programId) {
-        scrapRepository.findByUserIdAndProgramId(userId, programId)
-                .filter(scrap -> scrap.getDeletedAt() == null)
-                .ifPresent(scrap -> scrap.softDelete(userId));
+        Scrap scrap = scrapRepository
+                .findByUserIdAndProgramIdAndDeletedAtIsNull(userId, programId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SCRAP_NOT_FOUND));
+
+        scrap.softDelete(userId);
     }
 
     /**
