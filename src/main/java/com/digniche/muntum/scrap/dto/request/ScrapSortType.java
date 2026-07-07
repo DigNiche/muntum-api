@@ -19,11 +19,6 @@ public enum ScrapSortType {
     LATEST("program.createdAt"),
 
     /**
-     * 프로그램 조회수 기준
-     */
-    VIEW("program.viewCount"),
-
-    /**
      * 프로그램 운영 시작일 기준
      */
     START_DATE("program.startDate"),

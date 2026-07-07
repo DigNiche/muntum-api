@@ -11,11 +11,6 @@ public enum ProgramSortType {
     LATEST("createdAt"),
 
     /**
-     * 조회수 기준
-     */
-    VIEW("viewCount"),
-
-    /**
      * 운영 시작일 기준
      */
     START_DATE("startDate"),

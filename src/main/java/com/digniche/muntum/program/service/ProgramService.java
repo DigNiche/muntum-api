@@ -255,7 +255,6 @@ public class ProgramService {
     @Transactional
     public ProgramResponse getProgram(UUID programId) {
         Program program = getActiveProgram(programId);
-        program.increaseViewCount();
         List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
 
         List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(programId).stream()
