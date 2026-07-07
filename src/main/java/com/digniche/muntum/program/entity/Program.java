@@ -83,8 +83,8 @@ public class Program extends BaseEntity {
     @Column(name = "operating_hours", length = 500)
     private String operatingHours;
 
-    @Column(name = "operating_hours_meta", length = 255)
-    private String operatingHoursMeta;
+//    @Column(name = "operating_hours_meta", length = 255)
+//    private String operatingHoursMeta;
 
     @Column(name = "inquiry_contact", length = 255)
     private String inquiryContact;
@@ -144,7 +144,7 @@ public class Program extends BaseEntity {
         this.endDate = endDate;
         this.operatingPeriodMeta = operatingPeriodMeta;
         this.operatingHours = operatingHours;
-        this.operatingHoursMeta = operatingHoursMeta;
+//        this.operatingHoursMeta = operatingHoursMeta;
         this.inquiryContact = inquiryContact;
         this.viewCount = 0;
         this.status = ProgramStatus.ACTIVE;

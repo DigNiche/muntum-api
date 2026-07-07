@@ -1,6 +1,7 @@
 package com.digniche.muntum.program.dto.response;
 
 import com.digniche.muntum.program.entity.Program;
+import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
 
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ public record ProgramCardResponse(
         LocalDate startDate,
         LocalDate endDate,
         int viewCount,
+        ProgramStatus status,
         String thumbnailUrl,
         List<ProgramKeywordResponse> keywords,   // 키워드 이름 목록
         boolean ended
@@ -45,6 +47,7 @@ public record ProgramCardResponse(
                 program.getStartDate(),
                 program.getEndDate(),
                 program.getViewCount(),
+                program.getStatus(),
                 thumbnailUrl,
                 keywords,
                 ended
