@@ -77,6 +77,4 @@ public class AnnouncementController {
             @PathVariable("announcement_id") UUID announcmentId) {
         return ResponseEntity.ok(ApiResponse.success("공지사항이 조회되었습니다.", announcementService.getAnnouncement(announcmentId)));
     }
-// 4. 공지 컨트롤러 수정 (사용자 삭제되었을 때 by가 null처리 되면 어떻게 할지 다시 생각하기)
-
 }
