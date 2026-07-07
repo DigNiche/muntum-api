@@ -3,7 +3,7 @@ package com.digniche.muntum.scrap.controller;
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
-import com.digniche.muntum.program.dto.response.ProgramListResponse;
+import com.digniche.muntum.program.dto.response.ProgramCardResponse;
 import com.digniche.muntum.scrap.service.ScrapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -55,14 +55,14 @@ public class ScrapController {
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
-    public ApiResponse<PageResponse<ProgramListResponse>> getMyScraps(
+    public ApiResponse<PageResponse<ProgramCardResponse>> getMyScraps(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam(defaultValue = "SCRAPPED_AT") ScrapSortType sort,
             @RequestParam(defaultValue = "DESC") Sort.Direction order,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        PageResponse<ProgramListResponse> response =
+        PageResponse<ProgramCardResponse> response =
                 scrapService.getMyScraps(
                         userPrincipal.getUserId(),
                         sort,
