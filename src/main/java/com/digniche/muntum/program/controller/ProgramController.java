@@ -40,9 +40,7 @@ public class ProgramController {
     private final ProgramService programService;
     private final ProgramImageService programImageService;
 
-    /**
-     * 프로그램 등록 (큐레이터, 관리자)
-     */
+    // 프로그램 등록 (큐레이터, 관리자)
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProgramResponse>> createProgram(
@@ -52,95 +50,6 @@ public class ProgramController {
         ProgramResponse response = programService.createProgram(request, files);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("프로그램이 등록되었습니다.", response));
-    }
-
-    /**
-     * 프로그램 목록 조회 + 검색 (텍스트 / 키워드) 통합 진입점
-     * - search : 텍스트 검색 (프로그램명/한줄소개/큐레이션) — 다음 단계 구현
-     * - keywordIds : 키워드 검색 (칩 복수 선택)
-     * - 둘 다 없으면 일반 목록 (sort/order 적용)
-     * - search와 keywordIds 동시 사용 불가 (서비스에서 가드)
-     * - 주의: keywordIds 검색 시 정렬은 고정이라 sort/order는 무시됨
-     */
-    @GetMapping("")
-     public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getPrograms(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) List<UUID> keywordIds,
-            @RequestParam(required = false) ProgramFilterChip chip,
-            @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
-            @RequestParam(defaultValue = "DESC") Sort.Direction order,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @AuthenticationPrincipal UserPrincipal userPrincipal
-     ) {
-        UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
-
-        PageResponse<ProgramCardResponse> response = programService.getPrograms(userId, search, keywordIds, chip, sort, order, page, size);
-         return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
-
-//    public ApiResponse<PageResponse<ProgramListResponse>> getPrograms(
-//            @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
-//            @RequestParam(defaultValue = "DESC") Sort.Direction order,
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "20") int size
-//    ) {
-//        PageResponse<ProgramListResponse> response =
-//                programService.getPrograms(sort, order, page, size);
-//
-//        return ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response);
-    }
-
-    // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
-    @GetMapping("/closing-soon")
-    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getProgramsByClosestEndDate(
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
-        PageResponse<ProgramCardResponse> response = programService.getProgramsByClosestEndDate(pageable);
-        return ResponseEntity.ok(ApiResponse.success("마감 임박 프로그램 목록 조회에 성공했습니다.", response));
-    }
-
-    // 인기 키워드를 가진 프로그램 목록 정렬
-    @GetMapping("/hot")
-    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getHotPrograms(
-            @RequestParam(defaultValue = "5") @Min(1) int topN,
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
-        PageResponse<ProgramCardResponse> response = programService.getProgramsByHotKeywords(topN, pageable);
-        return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
-    }
-
-    // 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
-    @GetMapping("/nearby")
-    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getNearbyPrograms(
-            @RequestParam double lat,
-            @RequestParam double lng,
-            @RequestParam double radiusMeters,
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
-        PageResponse<ProgramCardResponse> response = programService.getNearbyPrograms(lat, lng, radiusMeters, pageable);
-        return ResponseEntity.ok(ApiResponse.success("근처 프로그램 목록 조회에 성공했습니다.", response));
-    }
-
-    // 지도 뷰포트 바운딩 박스 기반 프로그램 조회 (필터칩 적용, 페이지네이션 없음·최대 200건)
-    @GetMapping("/map")
-    public ResponseEntity<ApiResponse<List<ProgramCardResponse>>> getProgramsInBounds(
-            @Valid @ModelAttribute MapBoundsRequest bounds,
-            @RequestParam(required = false) ProgramFilterChip chip
-    ) {
-        List<ProgramCardResponse> response = programService.getProgramsInBounds(bounds, chip);
-        return ResponseEntity.ok(ApiResponse.success("지도 영역 프로그램 목록 조회에 성공했습니다.", response));
-    }
-
-
-    /**
-     * 프로그램 단건 조회
-     */
-    @GetMapping("/{program_id}")
-    public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(
-            @PathVariable("program_id") UUID programId
-    ) {
-        ProgramResponse response = programService.getProgram(programId);
-        return ResponseEntity.ok(ApiResponse.success("프로그램 조회에 성공했습니다.", response));
     }
 
     /**
@@ -167,6 +76,86 @@ public class ProgramController {
     ) {
         programService.deleteProgram(programId, userPrincipal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("프로그램이 삭제되었습니다.", null));
+    }
+
+    /**
+     * 프로그램 목록 조회 + 검색 (텍스트 / 키워드) 통합 진입점
+     * - search : 텍스트 검색 (프로그램명/한줄소개/큐레이션) — 다음 단계 구현
+     * - keywordIds : 키워드 복수 검색
+     * - chip : 필터 칩 단일 선택
+     * - 둘 다 없으면 일반 목록 (sort/order 적용)
+     * - search와 keywordIds 동시 사용 불가 (서비스에서 가드)
+     * - 주의: keywordIds 검색 시 정렬은 고정이라 sort/order는 무시됨
+     */
+    @GetMapping("")
+     public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getPrograms(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<UUID> keywordIds,
+            @RequestParam(required = false) ProgramFilterChip chip,
+            @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
+            @RequestParam(defaultValue = "DESC") Sort.Direction order,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+     ) {
+        UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
+
+        PageResponse<ProgramCardResponse> response = programService.getPrograms(userId, search, keywordIds, chip, sort, order, page, size);
+         return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
+    }
+
+    // 섹션별 목록 조회 : 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
+    @GetMapping("/closing-soon")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getProgramsByClosestEndDate(
+            @RequestParam(required = false) ProgramFilterChip chip,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        PageResponse<ProgramCardResponse> response = programService.getProgramsByClosestEndDate(pageable);
+        return ResponseEntity.ok(ApiResponse.success("마감 임박 프로그램 목록 조회에 성공했습니다.", response));
+    }
+
+    // 섹션별 목록 조회 : 인기 키워드를 가진 프로그램 목록 정렬
+    @GetMapping("/hot")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getHotPrograms(
+            @RequestParam(required = false) ProgramFilterChip chip,
+            @RequestParam(defaultValue = "5") @Min(1) int topN,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        PageResponse<ProgramCardResponse> response = programService.getProgramsByHotKeywords(topN, pageable);
+        return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
+    }
+
+    // 지도 : 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
+    @GetMapping("/nearby")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getNearbyPrograms(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam double radiusMeters,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        PageResponse<ProgramCardResponse> response = programService.getNearbyPrograms(lat, lng, radiusMeters, pageable);
+        return ResponseEntity.ok(ApiResponse.success("근처 프로그램 목록 조회에 성공했습니다.", response));
+    }
+
+    // 지도 뷰포트 바운딩 박스 기반 프로그램 조회 (필터칩 적용, 페이지네이션 없음·최대 200건)
+    @GetMapping("/map")
+    public ResponseEntity<ApiResponse<List<ProgramCardResponse>>> getProgramsInBounds(
+            @Valid @ModelAttribute MapBoundsRequest bounds,
+            @RequestParam(required = false) ProgramFilterChip chip
+    ) {
+        List<ProgramCardResponse> response = programService.getProgramsInBounds(bounds, chip);
+        return ResponseEntity.ok(ApiResponse.success("지도 영역 프로그램 목록 조회에 성공했습니다.", response));
+    }
+
+    /**
+     * 프로그램 단건 조회
+     */
+    @GetMapping("/{prograㅂm_id}")
+    public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(
+            @PathVariable("program_id") UUID programId
+    ) {
+        ProgramResponse response = programService.getProgram(programId);
+        return ResponseEntity.ok(ApiResponse.success("프로그램 조회에 성공했습니다.", response));
     }
 
     /**

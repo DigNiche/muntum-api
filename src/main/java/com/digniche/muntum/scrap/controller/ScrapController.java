@@ -19,7 +19,7 @@ import java.util.UUID;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/scraps")
 public class ScrapController {
 
     private final ScrapService scrapService;
@@ -28,7 +28,7 @@ public class ScrapController {
      * 스크랩 등록 (로그인 사용자)
      */
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/program/{program_id}/scrap")
+    @PostMapping("/{program_id}")
     public ApiResponse<Void> createScrap(
             @PathVariable("program_id") UUID programId,
             @AuthenticationPrincipal UserPrincipal userPrincipal
@@ -41,7 +41,7 @@ public class ScrapController {
      * 스크랩 해제 (로그인 사용자)
      */
     @PreAuthorize("isAuthenticated()")
-    @DeleteMapping("/program/{program_id}/scrap")
+    @DeleteMapping("{program_id}")
     public ApiResponse<Void> deleteScrap(
             @PathVariable("program_id") UUID programId,
             @AuthenticationPrincipal UserPrincipal userPrincipal
@@ -54,7 +54,7 @@ public class ScrapController {
      * 내 스크랩 목록 조회 (로그인 사용자)
      */
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/scraps")
+    @GetMapping("/me")
     public ApiResponse<PageResponse<ProgramListResponse>> getMyScraps(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam(defaultValue = "SCRAPPED_AT") ScrapSortType sort,

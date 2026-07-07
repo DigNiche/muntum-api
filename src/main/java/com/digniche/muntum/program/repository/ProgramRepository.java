@@ -270,15 +270,13 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     FROM Program p
     WHERE p.status = :status
     AND p.deletedAt IS NULL
-    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:freeOnly IS NULL OR p.free = true) 
     AND (:noReservationOnly IS NULL OR p.reserved = false)
     AND (:programType IS NULL OR p.programType = :programType)
-    AND (
-        :weekStart IS NULL
-        OR (
-            (p.startDate IS NULL OR p.startDate <= :weekEnd)
-            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
-        )
+    AND (:weekStart IS NULL OR (
+                                (p.startDate IS NULL OR p.startDate <= :weekEnd)
+                                AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+                            )
     )
 """,
             countQuery = """

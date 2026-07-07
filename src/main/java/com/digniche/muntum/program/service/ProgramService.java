@@ -144,38 +144,6 @@ public class ProgramService {
         return PageResponse.from(toCardResponsePage(programPage));
 
     }
-//    public PageResponse<ProgramListResponse> getPrograms(Pageable pageable)
-//            ProgramSortType sort,
-//            Sort.Direction order,
-//            int page,
-//            int size
-//    )
-//    {
-//        Pageable pageable = PageRequest.of(
-//                page,
-//                size,
-//                createSort(sort, order)
-//        );
-//        // ① 엔티티 페이지 (변환 전) - 이름: programPage, 타입: Page<Program>
-//        // 1. 프로그램 목록 조회 (쿼리 1번)
-//        Page<Program> programPage = programRepository.findProgramsEndedLast(
-//                List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED),
-//                LocalDate.now(),
-//                pageable
-//        );
-//
-//        // 2. 이 페이지 프로그램들의 id 모으기
-//        List<UUID> programIds = programPage.getContent().stream()
-//                .map(Program::getId)
-//                .toList();
-//
-//        Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
-//
-//        Page<ProgramListResponse> responsePage = programPage.map(program ->
-//                ProgramListResponse.from(program, thumbnailMap.get(program.getId()))
-//        );
-//        return PageResponse.from(responsePage);
-//    }
 
     // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
     @Transactional(readOnly = true)
@@ -208,36 +176,7 @@ public class ProgramService {
 
         return PageResponse.from(toCardResponsePage(programPage));
     }
-    /**
-     * 내 취향 프로그램 목록
-     * - 유저가 선택한 활성 키워드에 매칭되는 프로그램을, 매칭 개수 많은 순으로
-     * - 정렬/필터는 키워드 검색(searchProgramsByKeywordIds)과 동일 로직 재사용
-     */
-    @Transactional(readOnly = true)
-    public PageResponse<ProgramCardResponse> getTastePrograms(
-            UUID userId, ProgramFilterChip chip, int page, int size) {
 
-        // 1. 유저의 활성 취향 키워드 ID (비활성/삭제는 SQL에서 이미 제외)
-        List<UUID> keywordIds = userKeywordRepository.findActiveKeywordIdsByUserId(userId);
-
-        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
-
-        // 2. 취향 키워드 없으면 빈 페이지 (hot과 동일 방어)
-        if (keywordIds.isEmpty()) {
-            return PageResponse.from(Page.empty(pageable));
-        }
-
-        // 3. 칩 → 필터 조건 (검색/일반목록과 동일 변환)
-        ProgramFilterCondition filter = createFilterCondition(chip);
-
-        Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
-                ProgramStatus.ACTIVE, keywordIds, LocalDate.now(),
-                filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
-                filter.weekStart(), filter.weekEnd(),
-                pageable                                                    // ← 여기도 같은 거
-        );
-        return PageResponse.from(toCardResponsePage(programPage));
-    }
 
     private Sort createSort(ProgramSortType sort, Sort.Direction order) {
         Sort primarySort = Sort.by(order, sort.getProperty());
@@ -492,6 +431,38 @@ public class ProgramService {
         if (userId != null) {
             recentSearchService.save(userId, trimmed);
         }
+        return PageResponse.from(toCardResponsePage(programPage));
+    }
+
+
+    /**
+     * 내 취향 프로그램 목록
+     * - 유저가 선택한 활성 키워드에 매칭되는 프로그램을, 매칭 개수 많은 순으로
+     * - 정렬/필터는 키워드 검색(searchProgramsByKeywordIds)과 동일 로직 재사용
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<ProgramCardResponse> getTastePrograms(
+            UUID userId, ProgramFilterChip chip, int page, int size) {
+
+        // 1. 유저의 활성 취향 키워드 ID (비활성/삭제는 SQL에서 이미 제외)
+        List<UUID> keywordIds = userKeywordRepository.findActiveKeywordIdsByUserId(userId);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+
+        // 2. 취향 키워드 없으면 빈 페이지 (hot과 동일 방어)
+        if (keywordIds.isEmpty()) {
+            return PageResponse.from(Page.empty(pageable));
+        }
+
+        // 3. 칩 → 필터 조건 (검색/일반목록과 동일 변환)
+        ProgramFilterCondition filter = createFilterCondition(chip);
+
+        Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
+                ProgramStatus.ACTIVE, keywordIds, LocalDate.now(),
+                filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
+                filter.weekStart(), filter.weekEnd(),
+                pageable                                                    // ← 여기도 같은 거
+        );
         return PageResponse.from(toCardResponsePage(programPage));
     }
 

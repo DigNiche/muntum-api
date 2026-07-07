@@ -25,7 +25,7 @@ import java.util.UUID;
 @RestController
 @Validated
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/suggestions")
+@RequestMapping("/api/v1/suggestions") //
 public class SpotSuggestionController {
 
     private final SpotSuggestionService spotSuggestionService;
@@ -97,7 +97,7 @@ public class SpotSuggestionController {
         return ResponseEntity.ok(ApiResponse.success("제보가 수정되었습니다.", response));
     }
 
-    //제보 상태 변경 - 관리자 전용
+    // 제보 상태 변경 - 관리자 전용
     @PreAuthorize("hasAnyRole('MANAGER')")
     @PatchMapping("/{suggestion_id}/status")
     public ResponseEntity<ApiResponse<SpotSuggestionResponse>> updateSuggestionStatus(

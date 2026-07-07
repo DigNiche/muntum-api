@@ -30,31 +30,7 @@ public class KeywordService {
 
     private final KeywordRepository keywordRepository;
     private final UserKeywordRepository userKeywordRepository;
-    private final UserRepository userRepository;
     private final ProgramKeywordRepository programKeywordRepository;
-
-    // 키워드 선택(온보딩 생성 / 마이페이지 수정)
-    @Transactional
-    public List<KeywordResponse> setTasteKeywords(UUID userId, SelectKeywordsRequest request) {
-        List<Keyword> keywords = keywordRepository.findAllByNameInAndActiveTrue(request.selectKeywords());
-
-        if (keywords.size() != request.selectKeywords().size()) {
-            throw new BusinessException(ErrorCode.KEYWORD_NOT_FOUND);
-        }
-
-        userKeywordRepository.deleteAllByUserId(userId);
-
-        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        user.updateTasteSelected(!request.selectKeywords().isEmpty());
-
-        List<UserKeyword> userKeywords = keywords.stream()
-                .map(k -> UserKeyword.builder().user(user).keyword(k).build())
-                .toList();
-
-        userKeywordRepository.saveAll(userKeywords);
-
-        return keywords.stream().map(KeywordResponse::from).toList();
-    }
 
     // 키워드 등록
     @Transactional
@@ -133,17 +109,9 @@ public class KeywordService {
         return KeywordResponse.from(keyword);
     }
 
-    // 내 취향 키워드 목록 조회
-    @Transactional(readOnly = true)
-    public List<KeywordResponse> retrieveSelectedKeywords(UUID userId) {
-        return userKeywordRepository.findAllByUserId(userId).stream()
-                .map(uk -> KeywordResponse.from(uk.getKeyword()))
-                .toList();
-    }
-
     // 인기 키워드 목록 조회
     @Transactional(readOnly = true)
-    public List<KeywordResponse> getHotKeywords(int topN) {
+    public List<KeywordResponse> getTopKeywords(int topN) {
         return userKeywordRepository.findTopKeywords(PageRequest.of(0, topN))
                 .stream()
                 .map(KeywordResponse::from)

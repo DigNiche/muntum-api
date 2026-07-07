@@ -26,6 +26,7 @@ public class AnnouncementController {
 
     private final AnnouncementService announcementService;
 
+    // 공지 작성
     @PreAuthorize("hasRole('MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<AnnouncementResponse>> createAnnouncement(
@@ -35,6 +36,7 @@ public class AnnouncementController {
                 .body(ApiResponse.success("공지사항이 등록되었습니다.", response));
     }
 
+    // 공지 수정
     @PreAuthorize("hasRole('MANAGER')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AnnouncementResponse>> updateAnnouncement(
@@ -44,6 +46,7 @@ public class AnnouncementController {
         return ResponseEntity.ok(ApiResponse.success("공지사항이 수정되었습니다.", response));
     }
 
+    // 공지 삭제
     @PreAuthorize("hasRole('MANAGER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteAnnouncement(
@@ -53,22 +56,27 @@ public class AnnouncementController {
         return ResponseEntity.ok(ApiResponse.success("공지사항이 삭제되었습니다.", null));
     }
 
+    // 공지 목록 조회
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<AnnouncementResponse>>> getAnnouncements(
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success(null, announcementService.getAnnouncements(pageable)));
+        return ResponseEntity.ok(ApiResponse.success("공지사항 목록이 조회되었습니다", announcementService.getAnnouncements(pageable)));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<AnnouncementResponse>> getAnnouncement(
-            @PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success(null, announcementService.getAnnouncement(id)));
-    }
-
+    // 삭제된 공지까지 모두 조회
     @PreAuthorize("hasRole('MANAGER')")
     @GetMapping("/manager")
     public ResponseEntity<ApiResponse<PageResponse<AnnouncementForManagerResponse>>> getAnnouncementsForManager(
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success(null, announcementService.getAnnouncementsForManager(pageable)));
+        return ResponseEntity.ok(ApiResponse.success("공지사항 목록이 삭제된 것까지 모두 조회되었습니다.", announcementService.getAnnouncementsForManager(pageable)));
     }
+
+    // 공지 단건 조회
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<AnnouncementResponse>> getAnnouncement(
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success("공지사항이 조회되었습니다.", announcementService.getAnnouncement(id)));
+    }
+
+
 }
