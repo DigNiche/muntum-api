@@ -56,6 +56,11 @@ public class ProgramService {
     private final KeywordRepository keywordRepository;
     private final RecentSearchService recentSearchService;
     private static final int MAP_MAX_RESULTS = 200;
+    private static final List<ProgramStatus> ACTIVE_ONLY =
+            List.of(ProgramStatus.ACTIVE); // 현재 운영중
+
+    private static final List<ProgramStatus> PUBLIC_VIEWABLE =
+            List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED); // 운영중+운영종료
 
     // 프로그램 등록
     @Transactional
@@ -130,7 +135,7 @@ public class ProgramService {
         Pageable pageable = PageRequest.of(page, size, createSort(sort, order));
 
         Page<Program> programPage = programRepository.findProgramsWithFilter(
-                ProgramStatus.ACTIVE,
+                PUBLIC_VIEWABLE,
                 filter.freeOnly(),
                 filter.noReservationOnly(),
                 filter.programType(),
@@ -174,7 +179,7 @@ public class ProgramService {
         }
 
         Page<Program> programPage = programRepository.findProgramsByKeywordIds(
-                ProgramStatus.ACTIVE, topKeywordIds, pageable);
+                ACTIVE_ONLY, topKeywordIds, pageable);
 
         return PageResponse.from(toCardResponsePage(programPage));
     }
@@ -211,13 +216,13 @@ public class ProgramService {
 
         if (chip == ProgramFilterChip.HOT) {
             programs = programRepository.findHotProgramsInBounds(
-                    ProgramStatus.ACTIVE,
+                    ACTIVE_ONLY,
                     bounds.swLat(), bounds.swLng(), bounds.neLat(), bounds.neLng(),
                     Limit.of(MAP_MAX_RESULTS));
         } else {
             ProgramFilterCondition filter = createFilterCondition(chip);
             programs = programRepository.findProgramsInBounds(
-                    ProgramStatus.ACTIVE,
+                    ACTIVE_ONLY,
                     bounds.swLat(), bounds.swLng(), bounds.neLat(), bounds.neLng(),
                     filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
                     filter.weekStart(), filter.weekEnd(),
@@ -257,8 +262,7 @@ public class ProgramService {
      */
     @Transactional
     public ProgramResponse getProgram(UUID programId) {
-        Program program = getActiveProgram(programId);
-        program.increaseViewCount();
+        Program program = getPublicViewableProgram(programId);
         List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
 
         List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(programId).stream()
@@ -270,7 +274,7 @@ public class ProgramService {
     // 프로그램 수정
     @Transactional
     public ProgramResponse updateProgram(UUID programId, ProgramUpdateRequest request, List<MultipartFile> files) {
-        Program program = getActiveProgramForUpdate(programId);
+        Program program = getExistingProgram(programId);
 
         if (request.operatingPeriod() != null) {
             List<LocalDate> operatingPeriod = validateProgramPeriod(request.operatingPeriod());
@@ -319,27 +323,36 @@ public class ProgramService {
     // 프로그램 삭제
     @Transactional
     public void deleteProgram(UUID programId, UUID deletedBy) {
-        Program program = getActiveProgramForUpdate(programId);
+        Program program = getExistingProgram(programId);
+
         programImageRepository.deleteAllByProgramId(programId);
         programKeywordRepository.deleteAllByProgramId(programId);
         programRepository.delete(program);
     }
 
     /**
-     * 삭제되지 않은 프로그램 조회
+     *  공개 조회용 (ACTIVE, ENDED)
      */
-    private Program getActiveProgram(UUID programId) {
+    private Program getPublicViewableProgram(UUID programId) {
         return programRepository.findByIdAndDeletedAtIsNullAndStatusIn(
-                        programId, List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED))
+                        programId, PUBLIC_VIEWABLE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 
-    // 삭제되지 않은 프로그램 조회 - Lock 적용
+    /**
+     *  관리자 작업용(수정, 삭제, 상태변경용 (ACTIVE/ENDED/HIDDEN = DeletedAt 만 null))
+     */
+    private Program getExistingProgram(UUID programId) {
+        return programRepository.findByIdAndDeletedAtIsNull(programId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
+    }
+
+/*    // 삭제되지 않은 프로그램 조회 - Lock 적용
     private Program getActiveProgramForUpdate(UUID programId) {
         return programRepository.findActiveProgramForUpdate(
                         programId, List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED))
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
-    }
+    }*/
 
     /**
      * 프로그램 기간 검증
@@ -413,7 +426,7 @@ public class ProgramService {
 
         //4. 조회 + 공통 후처리
         Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
-                ProgramStatus.ACTIVE, distinctIds, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
+                PUBLIC_VIEWABLE, distinctIds, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
 
         return PageResponse.from(toCardResponsePage(programPage));
     }
@@ -437,7 +450,7 @@ public class ProgramService {
 
         // 4. 조회 + 공통 후처리
         Page<Program> programPage = programRepository.searchProgramsByText(
-                ProgramStatus.ACTIVE, pattern, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
+                PUBLIC_VIEWABLE, pattern, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
         // 로그인 유저면 최근 검색어 저장 (trimmed 재사용, 게스트=null 제외)
         if (userId != null) {
             recentSearchService.save(userId, trimmed);
@@ -469,7 +482,7 @@ public class ProgramService {
         ProgramFilterCondition filter = createFilterCondition(chip);
 
         Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
-                ProgramStatus.ACTIVE, keywordIds, LocalDate.now(),
+                ACTIVE_ONLY, keywordIds, LocalDate.now(),
                 filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
                 filter.weekStart(), filter.weekEnd(),
                 pageable                                                    // ← 여기도 같은 거
@@ -501,5 +514,20 @@ public class ProgramService {
             case EXHIBITION, PERFORMANCE, CLASS_EXPERIENCE, FAIR ->
                     new ProgramFilterCondition(null, null, ProgramType.valueOf(chip.name()), null, null);
         };
+    }
+
+    @Transactional
+    public ProgramResponse updateProgramStatus(UUID programId, ProgramStatus status) {
+        Program program = getExistingProgram(programId);
+
+        program.updateStatus(status);
+
+        List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
+
+        List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(programId).stream()
+                .map(ProgramKeywordResponse::from)
+                .toList();
+
+        return ProgramResponse.from(program, images, keywords);
     }
 }

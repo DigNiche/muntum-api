@@ -23,7 +23,6 @@ public record ProgramCardResponse(
         BigDecimal longitude,
         LocalDate startDate,
         LocalDate endDate,
-        int viewCount,
         ProgramStatus status,
         String thumbnailUrl,
         List<ProgramKeywordResponse> keywords,   // 키워드 이름 목록
@@ -46,7 +45,6 @@ public record ProgramCardResponse(
                 program.getLongitude(),
                 program.getStartDate(),
                 program.getEndDate(),
-                program.getViewCount(),
                 program.getStatus(),
                 thumbnailUrl,
                 keywords,

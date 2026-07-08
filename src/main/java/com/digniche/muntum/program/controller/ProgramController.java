@@ -165,6 +165,17 @@ public class ProgramController {
     public ResponseEntity<ApiResponse<List<ProgramImageResponse>>> getThumbnails() {
         return ResponseEntity.ok(ApiResponse.success("썸네일 목록 조회에 성공했습니다.", programImageService.getThumbnails()));
     }
-
+    /**
+     * 프로그램 상태 변경 (관리자)
+     */
+    @PreAuthorize("hasAnyRole('MANAGER')")
+    @PatchMapping("/{program_id}/status")
+    public ResponseEntity<ApiResponse<ProgramResponse>> updateProgramStatus(
+            @PathVariable("program_id") UUID programId,
+            @Valid @RequestBody ProgramStatusUpdateRequest request
+    ) {
+        ProgramResponse response = programService.updateProgramStatus(programId, request.status());
+        return ResponseEntity.ok(ApiResponse.success("프로그램 상태가 변경되었습니다.", response));
+    }
 
 }

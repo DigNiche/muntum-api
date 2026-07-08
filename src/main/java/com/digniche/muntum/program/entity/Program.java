@@ -89,9 +89,6 @@ public class Program extends BaseEntity {
     @Column(name = "inquiry_contact", length = 255)
     private String inquiryContact;
 
-    @Column(name = "view_count", nullable = false)
-    private int viewCount = 0;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -146,7 +143,6 @@ public class Program extends BaseEntity {
         this.operatingHours = operatingHours;
         this.operatingHoursMeta = operatingHoursMeta;
         this.inquiryContact = inquiryContact;
-        this.viewCount = 0;
         this.status = ProgramStatus.ACTIVE;
     }
 
@@ -187,9 +183,6 @@ public class Program extends BaseEntity {
         if (inquiryContact != null) this.inquiryContact = inquiryContact;
     }
 
-    public void increaseViewCount() {
-        this.viewCount++;
-    }
 
     public void updateStatus(ProgramStatus status) {
         this.status = status;

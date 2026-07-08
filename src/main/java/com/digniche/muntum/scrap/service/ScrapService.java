@@ -4,7 +4,6 @@ import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.program.dto.response.ProgramCardResponse;
-import com.digniche.muntum.program.dto.response.ProgramListResponse;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.repository.ProgramRepository;
@@ -21,7 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.digniche.muntum.scrap.dto.request.ScrapSortType;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import com.digniche.muntum.keyword.repository.ProgramKeywordRepository;
+import com.digniche.muntum.program.dto.response.ProgramKeywordResponse;
 
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,7 +40,9 @@ public class ScrapService {
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
     private final ProgramImageService programImageService;
-
+    private final ProgramKeywordRepository programKeywordRepository;
+    private static final List<ProgramStatus> SCRAPPABLE =
+            List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED);
     /**
      * 스크랩 등록
      * - 기존 row 없음            → 새로 저장
@@ -48,7 +52,7 @@ public class ScrapService {
     @Transactional
     public void createScrap(UUID userId, UUID programId) {
         User user = getUser(userId);
-        Program program = getActiveProgram(programId);
+        Program program = getScrappableProgram(programId);
 
         scrapRepository.findByUserIdAndProgramId(userId, programId)
                 .ifPresentOrElse(
@@ -69,19 +73,21 @@ public class ScrapService {
 
     /**
      * 스크랩 해제
-     * 멱등 처리: 활성 스크랩이 있을 때만 soft delete, 없거나 이미 삭제됐으면 그냥 성공.
+     * 이미 스크랩한 것만 삭제 가능
      */
     @Transactional
     public void deleteScrap(UUID userId, UUID programId) {
-        scrapRepository.findByUserIdAndProgramId(userId, programId)
-                .filter(scrap -> scrap.getDeletedAt() == null)
-                .ifPresent(scrap -> scrap.softDelete(userId));
+        Scrap scrap = scrapRepository
+                .findByUserIdAndProgramIdAndDeletedAtIsNull(userId, programId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SCRAP_NOT_FOUND));
+
+        scrap.softDelete(userId);
     }
 
     /**
      * 내 스크랩 목록 조회
      */
-    public PageResponse<ProgramListResponse> getMyScraps(
+    public PageResponse<ProgramCardResponse> getMyScraps(
             UUID userId,
             ScrapSortType sort,
             Sort.Direction order,
@@ -94,7 +100,11 @@ public class ScrapService {
                 createSort(sort, order)
         );
 
-        Page<Scrap> scrapPage = scrapRepository.findMyScrapsWithProgram(userId, pageable);
+        Page<Scrap> scrapPage = scrapRepository.findMyScrapsWithProgram(
+                userId,
+                SCRAPPABLE,
+                pageable
+        );
 
         List<UUID> programIds = scrapPage.getContent().stream()
                 .map(scrap -> scrap.getProgram().getId())
@@ -102,9 +112,21 @@ public class ScrapService {
 
         Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
 
-        Page<ProgramListResponse> responsePage = scrapPage.map(scrap -> {
+        Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
+                .findByProgramIdIn(programIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        pk -> pk.getProgram().getId(),
+                        Collectors.mapping(ProgramKeywordResponse::from, Collectors.toList())
+                ));
+
+        Page<ProgramCardResponse> responsePage = scrapPage.map(scrap -> {
             Program program = scrap.getProgram();
-            return ProgramListResponse.from(program, thumbnailMap.get(program.getId()));
+            return ProgramCardResponse.from(
+                    program,
+                    thumbnailMap.get(program.getId()),
+                    keywordMap.getOrDefault(program.getId(), List.of())
+            );
         });
 
         return PageResponse.from(responsePage);
@@ -127,8 +149,8 @@ public class ScrapService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private Program getActiveProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNullAndStatus(programId, ProgramStatus.ACTIVE)
+    private Program getScrappableProgram(UUID programId) {
+        return programRepository.findByIdAndDeletedAtIsNullAndStatusIn(programId, SCRAPPABLE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 }
