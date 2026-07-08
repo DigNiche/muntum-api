@@ -4,6 +4,7 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.global.mail.MailService;
 import com.digniche.muntum.global.redis.PasswordResetRedisService;
+import com.digniche.muntum.global.redis.RefreshTokenService;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class PasswordResetService {
     private final MailService mailService;
     private final PasswordResetRedisService passwordResetRedisService;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final RefreshTokenService refreshTokenService;
 
     // 인증번호 생성 및 이메일 발송
     @Transactional(readOnly = true)
@@ -85,6 +87,7 @@ public class PasswordResetService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         user.changePassword(passwordEncoder.encode(newPassword));
+
         passwordResetRedisService.deleteResetToken(resetToken);
 
         log.debug("비밀번호 재설정 완료: email={}", email);
