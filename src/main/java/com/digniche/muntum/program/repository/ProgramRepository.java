@@ -28,6 +28,9 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     // 목록
     Page<Program> findByDeletedAtIsNullAndStatus(ProgramStatus status, Pageable pageable);
 
+    // 프로그램 status 조회
+    Optional<Program> findByIdAndDeletedAtIsNull(UUID id);
+
     Optional<Program> findByIdAndDeletedAtIsNullAndStatusIn(
             UUID id, Collection<ProgramStatus> statuses);
 
@@ -46,7 +49,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
     @Query("""
     SELECT p FROM Program p
-    WHERE p.status = :status
+    WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND p.endDate IS NOT NULL
     AND p.endDate >= :today
@@ -60,7 +63,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             value = """
         SELECT p FROM Program p
         JOIN ProgramKeyword pk ON pk.program = p
-        WHERE p.status = :status
+        WHERE p.status IN :statuses
         AND p.deletedAt IS NULL
         AND pk.keyword.id IN :keywordIds
         GROUP BY p
@@ -69,13 +72,13 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             countQuery = """
         SELECT COUNT(DISTINCT p) FROM Program p
         JOIN ProgramKeyword pk ON pk.program = p
-        WHERE p.status = :status
+        WHERE p.status IN :statuses
         AND p.deletedAt IS NULL
         AND pk.keyword.id IN :keywordIds
     """
     )
     Page<Program> findProgramsByKeywordIds(
-            @Param("status") ProgramStatus status,
+            @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("keywordIds") List<UUID> keywordIds,
             Pageable pageable
     );
@@ -87,7 +90,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     SELECT p
     FROM Program p
     JOIN ProgramKeyword pk ON pk.program = p
-    WHERE p.status = :status
+    WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND pk.keyword.id IN :keywordIds
     AND (:freeOnly IS NULL OR p.free = true)
@@ -116,7 +119,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     SELECT COUNT(DISTINCT p)
     FROM Program p
     JOIN ProgramKeyword pk ON pk.program = p
-    WHERE p.status = :status
+    WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND pk.keyword.id IN :keywordIds
     AND (:freeOnly IS NULL OR p.free = true)
@@ -132,7 +135,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
 """
     )
     Page<Program> searchProgramsByKeywordIds(
-            @Param("status") ProgramStatus status,
+            @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("keywordIds") List<UUID> keywordIds,
             @Param("today") LocalDate today,
             @Param("freeOnly") Boolean freeOnly,
@@ -149,7 +152,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             value = """
     SELECT p
     FROM Program p
-    WHERE p.status = :status
+    WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND (
         p.title LIKE :keyword ESCAPE '\\'
@@ -180,7 +183,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             countQuery = """
     SELECT COUNT(p)
     FROM Program p
-    WHERE p.status = :status
+    WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND (
         p.title LIKE :keyword ESCAPE '\\'
@@ -200,7 +203,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
 """
     )
     Page<Program> searchProgramsByText(
-            @Param("status") ProgramStatus status,
+            @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("keyword") String keyword,
             @Param("today") LocalDate today,
             @Param("freeOnly") Boolean freeOnly,
@@ -234,7 +237,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     // 바운딩 박스 내 프로그램 조회 (지도탭) — 필터칩 적용, 상한 있는 List 반환
     @Query("""
     SELECT p FROM Program p
-    WHERE p.status = :status AND p.deletedAt IS NULL
+    WHERE p.status IN :statuses AND p.deletedAt IS NULL
     AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL
     AND p.latitude BETWEEN :swLat AND :neLat
     AND p.longitude BETWEEN :swLng AND :neLng
@@ -251,7 +254,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     ORDER BY p.createdAt DESC, p.id DESC
     """)
     List<Program> findProgramsInBounds(
-            @Param("status") ProgramStatus status,
+            @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("swLat") double swLat, @Param("swLng") double swLng,
             @Param("neLat") double neLat, @Param("neLng") double neLng,
             @Param("freeOnly") Boolean freeOnly,
@@ -268,7 +271,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             value = """
     SELECT p
     FROM Program p
-    WHERE p.status = :status
+    WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND (:freeOnly IS NULL OR p.free = true) 
     AND (:noReservationOnly IS NULL OR p.reserved = false)
@@ -282,7 +285,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             countQuery = """
     SELECT COUNT(p)
     FROM Program p
-    WHERE p.status = :status
+    WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND (:freeOnly IS NULL OR p.free = true)
     AND (:noReservationOnly IS NULL OR p.reserved = false)
@@ -297,7 +300,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
 """
     )
     Page<Program> findProgramsWithFilter(
-            @Param("status") ProgramStatus status,
+            @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
             @Param("programType") ProgramType programType,
@@ -310,7 +313,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     @Query("""
     SELECT p FROM Program p
     LEFT JOIN Scrap s ON s.program = p AND s.deletedAt IS NULL
-    WHERE p.status = :status AND p.deletedAt IS NULL
+    WHERE p.status IN :statuses AND p.deletedAt IS NULL
     AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL
     AND p.latitude BETWEEN :swLat AND :neLat
     AND p.longitude BETWEEN :swLng AND :neLng
@@ -318,7 +321,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     ORDER BY COUNT(s) DESC, p.createdAt DESC, p.id DESC
     """)
     List<Program> findHotProgramsInBounds(
-            @Param("status") ProgramStatus status,
+            @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("swLat") double swLat,
             @Param("swLng") double swLng,
             @Param("neLat") double neLat,

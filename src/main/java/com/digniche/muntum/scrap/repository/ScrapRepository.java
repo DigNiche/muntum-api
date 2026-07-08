@@ -1,5 +1,6 @@
 package com.digniche.muntum.scrap.repository;
 
+import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.scrap.entity.Scrap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,13 +35,19 @@ public interface ScrapRepository extends JpaRepository<Scrap, UUID> {
             value = "SELECT s FROM Scrap s JOIN FETCH s.program p " +
                     "WHERE s.user.id = :userId " +
                     "AND s.deletedAt IS NULL " +
-                    "AND p.deletedAt IS NULL",
+                    "AND p.deletedAt IS NULL " +
+                    "AND p.status IN :statuses",
             countQuery = "SELECT COUNT(s) FROM Scrap s JOIN s.program p " +
                     "WHERE s.user.id = :userId " +
                     "AND s.deletedAt IS NULL " +
-                    "AND p.deletedAt IS NULL"
+                    "AND p.deletedAt IS NULL " +
+                    "AND p.status IN :statuses"
     )
-    Page<Scrap> findMyScrapsWithProgram(@Param("userId") UUID userId, Pageable pageable);
+    Page<Scrap> findMyScrapsWithProgram(
+            @Param("userId") UUID userId,
+            @Param("statuses") Collection<ProgramStatus> statuses,
+            Pageable pageable
+    );
 
     /**
      * 사용자의 스크랩 모두 삭제

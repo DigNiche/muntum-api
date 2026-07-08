@@ -41,7 +41,8 @@ public class ScrapService {
     private final UserRepository userRepository;
     private final ProgramImageService programImageService;
     private final ProgramKeywordRepository programKeywordRepository;
-
+    private static final List<ProgramStatus> SCRAPPABLE =
+            List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED);
     /**
      * 스크랩 등록
      * - 기존 row 없음            → 새로 저장
@@ -51,7 +52,7 @@ public class ScrapService {
     @Transactional
     public void createScrap(UUID userId, UUID programId) {
         User user = getUser(userId);
-        Program program = getActiveProgram(programId);
+        Program program = getScrappableProgram(programId);
 
         scrapRepository.findByUserIdAndProgramId(userId, programId)
                 .ifPresentOrElse(
@@ -99,7 +100,11 @@ public class ScrapService {
                 createSort(sort, order)
         );
 
-        Page<Scrap> scrapPage = scrapRepository.findMyScrapsWithProgram(userId, pageable);
+        Page<Scrap> scrapPage = scrapRepository.findMyScrapsWithProgram(
+                userId,
+                SCRAPPABLE,
+                pageable
+        );
 
         List<UUID> programIds = scrapPage.getContent().stream()
                 .map(scrap -> scrap.getProgram().getId())
@@ -144,8 +149,8 @@ public class ScrapService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private Program getActiveProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNullAndStatus(programId, ProgramStatus.ACTIVE)
+    private Program getScrappableProgram(UUID programId) {
+        return programRepository.findByIdAndDeletedAtIsNullAndStatusIn(programId, SCRAPPABLE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 }
