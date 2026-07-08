@@ -56,13 +56,13 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
     @Query("""
     SELECT p FROM Program p
-    WHERE p.status IN :statuses
+    WHERE p.status = :status
     AND p.deletedAt IS NULL
     AND p.endDate IS NOT NULL
     AND p.endDate >= :today
     AND p.endDate <= :monthEnd
     ORDER BY ABS(DATEDIFF(p.endDate, :today)) ASC
-""")
+    """)
     Page<Program> findByStatusOrderByClosestEndDate(@Param("status") ProgramStatus status, @Param("today") LocalDate today, @Param("monthEnd") LocalDate monthEnd, Pageable pageable);
 
     // 인기 키워드를 많이 가진 프로그램 순으로 정렬
@@ -73,6 +73,16 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
         WHERE p.status IN :statuses
         AND p.deletedAt IS NULL
         AND pk.keyword.id IN :keywordIds
+        AND (:freeOnly IS NULL OR p.free = true)
+        AND (:noReservationOnly IS NULL OR p.reserved = false)
+        AND (:programType IS NULL OR p.programType = :programType)
+        AND (
+            :weekStart IS NULL
+            OR (
+                (p.startDate IS NULL OR p.startDate <= :weekEnd)
+                AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+            )
+        )
         GROUP BY p
         ORDER BY COUNT(pk) DESC
     """,
@@ -82,14 +92,54 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
         WHERE p.status IN :statuses
         AND p.deletedAt IS NULL
         AND pk.keyword.id IN :keywordIds
+        AND (:freeOnly IS NULL OR p.free = true)
+        AND (:noReservationOnly IS NULL OR p.reserved = false)
+        AND (:programType IS NULL OR p.programType = :programType)
+        AND (
+            :weekStart IS NULL
+            OR (
+                (p.startDate IS NULL OR p.startDate <= :weekEnd)
+                AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+            )
+        )
     """
     )
     Page<Program> findProgramsByKeywordIds(
             @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("keywordIds") List<UUID> keywordIds,
+            @Param("freeOnly") Boolean freeOnly,
+            @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("programType") ProgramType programType,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
             Pageable pageable
     );
-
+    // 스크랩 많은 프로그램 순 조회
+    // 스크랩이 1개 이상 있는 프로그램만 조회됨
+    @Query(
+            value = """
+    SELECT p
+    FROM Scrap s
+    JOIN s.program p
+    WHERE p.status IN :statuses
+    AND p.deletedAt IS NULL
+    AND s.deletedAt IS NULL
+    GROUP BY p
+    ORDER BY COUNT(s) DESC, p.createdAt DESC, p.id DESC
+    """,
+                countQuery = """
+    SELECT COUNT(DISTINCT p)
+    FROM Scrap s
+    JOIN s.program p
+    WHERE p.status IN :statuses
+    AND p.deletedAt IS NULL
+    AND s.deletedAt IS NULL
+    """
+    )
+    Page<Program> findProgramsOrderByScrapCount(
+            @Param("statuses") Collection<ProgramStatus> statuses,
+            Pageable pageable
+    );
     // 키워드 검색: 사용자가 직접 선택한 keywordIds와 많이 매칭된 프로그램 순
     // 정렬: 매칭 수 DESC → 안 끝난 것 먼저(마감임박순) → 끝난 것(최근 종료순) → 미입력 맨 뒤
     @Query(
@@ -121,7 +171,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
                  WHEN p.endDate >= :today THEN p.endDate
              END ASC,
              p.endDate DESC
-""",
+    """,
             countQuery = """
     SELECT COUNT(DISTINCT p)
     FROM Program p
@@ -139,7 +189,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             AND (p.endDate IS NULL OR p.endDate >= :weekStart)
         )
     )
-"""
+    """
     )
     Page<Program> searchProgramsByKeywordIds(
             @Param("statuses") Collection<ProgramStatus> statuses,
@@ -155,8 +205,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
 
     // 텍스트 검색: title/tagline/curation LIKE 매칭
     // 정렬: 필드 우선순위(title→tagline→curation) → (안 끝난 것 먼저, 마감임박 → 끝난 것 최근순 → null 맨 뒤)
-    @Query(
-            value = """
+    @Query(value = """
     SELECT p
     FROM Program p
     WHERE p.status IN :statuses
@@ -186,7 +235,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
              ELSE 0 END ASC,
         CASE WHEN p.endDate >= :today THEN p.endDate END ASC,
         p.endDate DESC
-""",
+    """,
             countQuery = """
     SELECT COUNT(p)
     FROM Program p
@@ -207,7 +256,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             AND (p.endDate IS NULL OR p.endDate >= :weekStart)
         )
     )
-"""
+    """
     )
     Page<Program> searchProgramsByText(
             @Param("statuses") Collection<ProgramStatus> statuses,

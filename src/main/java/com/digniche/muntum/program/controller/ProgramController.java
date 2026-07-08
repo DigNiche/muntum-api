@@ -107,20 +107,34 @@ public class ProgramController {
             @PageableDefault(size = 20) Pageable pageable
     ) {
         PageResponse<ProgramCardResponse> response = programService.getProgramsByClosestEndDate(pageable);
-        return ResponseEntity.ok(ApiResponse.success("마감 임박 프로그램 목록 조회에 성공했습니다.", response));
+        return ResponseEntity.ok(ApiResponse.success("이번달 안에 끝나는 프로그램 목록 조회에 성공했습니다.", response));
     }
 
-    // 섹션별 목록 조회 : 인기 키워드를 가진 프로그램 목록 정렬
-    @GetMapping("/hot")
-    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getHotPrograms(
+    // 섹션별 목록 조회 : 인기 키워드 프로그램 목록
+    // 모아보기 섹션용. chip 적용 가능.
+    @GetMapping("/hot-keywords")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getHotKeywordPrograms(
             @RequestParam(required = false) ProgramFilterChip chip,
             @RequestParam(defaultValue = "5") @Min(1) int topN,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        PageResponse<ProgramCardResponse> response = programService.getProgramsByHotKeywords(topN, pageable);
+        PageResponse<ProgramCardResponse> response =
+                programService.getProgramsByHotKeywords(topN, chip, pageable);
+
         return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
     }
 
+    // 섹션별 목록 조회 : 스크랩 많은 순
+    // 지금 주목받는 섹션용. chip 없음.
+    @GetMapping("/hot")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getHotPrograms(
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        PageResponse<ProgramCardResponse> response =
+                programService.getProgramsByMostScrapped(pageable);
+
+        return ResponseEntity.ok(ApiResponse.success("스크랩 많은 프로그램 목록 조회에 성공했습니다.", response));
+    }
     /**
      * 지도
      */
