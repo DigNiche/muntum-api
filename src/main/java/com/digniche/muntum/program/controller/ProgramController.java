@@ -40,11 +40,10 @@ public class ProgramController {
     private final ProgramService programService;
     private final ProgramImageService programImageService;
 
-    // 프로그램 등록 (큐레이터, 관리자)
+    // 프로그램 등록
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<ProgramResponse>> createProgram(
-//            @Valid @RequestBody ProgramCreateRequest request
+    public ResponseEntity<ApiResponse<ProgramResponse>> registerProgram(
             @RequestPart("program") @Valid ProgramCreateRequest request,
             @RequestPart(value="images", required=false) List<MultipartFile> files) {
         ProgramResponse response = programService.createProgram(request, files);
@@ -52,22 +51,19 @@ public class ProgramController {
                 .body(ApiResponse.success("프로그램이 등록되었습니다.", response));
     }
 
-    /**
-     * 프로그램 수정 (큐레이터, 관리자)
-     */
+    // 프로그램 수정
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @PutMapping("/{program_id}")
-    public ResponseEntity<ApiResponse<ProgramResponse>> updateProgram(
+    @PutMapping(value = "/{program_id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ProgramResponse>> rewriteProgram(
             @PathVariable("program_id") UUID programId,
-            @Valid @RequestBody ProgramUpdateRequest request
+            @RequestPart("program") @Valid ProgramUpdateRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> files
     ) {
-        ProgramResponse response = programService.updateProgram(programId, request);
+        ProgramResponse response = programService.updateProgram(programId, request, files);
         return ResponseEntity.ok(ApiResponse.success("프로그램이 수정되었습니다.", response));
     }
 
-    /**
-     * 프로그램 삭제 (관리자)
-     */
+    // 프로그램 삭제
     @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/{program_id}")
     public ResponseEntity<ApiResponse<Void>> deleteProgram(
