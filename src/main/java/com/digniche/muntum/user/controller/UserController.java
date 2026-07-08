@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ public class UserController {
     private final UserService userService;
 
     // 닉네임 설정(생성 및 수정)
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("nickname")
     public ResponseEntity<ApiResponse<Void>> setNickname(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -34,6 +36,7 @@ public class UserController {
     }
 
     // 사용자 약관 동의
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/terms")
     public ResponseEntity<ApiResponse<Void>> updateTermsConsent(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestBody @Valid TermsConsentListRequest request) {
         userService.updateTermsConsent(userPrincipal.getUserId(), request);
@@ -41,6 +44,7 @@ public class UserController {
     }
 
     // 회원 탈퇴
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("")
     public ResponseEntity<ApiResponse<Void>> withdraw(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
