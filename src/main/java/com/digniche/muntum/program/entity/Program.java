@@ -83,8 +83,8 @@ public class Program extends BaseEntity {
     @Column(name = "operating_hours", length = 500)
     private String operatingHours;
 
-//    @Column(name = "operating_hours_meta", length = 255)
-//    private String operatingHoursMeta;
+    @Column(name = "operating_hours_meta", length = 255)
+    private String operatingHoursMeta;
 
     @Column(name = "inquiry_contact", length = 255)
     private String inquiryContact;
@@ -144,7 +144,7 @@ public class Program extends BaseEntity {
         this.endDate = endDate;
         this.operatingPeriodMeta = operatingPeriodMeta;
         this.operatingHours = operatingHours;
-//        this.operatingHoursMeta = operatingHoursMeta;
+        this.operatingHoursMeta = operatingHoursMeta;
         this.inquiryContact = inquiryContact;
         this.viewCount = 0;
         this.status = ProgramStatus.ACTIVE;
@@ -167,7 +167,7 @@ public class Program extends BaseEntity {
             String officialUrl,
             String operatingPeriodMeta,
             String operatingHours,
-//            String operatingHoursMeta,
+            String operatingHoursMeta,
             String inquiryContact
     ) {
         if (title != null) this.title = title;
@@ -183,7 +183,7 @@ public class Program extends BaseEntity {
         if (officialUrl != null) this.officialUrl = officialUrl;
         if (operatingPeriodMeta != null) this.operatingPeriodMeta = operatingPeriodMeta;
         if (operatingHours != null) this.operatingHours = operatingHours;
-//        if (operatingHoursMeta != null) this.operatingHoursMeta = operatingHoursMeta;
+        if (operatingHoursMeta != null) this.operatingHoursMeta = operatingHoursMeta;
         if (inquiryContact != null) this.inquiryContact = inquiryContact;
     }
 
