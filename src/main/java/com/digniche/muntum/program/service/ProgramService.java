@@ -98,7 +98,6 @@ public class ProgramService {
     /**
      * 프로그램 목록 조회 + 검색 통합 진입점 (합의 1: 서비스 최상단 디스패치)
      * - 텍스트 검색(search)과 키워드 검색(keywordIds)은 동시 사용 불가
-     * - 텍스트 검색은 다음 단계에서 구현 (현재는 일반 목록으로 흐름)
      */
     @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getPrograms(
@@ -170,16 +169,43 @@ public class ProgramService {
 
     // 프로그램 목록 정렬 조회 : 인기 키워드를 많이 가진 프로그램 순으로 정렬
     @Transactional(readOnly = true)
-    public PageResponse<ProgramCardResponse> getProgramsByHotKeywords(int topN, Pageable pageable) {
+    public PageResponse<ProgramCardResponse> getProgramsByHotKeywords(
+            int topN,
+            ProgramFilterChip chip,
+            Pageable pageable
+    ) {
         List<UUID> topKeywordIds = userKeywordRepository.findTopKeywords(PageRequest.of(0, topN))
-                .stream().map(Keyword::getId).toList();
+                .stream()
+                .map(Keyword::getId)
+                .toList();
 
         if (topKeywordIds.isEmpty()) {
             return PageResponse.from(Page.empty(pageable));
         }
 
+        ProgramFilterCondition filter = createFilterCondition(chip);
+
         Page<Program> programPage = programRepository.findProgramsByKeywordIds(
-                ACTIVE_ONLY, topKeywordIds, pageable);
+                ACTIVE_ONLY,
+                topKeywordIds,
+                filter.freeOnly(),
+                filter.noReservationOnly(),
+                filter.programType(),
+                filter.weekStart(),
+                filter.weekEnd(),
+                pageable
+        );
+
+        return PageResponse.from(toCardResponsePage(programPage));
+    }
+
+    // 프로그램 목록 정렬 조회 : 스크랩 많은 순
+    @Transactional(readOnly = true)
+    public PageResponse<ProgramCardResponse> getProgramsByMostScrapped(Pageable pageable) {
+        Page<Program> programPage = programRepository.findProgramsOrderByScrapCount(
+                ACTIVE_ONLY,
+                pageable
+        );
 
         return PageResponse.from(toCardResponsePage(programPage));
     }
