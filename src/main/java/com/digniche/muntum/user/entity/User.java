@@ -118,6 +118,10 @@ public class User extends BaseEntity {
         this.tasteSelected = selected;
     }
 
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
     public void verifyEmail() {
         this.emailVerified = true;
         this.emailVerifiedAt = LocalDateTime.now();

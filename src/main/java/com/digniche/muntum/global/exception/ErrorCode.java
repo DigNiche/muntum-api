@@ -23,6 +23,12 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND("A009", "Refresh Token이 존재하지 않습니다", HttpStatus.UNAUTHORIZED),
     INVALID_REFRESH_TOKEN("A010", "유효하지 않은 Refresh Token입니다", HttpStatus.UNAUTHORIZED),
 
+    // 비밀번호 재설정
+    VERIFICATION_CODE_EXPIRED("A011", "인증번호가 만료되었습니다. 다시 요청해주세요", HttpStatus.BAD_REQUEST),
+    INVALID_VERIFICATION_CODE("A012", "인증번호가 일치하지 않습니다", HttpStatus.BAD_REQUEST),
+    TOO_MANY_VERIFICATION_ATTEMPTS("A013", "인증 시도 횟수를 초과했습니다. 다시 요청해주세요", HttpStatus.TOO_MANY_REQUESTS),
+    INVALID_RESET_TOKEN("A014", "유효하지 않거나 만료된 요청입니다. 처음부터 다시 시도해주세요", HttpStatus.BAD_REQUEST),
+
     // 사용자 정보
     NICKNAME_ALREADY_EXISTS("U001", "이미 사용 중인 닉네임입니다", HttpStatus.CONFLICT),
 
