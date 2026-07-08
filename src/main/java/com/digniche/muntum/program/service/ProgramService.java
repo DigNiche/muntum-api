@@ -293,7 +293,7 @@ public class ProgramService {
                 request.address(),
                 request.officialUrl(),
                 request.operatingPeriodMeta(),
-                request.operatingHours(), //request.operatingHoursMeta(),
+                request.operatingHours(), request.operatingHoursMeta(),
                 request.inquiryContact()
         );
 
