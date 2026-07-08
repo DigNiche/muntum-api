@@ -57,9 +57,7 @@ public class ProgramService {
     private final RecentSearchService recentSearchService;
     private static final int MAP_MAX_RESULTS = 200;
 
-    /**
-     * 프로그램 등록
-     */
+    // 프로그램 등록
     @Transactional
     public ProgramResponse createProgram(ProgramCreateRequest request, List<MultipartFile> files) {
         Program program = request.toEntity();
@@ -145,7 +143,11 @@ public class ProgramService {
 
     }
 
-    // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
+    /**
+     * 목적별 프로그램 목록 조회 : 섹션
+     */
+
+    // 프로그램 목록 정렬 조회 : 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
     @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getProgramsByClosestEndDate(Pageable pageable) {
         LocalDate today = LocalDate.now();
@@ -161,7 +163,7 @@ public class ProgramService {
         return PageResponse.from(toCardResponsePage(programPage));
     }
 
-    // 인기 키워드를 많이 가진 프로그램 순으로 정렬
+    // 프로그램 목록 정렬 조회 : 인기 키워드를 많이 가진 프로그램 순으로 정렬
     @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getProgramsByHotKeywords(int topN, Pageable pageable) {
         List<UUID> topKeywordIds = userKeywordRepository.findTopKeywords(PageRequest.of(0, topN))
@@ -191,7 +193,7 @@ public class ProgramService {
     }
 
     /**
-     * 지도
+     * 목적별 프로그램 목록 조회 : 지도
      */
 
     // 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
@@ -265,12 +267,10 @@ public class ProgramService {
         return ProgramResponse.from(program, images, keywords);
     }
 
-    /**
-     * 프로그램 수정
-     */
+    // 프로그램 수정
     @Transactional
-    public ProgramResponse updateProgram(UUID programId, ProgramUpdateRequest request) {
-        Program program = getActiveProgram(programId);
+    public ProgramResponse updateProgram(UUID programId, ProgramUpdateRequest request, List<MultipartFile> files) {
+        Program program = getActiveProgramForUpdate(programId);
 
         if (request.operatingPeriod() != null) {
             List<LocalDate> operatingPeriod = validateProgramPeriod(request.operatingPeriod());
@@ -286,9 +286,6 @@ public class ProgramService {
             program.setLongitude(BigDecimal.valueOf(coord.longitude()));
         }
 
-        // TODO: 키워드 수정
-        // TODO: 프로그램 이미지 수정
-
         program.update(
                 request.title(), request.programType(), request.tagline(),
                 request.curation(), request.reserved(), request.free(),
@@ -300,23 +297,29 @@ public class ProgramService {
                 request.inquiryContact()
         );
 
-        List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
-
+        // 프로그램 키워드 수정
         if (request.keywordIds() != null) {
             programKeywordService.replaceKeywords(program, request.keywordIds());
         }
+
+        // 프로그램 이미지 수정
+        if (files != null && !files.isEmpty()) {
+            programImageService.replaceImages(program, files); // 반드시 마지막
+        }
+
+
+        List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
+
         List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(programId).stream()
                 .map(ProgramKeywordResponse::from)
                 .toList();
         return ProgramResponse.from(program, images, keywords);
     }
 
-    /**
-     * 프로그램 삭제
-     */
+    // 프로그램 삭제
     @Transactional
     public void deleteProgram(UUID programId, UUID deletedBy) {
-        Program program = getActiveProgram(programId);
+        Program program = getActiveProgramForUpdate(programId);
         programImageRepository.deleteAllByProgramId(programId);
         programKeywordRepository.deleteAllByProgramId(programId);
         programRepository.delete(program);
@@ -327,6 +330,13 @@ public class ProgramService {
      */
     private Program getActiveProgram(UUID programId) {
         return programRepository.findByIdAndDeletedAtIsNullAndStatusIn(
+                        programId, List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED))
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
+    }
+
+    // 삭제되지 않은 프로그램 조회 - Lock 적용
+    private Program getActiveProgramForUpdate(UUID programId) {
+        return programRepository.findActiveProgramForUpdate(
                         programId, List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED))
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
