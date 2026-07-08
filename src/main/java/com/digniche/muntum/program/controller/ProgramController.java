@@ -40,11 +40,10 @@ public class ProgramController {
     private final ProgramService programService;
     private final ProgramImageService programImageService;
 
-    // 프로그램 등록 (큐레이터, 관리자)
+    // 프로그램 등록
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<ProgramResponse>> createProgram(
-//            @Valid @RequestBody ProgramCreateRequest request
+    public ResponseEntity<ApiResponse<ProgramResponse>> registerProgram(
             @RequestPart("program") @Valid ProgramCreateRequest request,
             @RequestPart(value="images", required=false) List<MultipartFile> files) {
         ProgramResponse response = programService.createProgram(request, files);
@@ -52,22 +51,19 @@ public class ProgramController {
                 .body(ApiResponse.success("프로그램이 등록되었습니다.", response));
     }
 
-    /**
-     * 프로그램 수정 (큐레이터, 관리자)
-     */
+    // 프로그램 수정
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
-    @PutMapping("/{program_id}")
-    public ResponseEntity<ApiResponse<ProgramResponse>> updateProgram(
+    @PutMapping(value = "/{program_id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ProgramResponse>> rewriteProgram(
             @PathVariable("program_id") UUID programId,
-            @Valid @RequestBody ProgramUpdateRequest request
+            @RequestPart("program") @Valid ProgramUpdateRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> files
     ) {
-        ProgramResponse response = programService.updateProgram(programId, request);
+        ProgramResponse response = programService.updateProgram(programId, request, files);
         return ResponseEntity.ok(ApiResponse.success("프로그램이 수정되었습니다.", response));
     }
 
-    /**
-     * 프로그램 삭제 (관리자)
-     */
+    // 프로그램 삭제
     @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/{program_id}")
     public ResponseEntity<ApiResponse<Void>> deleteProgram(
@@ -125,15 +121,19 @@ public class ProgramController {
         return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
     }
 
-    // 지도 : 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
+    /**
+     * 지도
+     */
+
+    // 입력 좌표로부터 반경 n km 이내의 프로그램 목록 조회
     @GetMapping("/nearby")
     public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getNearbyPrograms(
             @RequestParam double lat,
             @RequestParam double lng,
-            @RequestParam double radiusMeters,
+            @RequestParam(defaultValue = "5") double radiusKm,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        PageResponse<ProgramCardResponse> response = programService.getNearbyPrograms(lat, lng, radiusMeters, pageable);
+        PageResponse<ProgramCardResponse> response = programService.getNearbyPrograms(lat, lng, radiusKm, pageable);
         return ResponseEntity.ok(ApiResponse.success("근처 프로그램 목록 조회에 성공했습니다.", response));
     }
 
@@ -150,7 +150,7 @@ public class ProgramController {
     /**
      * 프로그램 단건 조회
      */
-    @GetMapping("/{prograㅂm_id}")
+    @GetMapping("/{program_id}")
     public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(
             @PathVariable("program_id") UUID programId
     ) {

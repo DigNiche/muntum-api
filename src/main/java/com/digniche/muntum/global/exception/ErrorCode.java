@@ -40,6 +40,7 @@ public enum ErrorCode {
     PROGRAM_IMAGE_NOT_FOUND("I001", "존재하지 않는 이미지입니다", HttpStatus.NOT_FOUND),
     IMAGE_UPLOAD_FAILED("I002", "이미지 업로드에 실패했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_IMAGE_FILE("I003", "유효하지 않은 이미지 파일입니다", HttpStatus.BAD_REQUEST),
+    TOO_MANY_PROGRAM_IMAGES("I004", "이미지는 최대 5개까지 등록할 수 있습니다.", HttpStatus.BAD_REQUEST),
 
     // 카카오 GeoCoordinate
     ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),

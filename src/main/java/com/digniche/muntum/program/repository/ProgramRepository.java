@@ -2,12 +2,14 @@ package com.digniche.muntum.program.repository;
 
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Collection;
 import com.digniche.muntum.program.entity.ProgramType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +23,11 @@ import java.util.UUID;
  * 프로그램 데이터 접근 계층
  */
 public interface ProgramRepository extends JpaRepository<Program, UUID> {
+    // 수정 시 동시성 제어용: 동일 프로그램에 대한 동시 PUT 요청을 직렬화
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Program p WHERE p.id = :id AND p.deletedAt IS NULL AND p.status IN :statuses")
+    Optional<Program> findActiveProgramForUpdate(
+            @Param("id") UUID id, @Param("statuses") Collection<ProgramStatus> statuses);
 
     // 단건
     Optional<Program> findByIdAndDeletedAtIsNullAndStatus(UUID id, ProgramStatus status);
