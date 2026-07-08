@@ -272,6 +272,11 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             Limit limit
     );
 
+    //ACTIVE 상태이고, Deleted null이고, endDate가 오늘보다 이전인 프로그램 조회
+    List<Program> findByStatusAndDeletedAtIsNullAndEndDateBefore(
+            ProgramStatus status,
+            LocalDate date
+    );
 
     // 일반 목록 필터용 메서드 추가
     @Query(
