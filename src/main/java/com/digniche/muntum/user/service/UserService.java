@@ -14,6 +14,7 @@ import com.digniche.muntum.program.repository.ProgramRepository;
 import com.digniche.muntum.scrap.repository.ScrapRepository;
 import com.digniche.muntum.suggestion.repository.SpotSuggestionRepository;
 import com.digniche.muntum.user.dto.NicknameUpdateRequest;
+import com.digniche.muntum.user.dto.PasswordChangeRequest;
 import com.digniche.muntum.user.dto.TermsConsentListRequest;
 import com.digniche.muntum.user.dto.TermsConsentRequest;
 import com.digniche.muntum.user.entity.User;
@@ -169,5 +170,17 @@ public class UserService {
         userRepository.deleteByStatusAndDeletedAtBefore(UserStatus.DELETED, ago);
     }
 
-    // deploy
+    // 비밀번호 변경
+    @Transactional
+    public void changePassword(UUID userId, PasswordChangeRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD);  // 기존 A003 재사용
+        }
+
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
+        refreshTokenService.delete(userId);  // 다른 기기 세션 로그아웃 (재로그인 유도)
+    }
 }

@@ -44,8 +44,6 @@ public class UserTermsAgreement extends BaseEntity{
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "agreed", nullable = false)
-    private Boolean agreed = true;
     /**
      * 서비스 이용약관 동의 시각 — 필수
      */
@@ -112,7 +110,6 @@ public class UserTermsAgreement extends BaseEntity{
             String version
     ) {
         this.user = user;
-        this.agreed = true;
         this.termsOfServiceAt = termsOfServiceAt;
         this.privacyPolicyAt = privacyPolicyAt;
         this.marketingPushAt = marketingPushAt;

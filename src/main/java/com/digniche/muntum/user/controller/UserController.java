@@ -5,6 +5,7 @@ import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
 
 import com.digniche.muntum.user.dto.NicknameUpdateRequest;
+import com.digniche.muntum.user.dto.PasswordChangeRequest;
 import com.digniche.muntum.user.dto.TermsConsentListRequest;
 import com.digniche.muntum.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,5 +55,14 @@ public class UserController {
         userService.withdraw(userPrincipal.getUserId(), request, accessToken);
 
         return ResponseEntity.ok(ApiResponse.success("회원탈퇴가 완료되었습니다.", null));
+    }
+
+    // 비밀번호 변경
+    @PatchMapping("/password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestBody @Valid PasswordChangeRequest request) {
+        userService.changePassword(userPrincipal.getUserId(), request);
+        return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다.", null));
     }
 }
