@@ -80,8 +80,7 @@ public class ScrapService {
         Scrap scrap = scrapRepository
                 .findByUserIdAndProgramIdAndDeletedAtIsNull(userId, programId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SCRAP_NOT_FOUND));
-
-        scrap.softDelete(userId);
+        scrapRepository.delete(scrap);
     }
 
     /**

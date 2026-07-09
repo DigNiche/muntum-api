@@ -529,7 +529,7 @@ public class ProgramService {
             return new ProgramFilterCondition(null, null, null, null, null);
         }
         return switch (chip) {
-            case HOT -> throw new BusinessException(ErrorCode.INVALID_SEARCH_CONDITION);
+            case HOT -> throw new BusinessException(ErrorCode.INVALID_ACCESS_SECTION);
             case FREE           -> new ProgramFilterCondition(true, null, null, null, null);
             case NO_RESERVATION -> new ProgramFilterCondition(null, true, null, null, null);
             case THIS_WEEK -> {

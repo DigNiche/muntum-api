@@ -68,14 +68,6 @@ public class Scrap extends BaseEntity {
         this.program = program;
     }
 
-    /**
-     * 논리 삭제 처리
-     */
-    public void softDelete(UUID deletedBy) {
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
-    }
-
 
     /**
      * 관심 등록 복구
