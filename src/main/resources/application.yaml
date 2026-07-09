@@ -7,7 +7,7 @@ spring:
   application:
     name: Muntum
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}
+    active: ${SPRING_PROFILES_ACTIVE:prod}
 
   # Server Shutdown
   lifecycle:
