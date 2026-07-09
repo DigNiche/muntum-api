@@ -71,7 +71,6 @@ public class SecurityConfig {
                                                         "/api/v1/keywords/tagged", "/api/v1/keywords/top",
                                                         "/api/v1/programs", "/api/v1/programs/**"
                         ).permitAll()
-                        .requestMatchers("/api/v1/search", "/api/v1/search/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
