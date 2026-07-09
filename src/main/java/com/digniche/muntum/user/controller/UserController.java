@@ -58,6 +58,7 @@ public class UserController {
     }
 
     // 비밀번호 변경
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/password")
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
