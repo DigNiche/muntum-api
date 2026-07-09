@@ -117,6 +117,10 @@ public class User extends BaseEntity {
     public void updateTasteSelected(boolean selected) {
         this.tasteSelected = selected;
     }
+    //비밀번호 변경
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 
     public void verifyEmail() {
         this.emailVerified = true;

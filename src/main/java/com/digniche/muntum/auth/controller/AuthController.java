@@ -1,11 +1,16 @@
 package com.digniche.muntum.auth.controller;
 
+import com.digniche.muntum.auth.dto.request.PasswordFindRequest;
+import com.digniche.muntum.auth.dto.request.PasswordResetRequest;
 import com.digniche.muntum.auth.dto.request.RefreshTokenReissueRequest;
+import com.digniche.muntum.auth.dto.request.VerifyCodeRequest;
 import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
 import com.digniche.muntum.auth.dto.response.SignupResponse;
+import com.digniche.muntum.auth.dto.response.VerifyCodeResponse;
 import com.digniche.muntum.auth.service.AuthService;
+import com.digniche.muntum.auth.service.PasswordResetService;
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
 import jakarta.validation.Valid;
@@ -25,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     // 회원가입
     @PostMapping("/signup")
@@ -64,5 +70,35 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("로그아웃이 완료되었습니다.", null));
+    }
+
+
+    // 비밀번호 찾기 - 인증번호 발송
+    @PostMapping("/password/find")
+    public ResponseEntity<ApiResponse<Void>> findPassword(@RequestBody @Valid PasswordFindRequest request) {
+        passwordResetService.sendVerificationCode(request.email());
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("인증번호가 이메일로 발송되었습니다.", null));
+    }
+
+
+    // 비밀번호 찾기 - 인증번호 확인
+    @PostMapping("/password/verify-code")
+    public ResponseEntity<ApiResponse<VerifyCodeResponse>> verifyCode(@RequestBody @Valid VerifyCodeRequest request) {
+        String resetToken = passwordResetService.verifyCode(request.email(), request.code());
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("인증번호가 확인되었습니다.", new VerifyCodeResponse(resetToken)));
+    }
+
+
+    // 비밀번호 재설정
+    @PostMapping("/password/reset")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
+        passwordResetService.resetPassword(request.resetToken(), request.newPassword());
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("비밀번호가 재설정되었습니다.", null));
     }
 }
