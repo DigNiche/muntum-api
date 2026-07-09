@@ -21,6 +21,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * DispatcherServlet 진입 후 내에서의 전반적인 예외 처리
@@ -112,6 +113,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(400, "INVALID_REQUEST", message));
+    }
+
+    // 업로드 파일/요청 크기가 spring.servlet.multipart 제한을 초과했을 때
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException e) {
+        ErrorCode errorCode = ErrorCode.FILE_SIZE_EXCEEDED;
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), errorCode.getMessage()));
     }
 
     // 이 외 모든 Catch 예외 처리
