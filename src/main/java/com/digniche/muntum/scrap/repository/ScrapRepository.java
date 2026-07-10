@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -56,5 +57,16 @@ public interface ScrapRepository extends JpaRepository<Scrap, UUID> {
     @Query("DELETE FROM Scrap s WHERE s.user.id = :userId")
     void deleteAllByUserId(@Param("userId") UUID userId);
 
+    /**
+     * 사용자별 스크랩 개수 집계 (프로필/사용자 관리 조회용)
+     */
+    @Query("""
+    SELECT s.user.id, COUNT(s)
+    FROM Scrap s
+    WHERE s.user.id IN :userIds
+    AND s.deletedAt IS NULL
+    GROUP BY s.user.id
+""")
+    List<Object[]> countByUserIds(@Param("userIds") Collection<UUID> userIds);
 
 }
