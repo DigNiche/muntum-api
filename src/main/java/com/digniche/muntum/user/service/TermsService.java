@@ -64,7 +64,7 @@ public class TermsService {
     // 현재 게시 중인 약관 목록 (로그인 사용자용)
     @Transactional(readOnly = true)
     public List<TermsSummaryResponse> getActiveTerms() {
-        return termsRepository.findAllByActiveTrueAndDeletedAtIsNull().stream()
+        return termsRepository.findAllByDeletedAtIsNull().stream()
                 .map(TermsSummaryResponse::from)
                 .toList();
     }
