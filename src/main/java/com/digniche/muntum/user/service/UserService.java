@@ -28,6 +28,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.user.dto.UserProfileResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -57,6 +67,53 @@ public class UserService {
     private static final int DATA_RETENTION_DISPOSAL_YEAR = 5;
     private static final String WITHDRAWAL_NICKNAME_PREFIX = "탈퇴회원";
     private static final UUID SYSTEM_UUID = AuditorAwareImpl.SYSTEM_UUID;
+
+    // 내 프로필 조회 (마이페이지 프로필 + 계정관리 공용)
+    @Transactional(readOnly = true)
+    public UserProfileResponse getMyProfile(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return toProfileResponses(List.of(user)).get(0);
+    }
+
+    // 사용자 관리 - 사용자 목록 조회 (관리자 전용, 닉네임/이메일 검색)
+    @Transactional(readOnly = true)
+    public PageResponse<UserProfileResponse> getUsers(String search, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<User> users = (search == null || search.isBlank())
+                ? userRepository.findAllByStatusNot(UserStatus.DELETED, pageable)
+                : userRepository.searchByNicknameOrEmail(search.trim(), UserStatus.DELETED, pageable);
+
+        List<UserProfileResponse> content = toProfileResponses(users.getContent());
+        return PageResponse.from(new PageImpl<>(content, pageable, users.getTotalElements()));
+    }
+
+    // 조회된 사용자들의 키워드/제보/스크랩 개수를 집계하여 응답 DTO로 변환
+    private List<UserProfileResponse> toProfileResponses(List<User> users) {
+        if (users.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> userIds = users.stream().map(User::getId).toList();
+
+        Map<UUID, Long> keywordCounts = toCountMap(userKeywordRepository.countActiveByUserIds(userIds));
+        Map<UUID, Long> suggestionCounts = toCountMap(spotSuggestionRepository.countByInformerIds(userIds));
+        Map<UUID, Long> scrapCounts = toCountMap(scrapRepository.countByUserIds(userIds));
+
+        return users.stream()
+                .map(user -> UserProfileResponse.of(
+                        user,
+                        keywordCounts.getOrDefault(user.getId(), 0L),
+                        suggestionCounts.getOrDefault(user.getId(), 0L),
+                        scrapCounts.getOrDefault(user.getId(), 0L)
+                ))
+                .toList();
+    }
+
+    private Map<UUID, Long> toCountMap(List<Object[]> rows) {
+        return rows.stream()
+                .collect(Collectors.toMap(row -> (UUID) row[0], row -> (Long) row[1]));
+    }
 
     // 닉네임 설정(생성 및 수정)
     @Transactional
