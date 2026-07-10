@@ -21,6 +21,7 @@ public interface TermsRepository extends JpaRepository<Terms, UUID> {
 
     // 현재 게시 중인 약관 전체 (사용자용 목록)
     List<Terms> findAllByActiveTrueAndDeletedAtIsNull();
+    List<Terms> findAllByDeletedAtIsNull();
 
     // 타입별 현재 활성 버전 (활성화 시 기존 버전 내리기용)
     Optional<Terms> findByTypeAndActiveTrueAndDeletedAtIsNull(UserTermsType type);
