@@ -75,7 +75,7 @@ public enum ErrorCode {
     FILE_SIZE_EXCEEDED("G002", "업로드 가능한 파일 크기를 초과했습니다", HttpStatus.PAYLOAD_TOO_LARGE),
 
     // 500~
-    SERVER_ERROR("G001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
+    SERVER_ERROR("E001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
 
 
     private final String code;

@@ -127,7 +127,7 @@ public class ProgramController {
     @GetMapping("/hot-keywords")
     public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getHotKeywordPrograms(
             @RequestParam(required = false) ProgramFilterChip chip,
-            @RequestParam(defaultValue = "5") @Min(1) int topN,
+            @RequestParam(defaultValue = "5") @Min(value = 1, message = "topN은 1 이상이어야 합니다") int topN,
             @PageableDefault(size = 20) Pageable pageable
     ) {
         PageResponse<ProgramCardResponse> response =

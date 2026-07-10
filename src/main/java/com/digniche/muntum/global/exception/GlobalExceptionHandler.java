@@ -11,7 +11,6 @@ import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.entity.UserTermsType;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import jakarta.validation.ConstraintViolationException;
 
 /**
  * DispatcherServlet 진입 후 내에서의 전반적인 예외 처리
@@ -85,7 +85,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
         Throwable cause = e.getCause();
-        String message = "";
+        // 기본 메시지가 빈 문자열이라, enum 오류가 아닌 경우(JSON 문법 깨짐 등) message: ""로 내려가는 문제도 함께 고침
+        String message = ErrorCode.INVALID_REQUEST.getMessage(); // "잘못된 요청입니다."
         if (cause instanceof InvalidFormatException ife && ife.getTargetType().isEnum()) {
             Class<?> targetType = ife.getTargetType();
 
@@ -110,9 +111,11 @@ public class GlobalExceptionHandler {
             }
             // TODO: Enum 추가 시 작성
         }
+        // 하드코딩된 400, invalid request를 errorcode 기반으로 고침 (error가 007로 통일)
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(400, "INVALID_REQUEST", message));
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), message));
     }
 
     // 업로드 파일/요청 크기가 spring.servlet.multipart 제한을 초과했을 때
@@ -123,7 +126,20 @@ public class GlobalExceptionHandler {
                 .status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), errorCode.getMessage()));
     }
+    // @RequestParam, @PathVariable 등 파라미터 검증(@Min 등) 실패 시
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(ConstraintViolationException e) {
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
 
+        String message = e.getConstraintViolations().stream()
+                .findFirst()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .orElse(errorCode.getMessage());
+
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), message));
+    }
     // 이 외 모든 Catch 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
@@ -132,6 +148,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.SERVER_ERROR;
         return ResponseEntity
                 .status(errorCode.getStatus())
-                .body(ApiResponse.fail(errorCode.getStatus().value(), String.valueOf(errorCode), errorCode.getMessage()));
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), errorCode.getMessage()));
+
     }
 }
