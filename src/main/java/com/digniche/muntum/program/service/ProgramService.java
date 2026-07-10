@@ -346,6 +346,17 @@ public class ProgramService {
         return ProgramResponse.from(program, images, keywords);
     }
 
+    // 프로그램 이미지만 수정
+    @Transactional
+    public List<ProgramImageResponse> updateProgramImages(UUID programId, List<MultipartFile> files) {
+        Program program = getExistingProgram(programId);
+
+        List<MultipartFile> safeFiles = (files != null) ? files : List.of();
+        programImageService.replaceImages(program, safeFiles);
+
+        return programImageService.getOrderedImages(programId);
+    }
+
     // 프로그램 삭제
     @Transactional
     public void deleteProgram(UUID programId, UUID deletedBy) {

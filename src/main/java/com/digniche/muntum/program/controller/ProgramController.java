@@ -63,6 +63,18 @@ public class ProgramController {
         return ResponseEntity.ok(ApiResponse.success("프로그램이 수정되었습니다.", response));
     }
 
+    // 프로그램 이미지 수정 (전체 교체. null이면 전체 삭제로 동작)
+    @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
+    @PatchMapping(value = "/{program_id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<List<ProgramImageResponse>>> updateProgramImages(
+            @PathVariable("program_id") UUID programId,
+            @RequestPart(value = "images", required = false) List<MultipartFile> files
+    ) {
+        List<ProgramImageResponse> response = programService.updateProgramImages(programId, files);
+        return ResponseEntity.ok(ApiResponse.success("프로그램 이미지가 수정되었습니다.", response));
+    }
+
+
     // 프로그램 삭제
     @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/{program_id}")
