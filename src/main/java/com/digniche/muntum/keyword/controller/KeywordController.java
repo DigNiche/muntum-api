@@ -17,7 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +28,7 @@ import java.util.UUID;
  * 키워드 컨트롤러
  */
 @RestController
+@Validated
 @RequestMapping("/api/v1/keywords")
 @RequiredArgsConstructor
 public class KeywordController {
@@ -103,7 +106,7 @@ public class KeywordController {
     // 인기 키워드 목록 정렬
     @GetMapping("/top")
     public ResponseEntity<ApiResponse<List<KeywordResponse>>> getPopularKeywords(
-            @RequestParam(defaultValue = "6") @Min(1) int topN
+            @RequestParam(defaultValue = "6") @Min(value = 1, message = "topN은 1 이상이어야 합니다") int topN
     ) {
         List<KeywordResponse> keywords = keywordService.getTopKeywords(topN);
         return ResponseEntity.ok(ApiResponse.success("인기 키워드 목록을 조회했습니다.", keywords));
