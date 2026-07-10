@@ -351,7 +351,7 @@ public class ProgramService {
     public void deleteProgram(UUID programId, UUID deletedBy) {
         Program program = getExistingProgram(programId);
 
-        programImageRepository.deleteAllByProgramId(programId);
+        programImageService.deleteImages(programId);
         programKeywordRepository.deleteAllByProgramId(programId);
         programRepository.delete(program);
     }

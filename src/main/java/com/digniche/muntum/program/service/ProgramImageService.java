@@ -79,6 +79,17 @@ public class ProgramImageService {
         programImageRepository.saveAll(newImages);
     }
 
+    // 프로그램 이미지 삭제(DB + Storage)
+    @Transactional
+    public void deleteImages(UUID programId) {
+        List<ProgramImage> images =
+                programImageRepository.findByProgramIdOrderByDisplayOrderAsc(programId);
+
+        programImageRepository.deleteAllByProgramId(programId);
+
+        images.forEach(this::deleteStoredImageSafely);
+    }
+
     // 프로그램 별 이미지 목록 조회
     @Transactional(readOnly = true)
     public List<ProgramImageResponse> getOrderedImages(UUID programId) {
