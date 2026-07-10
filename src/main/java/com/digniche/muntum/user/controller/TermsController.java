@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 약관 API 컨트롤러
+ * 약관 컨트롤러
  */
 @RestController
 @RequiredArgsConstructor
@@ -28,7 +28,7 @@ public class TermsController {
 
     private final TermsService termsService;
 
-    // 약관 등록 (관리자)
+    // 약관 등록
     @PreAuthorize("hasAnyRole('MANAGER')")
     @PostMapping("")
     public ResponseEntity<ApiResponse<TermsResponse>> registerTerms(
@@ -39,7 +39,7 @@ public class TermsController {
                 .body(ApiResponse.success("약관이 등록되었습니다.", response));
     }
 
-    // 약관 수정 (관리자)
+    // 약관 수정
     @PreAuthorize("hasAnyRole('MANAGER')")
     @PutMapping("/{terms_id}")
     public ResponseEntity<ApiResponse<TermsResponse>> rewriteTerms(
@@ -50,7 +50,7 @@ public class TermsController {
         return ResponseEntity.ok(ApiResponse.success("약관이 수정되었습니다.", response));
     }
 
-    // 약관 활성화/게시 (관리자) — 같은 타입의 기존 게시 버전은 자동 비활성화
+    // 약관 활성화/게시 — 같은 타입의 기존 게시 버전은 자동 비활성화
     @PreAuthorize("hasAnyRole('MANAGER')")
     @PatchMapping("/{terms_id}/activate")
     public ResponseEntity<ApiResponse<TermsResponse>> activateTerms(
@@ -60,7 +60,7 @@ public class TermsController {
         return ResponseEntity.ok(ApiResponse.success("약관이 게시되었습니다.", response));
     }
 
-    // 약관 삭제 (관리자)
+    // 약관 삭제
     @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/{terms_id}")
     public ResponseEntity<ApiResponse<Void>> deleteTerms(
@@ -71,8 +71,8 @@ public class TermsController {
         return ResponseEntity.ok(ApiResponse.success("약관이 삭제되었습니다.", null));
     }
 
-    // 현재 게시 중인 약관 목록 (로그인 사용자)
-    @PreAuthorize("isAuthenticated()")
+    // 약관 목록 조회
+    @PreAuthorize("hasAnyRole('MANAGER')")
     @GetMapping("")
     public ResponseEntity<ApiResponse<List<TermsSummaryResponse>>> getActiveTerms() {
         return ResponseEntity.ok(

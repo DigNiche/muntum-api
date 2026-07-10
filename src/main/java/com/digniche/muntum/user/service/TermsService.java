@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 약관 비즈니스 로직 계층
+ * 약관 서비스
  */
 @Service
 @RequiredArgsConstructor
