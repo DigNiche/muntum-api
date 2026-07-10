@@ -21,6 +21,7 @@ import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserRole;
 import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.entity.UserTermsAgreement;
+import com.digniche.muntum.user.repository.TermsRepository;
 import com.digniche.muntum.user.repository.UserRepository;
 import com.digniche.muntum.user.repository.UserTermsAgreementRepository;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +59,7 @@ public class UserService {
     private final ProgramRepository programRepository;
     private final UserTermsAgreementRepository userTermsAgreementRepository;
     private final AnnouncementRepository announcementRepository;
+    private final TermsRepository termsRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final AccessTokenService accessTokenService;
@@ -177,6 +179,10 @@ public class UserService {
             announcementRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
             announcementRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
             announcementRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
+            // 약관의 생성자/수정자/삭제자
+            termsRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            termsRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            termsRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
         } else if (role == UserRole.CURATOR) {
             // 제보의 생성자/수정자/제보자 시스템 UUID 처리
             spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);

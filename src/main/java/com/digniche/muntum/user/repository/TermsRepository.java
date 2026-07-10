@@ -3,6 +3,9 @@ package com.digniche.muntum.user.repository;
 import com.digniche.muntum.user.entity.Terms;
 import com.digniche.muntum.user.entity.UserTermsType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,4 +30,21 @@ public interface TermsRepository extends JpaRepository<Terms, UUID> {
 
     // 타입별 전체 이력 (관리자용, 최신 시행일 순)
     List<Terms> findAllByTypeAndDeletedAtIsNullOrderByEffectiveAtDesc(UserTermsType type);
+
+    /**
+     * 사용자 삭제 시
+     * - 생성자, 수정자, 삭제자 System UUID로 채우기
+     */
+
+    @Modifying
+    @Query("UPDATE Terms t SET t.createdBy = :systemUuid WHERE t.createdBy = :userId")
+    void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+
+    @Modifying
+    @Query("UPDATE Terms t SET t.updatedBy = NULL WHERE t.updatedBy = :userId")
+    void replaceUpdatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+
+    @Modifying
+    @Query("UPDATE Terms t SET t.deletedBy = :systemUuid WHERE t.deletedBy = :userId")
+    void replaceDeletedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 }
