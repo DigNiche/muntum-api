@@ -2,6 +2,8 @@ package com.digniche.muntum.user.repository;
 
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,4 +30,24 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findWithdrawnUserForReactivation(@Param("email") String email, @Param("status") UserStatus status, @Param("maskingLetterPrefix") String MASKING_LETTER_PREFIX);
 
     void deleteByStatusAndDeletedAtBefore(UserStatus userStatus, LocalDateTime ago);
+
+    /**
+     * 관리자 사용자 관리 - 전체 목록 조회
+     */
+    Page<User> findAllByStatusNot(UserStatus status, Pageable pageable);
+
+    /**
+     * 관리자 사용자 관리 - 닉네임 또는 이메일 검색
+     */
+    @Query("""
+        SELECT u FROM User u
+        WHERE u.status <> :excludedStatus
+        AND (LOWER(u.nickname) LIKE LOWER(CONCAT('%', :search, '%'))
+             OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))
+    """)
+    Page<User> searchByNicknameOrEmail(
+            @Param("search") String search,
+            @Param("excludedStatus") UserStatus excludedStatus,
+            Pageable pageable
+    );
 }

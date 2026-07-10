@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public interface SpotSuggestionRepository extends JpaRepository<SpotSuggestion, UUID> {
@@ -50,4 +52,13 @@ public interface SpotSuggestionRepository extends JpaRepository<SpotSuggestion, 
     @Modifying
     @Query("UPDATE SpotSuggestion s SET s.reviewedBy = null WHERE s.reviewedBy.id = :userId")
     void replaceReviewedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+
+    // 사용자별 제보 개수 집계 (프로필/사용자 관리 조회용)
+    @Query("""
+    SELECT s.informer.id, COUNT(s)
+    FROM SpotSuggestion s
+    WHERE s.informer.id IN :userIds
+    GROUP BY s.informer.id
+""")
+    List<Object[]> countByInformerIds(@Param("userIds") Collection<UUID> userIds);
 }

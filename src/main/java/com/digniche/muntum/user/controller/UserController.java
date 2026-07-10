@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.digniche.muntum.user.dto.UserProfileResponse;
 
 /**
  * 사용자 컨트롤러
@@ -25,6 +26,15 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+
+    // 내 프로필 조회 (마이페이지 프로필 + 계정관리)
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getMyProfile(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        UserProfileResponse response = userService.getMyProfile(userPrincipal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("내 프로필 조회에 성공했습니다.", response));
+    }
 
     // 닉네임 설정(생성 및 수정)
     @PreAuthorize("isAuthenticated()")

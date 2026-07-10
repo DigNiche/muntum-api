@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,4 +47,15 @@ public interface UserKeywordRepository extends JpaRepository<UserKeyword, UUID> 
     AND uk.keyword.active = true
 """)
     List<UUID> findActiveKeywordIdsByUserId(@Param("userId") UUID userId);
+
+    // 사용자별 취향 키워드 개수 집계 (프로필/사용자 관리 조회용)
+    @Query("""
+    SELECT uk.user.id, COUNT(uk)
+    FROM UserKeyword uk
+    WHERE uk.user.id IN :userIds
+    AND uk.deletedAt IS NULL
+    AND uk.keyword.active = true
+    GROUP BY uk.user.id
+""")
+    List<Object[]> countActiveByUserIds(@Param("userIds") Collection<UUID> userIds);
 }
