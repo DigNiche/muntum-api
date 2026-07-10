@@ -34,8 +34,8 @@ public class ProgramKeywordService {
     // 빈 리스트는 replaceKeywords에서 "전체 삭제" 의미로 사용됨.
 // saveKeywords 단독 호출에서는 저장할 키워드가 없으므로 아무 작업도 하지 않는다.
     @Transactional
-    public void saveKeywords(Program program, List<UUID> keywordIds) {
-        List<Keyword> keywords = validateAndGetKeywords(keywordIds);
+    public void saveKeywords(Program program, List<String> keywordNames) {
+        List<Keyword> keywords = validateAndGetKeywords(keywordNames);
         saveLinks(program, keywords);
     }
 
@@ -43,8 +43,8 @@ public class ProgramKeywordService {
      * 키워드 전체 교체 (PUT용): 기존 삭제 → flush → 새로 저장
      */
     @Transactional
-    public void replaceKeywords(Program program, List<UUID> keywordIds) {
-        List<Keyword> keywords = validateAndGetKeywords(keywordIds);   // ← 삭제 전에 검증
+    public void replaceKeywords(Program program, List<String> keywordNames) {
+        List<Keyword> keywords = validateAndGetKeywords(keywordNames);   // ← 삭제 전에 검증
         programKeywordRepository.deleteAllByProgramId(program.getId());
         programKeywordRepository.flush();
         saveLinks(program, keywords);
@@ -65,20 +65,20 @@ public class ProgramKeywordService {
      */
     // null: 등록 시 키워드 없음, 수정 시에는 호출부에서 미변경으로 처리
     // empty: 연결할 키워드 없음. replaceKeywords에서는 전체 삭제 의미
-    private List<Keyword> validateAndGetKeywords(List<UUID> keywordIds) {
-        if (keywordIds == null || keywordIds.isEmpty()) {
+    private List<Keyword> validateAndGetKeywords(List<String> keywordNames) {
+        if (keywordNames == null || keywordNames.isEmpty()) {
             return List.of();
         }
 
-        List<UUID> distinctIds = keywordIds.stream().distinct().toList();   // ← dedupe 필수
+        List<String> distinctNames = keywordNames.stream().distinct().toList();   // ← dedupe 필수
 
-        if (distinctIds.size() > MAX_KEYWORDS) {
+        if (distinctNames.size() > MAX_KEYWORDS) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        List<Keyword> keywords = keywordRepository.findAllByIdInAndActiveTrue(distinctIds);
+        List<Keyword> keywords = keywordRepository.findAllByNameInAndActiveTrue(distinctNames);
 
-        if (keywords.size() != distinctIds.size()) {   // ← 없는 ID + 비활성 동시 검출
+        if (keywords.size() != distinctNames.size()) {   // ← 없는 이름 + 비활성 동시 검출
             throw new BusinessException(ErrorCode.KEYWORD_NOT_FOUND);
         }
 

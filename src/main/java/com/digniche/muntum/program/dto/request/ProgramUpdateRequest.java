@@ -76,7 +76,7 @@ public record ProgramUpdateRequest(
 //        String > imageUrls,
 
         @Size(max = 3, message = "키워드는 최대 3개까지 선택할 수 있습니다.")
-                List<@NotNull(message = "키워드 ID는 비어 있을 수 없습니다.") UUID> keywordIds
+        List<@NotBlank(message = "키워드 이름은 비어 있을 수 없습니다.") String> keywordNames
 
 ) {
         /**

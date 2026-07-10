@@ -98,7 +98,7 @@ public class ProgramController {
     @GetMapping("")
      public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getPrograms(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) List<UUID> keywordIds,
+            @RequestParam(required = false) List<String> keywordNames,
             @RequestParam(required = false) ProgramFilterChip chip,
             @RequestParam(defaultValue = "LATEST") ProgramSortType sort,
             @RequestParam(defaultValue = "DESC") Sort.Direction order,
@@ -108,7 +108,7 @@ public class ProgramController {
      ) {
         UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
 
-        PageResponse<ProgramCardResponse> response = programService.getPrograms(userId, search, keywordIds, chip, sort, order, page, size);
+        PageResponse<ProgramCardResponse> response = programService.getPrograms(userId, search, keywordNames, chip, sort, order, page, size);
          return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
     }
 

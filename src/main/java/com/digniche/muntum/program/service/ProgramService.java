@@ -87,7 +87,7 @@ public class ProgramService {
         }
         List<ProgramImageResponse> images = programImageService.getOrderedImages(program.getId());
 
-        programKeywordService.saveKeywords(savedProgram, request.keywordIds());
+        programKeywordService.saveKeywords(savedProgram, request.keywordNames());
 
         List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(savedProgram.getId()).stream()
                 .map(ProgramKeywordResponse::from)
@@ -103,7 +103,7 @@ public class ProgramService {
     public PageResponse<ProgramCardResponse> getPrograms(
             UUID userId,
             String search,
-            List<UUID> keywordIds,
+            List<String> keywordNames,
             ProgramFilterChip chip,
             ProgramSortType sort,
             Sort.Direction order,
@@ -111,7 +111,7 @@ public class ProgramService {
             int size
     ) {
         boolean hasSearch = search != null && !search.isBlank();
-        boolean hasKeywords = keywordIds != null && !keywordIds.isEmpty();
+        boolean hasKeywords = keywordNames != null && !keywordNames.isEmpty();
 
         ProgramFilterCondition filter = createFilterCondition(chip);
 
@@ -122,7 +122,7 @@ public class ProgramService {
 
         // 분기: 키워드 검색
         if (hasKeywords) {
-            return searchProgramsByKeywords(keywordIds, filter, page, size);
+            return searchProgramsByKeywords(keywordNames, filter, page, size);
         }
 
         // 분기: 텍스트 검색
@@ -328,8 +328,8 @@ public class ProgramService {
         );
 
         // 프로그램 키워드 수정
-        if (request.keywordIds() != null) {
-            programKeywordService.replaceKeywords(program, request.keywordIds());
+        if (request.keywordNames() != null) {
+            programKeywordService.replaceKeywords(program, request.keywordNames());
         }
 
         // 프로그램 이미지 수정
@@ -445,25 +445,28 @@ public class ProgramService {
     //키워드 검색(사용자가 칩으로 직접 선택한 keywordIds 기반)
     @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> searchProgramsByKeywords(
-            List<UUID> keywordIds, ProgramFilterCondition filter, int page, int size) {
+            List<String> keywordNames, ProgramFilterCondition filter, int page, int size) {
         //1. 입력 정리: dedupe + 빈값 가드
-        List<UUID> distinctIds = keywordIds.stream().distinct().toList();
-        if (distinctIds.isEmpty()) {
+        List<String> distinctNames = keywordNames.stream().distinct().toList();
+        if (distinctNames.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
         //2. 키워드 검증: 없거나 비활성인 UUID 섞였으면 입력단에서 거절
-        List<Keyword> found = keywordRepository.findAllByIdInAndActiveTrue(distinctIds);
-        if (found.size() != distinctIds.size()) {
+        List<Keyword> found = keywordRepository.findAllByNameInAndActiveTrue(distinctNames);
+        if (found.size() != distinctNames.size()) {
             throw new BusinessException(ErrorCode.KEYWORD_NOT_FOUND);
         }
+
+        // 검증된 키워드의 ID를 추출
+        List<UUID> keywordIds = found.stream().map(Keyword::getId).toList();
 
         //3. 정렬은 쿼리에 하드코딩 -> Pagable엔 page/size만, sort는 버림
         Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
 
         //4. 조회 + 공통 후처리
         Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
-                PUBLIC_VIEWABLE, distinctIds, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
+                PUBLIC_VIEWABLE, keywordIds, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
 
         return PageResponse.from(toCardResponsePage(programPage));
     }
