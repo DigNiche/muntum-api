@@ -36,6 +36,7 @@ public enum ErrorCode {
     TERMS_NOT_FOUND("T001", "약관 동의 정보가 존재하지 않습니다", HttpStatus.NOT_FOUND),
     REQUIRED_TERMS_CANNOT_DISAGREE("T002", "필수 약관은 철회할 수 없습니다", HttpStatus.BAD_REQUEST),
     REQUIRED_TERMS_NOT_AGREED("T003", "필수 약관에 동의하지 않았습니다", HttpStatus.BAD_REQUEST),
+    TERMS_VERSION_ALREADY_EXISTS("T004", "이미 존재하는 약관 버전입니다", HttpStatus.CONFLICT),
 
     // 프로그램
     PROGRAM_NOT_FOUND("P001", "존재하지 않는 프로그램입니다", HttpStatus.NOT_FOUND),

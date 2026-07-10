@@ -1,6 +1,4 @@
-package com.digniche.muntum.user.dto;
-
-import jakarta.validation.constraints.AssertTrue;
+package com.digniche.muntum.user.dto.request;
 
 /**
  * 사용자 약관 동의/비동의 Request

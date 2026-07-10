@@ -1,4 +1,4 @@
-package com.digniche.muntum.user.dto;
+package com.digniche.muntum.user.dto.request;
 
 import com.digniche.muntum.user.entity.UserTermsType;
 import jakarta.validation.constraints.NotNull;
