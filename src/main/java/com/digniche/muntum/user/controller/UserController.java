@@ -4,9 +4,9 @@ import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
 
-import com.digniche.muntum.user.dto.NicknameUpdateRequest;
-import com.digniche.muntum.user.dto.PasswordChangeRequest;
-import com.digniche.muntum.user.dto.TermsConsentListRequest;
+import com.digniche.muntum.user.dto.request.NicknameUpdateRequest;
+import com.digniche.muntum.user.dto.request.PasswordChangeRequest;
+import com.digniche.muntum.user.dto.request.TermsConsentListRequest;
 import com.digniche.muntum.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

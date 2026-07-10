@@ -1,6 +1,5 @@
 package com.digniche.muntum.user.repository;
 
-import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserTermsAgreement;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

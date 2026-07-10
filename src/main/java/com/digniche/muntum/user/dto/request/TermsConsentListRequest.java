@@ -1,4 +1,4 @@
-package com.digniche.muntum.user.dto;
+package com.digniche.muntum.user.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
