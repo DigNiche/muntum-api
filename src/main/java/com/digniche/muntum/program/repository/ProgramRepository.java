@@ -203,7 +203,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             Pageable pageable
     );
 
-    // 텍스트 검색: title/tagline/curation LIKE 매칭
+    // 텍스트 검색: title/tagline/curation/venuename LIKE 매칭
     // 정렬: 필드 우선순위(title→tagline→curation) → (안 끝난 것 먼저, 마감임박 → 끝난 것 최근순 → null 맨 뒤)
     @Query(value = """
     SELECT p
@@ -214,6 +214,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
         p.title LIKE :keyword ESCAPE '\\'
         OR p.tagline LIKE :keyword ESCAPE '\\'
         OR p.curation LIKE :keyword ESCAPE '\\'
+        OR p.venueName LIKE :keyword ESCAPE '\\'
     )
     AND (:freeOnly IS NULL OR p.free = true)
     AND (:noReservationOnly IS NULL OR p.reserved = false)
@@ -229,7 +230,8 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
         CASE WHEN p.title LIKE :keyword ESCAPE '\\' THEN 0
              WHEN p.tagline LIKE :keyword ESCAPE '\\' THEN 1
              WHEN p.curation LIKE :keyword ESCAPE '\\' THEN 2
-             ELSE 3 END ASC,
+             WHEN p.venueName LIKE :keyword ESCAPE '\\' THEN 3
+                  ELSE 4 END ASC,
         CASE WHEN p.endDate IS NULL THEN 2
              WHEN p.endDate < :today THEN 1
              ELSE 0 END ASC,
@@ -245,6 +247,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
         p.title LIKE :keyword ESCAPE '\\'
         OR p.tagline LIKE :keyword ESCAPE '\\'
         OR p.curation LIKE :keyword ESCAPE '\\'
+        OR p.venueName LIKE :keyword ESCAPE '\\'
     )
     AND (:freeOnly IS NULL OR p.free = true)
     AND (:noReservationOnly IS NULL OR p.reserved = false)
