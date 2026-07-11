@@ -179,23 +179,27 @@ public class ProgramService {
                 .map(Keyword::getId)
                 .toList();
 
-        if (topKeywordIds.isEmpty()) {
-            return PageResponse.from(Page.empty(pageable));
-        }
-
         ProgramFilterCondition filter = createFilterCondition(chip);
-
-        Page<Program> programPage = programRepository.findProgramsByKeywordIds(
-                ACTIVE_ONLY,
-                topKeywordIds,
-                filter.freeOnly(),
-                filter.noReservationOnly(),
-                filter.programType(),
-                filter.weekStart(),
-                filter.weekEnd(),
-                pageable
-        );
-
+        Page<Program> programPage;
+        if (topKeywordIds.isEmpty()) {
+            programPage = programRepository.findFilteredProgramsOrderByLatest(
+                    ACTIVE_ONLY,
+                    filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
+                    filter.weekStart(), filter.weekEnd(),
+                    pageable
+            );
+        } else {
+            programPage = programRepository.findProgramsByKeywordIds(
+                    ACTIVE_ONLY,
+                    topKeywordIds,
+                    filter.freeOnly(),
+                    filter.noReservationOnly(),
+                    filter.programType(),
+                    filter.weekStart(),
+                    filter.weekEnd(),
+                    pageable
+            );
+        }
         return PageResponse.from(toCardResponsePage(programPage));
     }
 
@@ -525,7 +529,7 @@ public class ProgramService {
                 ACTIVE_ONLY, keywordIds, LocalDate.now(),
                 filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
                 filter.weekStart(), filter.weekEnd(),
-                pageable                                                    // ← 여기도 같은 거
+                pageable
         );
         return PageResponse.from(toCardResponsePage(programPage));
     }

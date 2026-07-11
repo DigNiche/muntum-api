@@ -65,14 +65,13 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     """)
     Page<Program> findByStatusOrderByClosestEndDate(@Param("status") ProgramStatus status, @Param("today") LocalDate today, @Param("monthEnd") LocalDate monthEnd, Pageable pageable);
 
-    // 인기 키워드를 많이 가진 프로그램 순으로 정렬
+    // 인기 키워드를 많이 가진 프로그램 순 → 매칭 없는 프로그램은 최신 등록순으로 뒤에
     @Query(
             value = """
         SELECT p FROM Program p
-        JOIN ProgramKeyword pk ON pk.program = p
+        LEFT JOIN ProgramKeyword pk ON pk.program = p AND pk.keyword.id IN :keywordIds
         WHERE p.status IN :statuses
         AND p.deletedAt IS NULL
-        AND pk.keyword.id IN :keywordIds
         AND (:freeOnly IS NULL OR p.free = true)
         AND (:noReservationOnly IS NULL OR p.reserved = false)
         AND (:programType IS NULL OR p.programType = :programType)
@@ -84,24 +83,22 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             )
         )
         GROUP BY p
-        ORDER BY COUNT(pk) DESC
+        ORDER BY COUNT(pk) DESC, p.createdAt DESC, p.id DESC
     """,
             countQuery = """
-        SELECT COUNT(DISTINCT p) FROM Program p
-        JOIN ProgramKeyword pk ON pk.program = p
-        WHERE p.status IN :statuses
-        AND p.deletedAt IS NULL
-        AND pk.keyword.id IN :keywordIds
-        AND (:freeOnly IS NULL OR p.free = true)
-        AND (:noReservationOnly IS NULL OR p.reserved = false)
-        AND (:programType IS NULL OR p.programType = :programType)
-        AND (
-            :weekStart IS NULL
-            OR (
-                (p.startDate IS NULL OR p.startDate <= :weekEnd)
-                AND (p.endDate IS NULL OR p.endDate >= :weekStart)
-            )
-        )
+        SELECT COUNT(p) FROM Program p
+                        WHERE p.status IN :statuses
+                        AND p.deletedAt IS NULL
+                        AND (:freeOnly IS NULL OR p.free = true)
+                        AND (:noReservationOnly IS NULL OR p.reserved = false)
+                        AND (:programType IS NULL OR p.programType = :programType)
+                        AND (
+                            :weekStart IS NULL
+                            OR (
+                                (p.startDate IS NULL OR p.startDate <= :weekEnd)
+                                AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+                            )
+                        )
     """
     )
     Page<Program> findProgramsByKeywordIds(
@@ -202,8 +199,33 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("weekEnd") LocalDate weekEnd,
             Pageable pageable
     );
-
-    // 텍스트 검색: title/tagline/curation LIKE 매칭
+    // hot-keywords 폴백: 인기 키워드가 하나도 없을 때 전체를 최신 등록순으로
+    @Query("""
+    SELECT p FROM Program p
+    WHERE p.status IN :statuses
+    AND p.deletedAt IS NULL
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+    ORDER BY p.createdAt DESC, p.id DESC
+""")
+    Page<Program> findFilteredProgramsOrderByLatest(
+            @Param("statuses") Collection<ProgramStatus> statuses,
+            @Param("freeOnly") Boolean freeOnly,
+            @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("programType") ProgramType programType,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
+            Pageable pageable
+    );
+    // 텍스트 검색: title/tagline/curation/venuename LIKE 매칭
     // 정렬: 필드 우선순위(title→tagline→curation) → (안 끝난 것 먼저, 마감임박 → 끝난 것 최근순 → null 맨 뒤)
     @Query(value = """
     SELECT p
@@ -214,6 +236,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
         p.title LIKE :keyword ESCAPE '\\'
         OR p.tagline LIKE :keyword ESCAPE '\\'
         OR p.curation LIKE :keyword ESCAPE '\\'
+        OR p.venueName LIKE :keyword ESCAPE '\\'
     )
     AND (:freeOnly IS NULL OR p.free = true)
     AND (:noReservationOnly IS NULL OR p.reserved = false)
@@ -229,7 +252,8 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
         CASE WHEN p.title LIKE :keyword ESCAPE '\\' THEN 0
              WHEN p.tagline LIKE :keyword ESCAPE '\\' THEN 1
              WHEN p.curation LIKE :keyword ESCAPE '\\' THEN 2
-             ELSE 3 END ASC,
+             WHEN p.venueName LIKE :keyword ESCAPE '\\' THEN 3
+                  ELSE 4 END ASC,
         CASE WHEN p.endDate IS NULL THEN 2
              WHEN p.endDate < :today THEN 1
              ELSE 0 END ASC,
@@ -245,6 +269,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
         p.title LIKE :keyword ESCAPE '\\'
         OR p.tagline LIKE :keyword ESCAPE '\\'
         OR p.curation LIKE :keyword ESCAPE '\\'
+        OR p.venueName LIKE :keyword ESCAPE '\\'
     )
     AND (:freeOnly IS NULL OR p.free = true)
     AND (:noReservationOnly IS NULL OR p.reserved = false)
