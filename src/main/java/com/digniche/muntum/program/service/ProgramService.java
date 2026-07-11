@@ -182,7 +182,6 @@ public class ProgramService {
         ProgramFilterCondition filter = createFilterCondition(chip);
         Page<Program> programPage;
         if (topKeywordIds.isEmpty()) {
-            // 기존: return PageResponse.from(Page.empty(pageable));  ← 이 줄 대신
             programPage = programRepository.findFilteredProgramsOrderByLatest(
                     ACTIVE_ONLY,
                     filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
@@ -530,7 +529,7 @@ public class ProgramService {
                 ACTIVE_ONLY, keywordIds, LocalDate.now(),
                 filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
                 filter.weekStart(), filter.weekEnd(),
-                pageable                                                    // ← 여기도 같은 거
+                pageable
         );
         return PageResponse.from(toCardResponsePage(programPage));
     }
