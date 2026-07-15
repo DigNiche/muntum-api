@@ -2,6 +2,7 @@ package com.digniche.muntum.keyword.controller;
 
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.global.analytics.AnalyticsEvents;
 import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.keyword.dto.KeywordResponse;
 import com.digniche.muntum.keyword.dto.SelectKeywordsRequest;
@@ -32,12 +33,16 @@ public class TasteController {
 
     private final ProgramService programService;
     private final TasteService tasteService;
+    private final AnalyticsEvents analyticsEvents;
 
     // 취향 설정
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/me/keywords")
     public ResponseEntity<ApiResponse<SelectedKeywordsResponse>> selectUserKeyword(@AuthenticationPrincipal UserPrincipal userPrincipal, @Valid @RequestBody SelectKeywordsRequest request) {
         List<KeywordResponse> res = tasteService.setTasteKeywords(userPrincipal.getUserId(), request);
+
+        // Analytics
+        analyticsEvents.tasteKeywordsSelected(userPrincipal.getUserId(), request.selectKeywords());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("취향 설정이 저장되었습니다.", new SelectedKeywordsResponse(res)));

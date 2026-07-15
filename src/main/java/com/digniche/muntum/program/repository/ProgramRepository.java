@@ -425,7 +425,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 
     @Modifying
-    @Query("UPDATE Program p SET p.updatedBy = NULL WHERE p.updatedBy = :userId")
+    @Query("UPDATE Program p SET p.updatedBy = :systemUuid WHERE p.updatedBy = :userId")
     void replaceUpdatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 
     @Modifying

@@ -47,6 +47,10 @@ public class SpotSuggestionService {
     public SpotSuggestionResponse updateSpotSuggestion(UUID suggestionId, UUID userId, SpotSuggestionRequest request) {
         SpotSuggestion suggestion = getSuggestionOrThrow(suggestionId);
 
+        if (suggestion.isDeleted()) {
+            throw new BusinessException(ErrorCode.SUGGESTION_NOT_FOUND);
+        }
+
         if (!isOwner(suggestion, userId)) {
             throw new BusinessException(ErrorCode.SUGGESTION_ACCESS_DENIED);
         }
@@ -62,6 +66,10 @@ public class SpotSuggestionService {
     @Transactional
     public SpotSuggestionResponse updateSuggestionStatus(UUID suggestionId, UUID reviewerId, SuggestionStatusUpdateRequest request) {
         SpotSuggestion suggestion = getSuggestionOrThrow(suggestionId);
+
+        if (suggestion.isDeleted()) {
+            throw new BusinessException(ErrorCode.SUGGESTION_NOT_FOUND);
+        }
         User reviewer = getUserOrThrow(reviewerId);
         if (!reviewer.getRole().equals(UserRole.MANAGER)) {
             throw new BusinessException(ErrorCode.SUGGESTION_ACCESS_DENIED);
@@ -84,9 +92,12 @@ public class SpotSuggestionService {
 
     // 제보 삭제
     @Transactional
-    public void deleteSpotSuggestion(UUID suggestionId) {
+    public void deleteSpotSuggestion(UUID suggestionId, UUID deletedBy) {
         SpotSuggestion suggestion = getSuggestionOrThrow(suggestionId);
-        spotSuggestionRepository.delete(suggestion);
+        if (suggestion.isDeleted()) {
+            throw new BusinessException(ErrorCode.SUGGESTION_NOT_FOUND);
+        }
+        suggestion.softDelete(deletedBy);
     }
 
     // 제보 단건 조회
@@ -102,6 +113,7 @@ public class SpotSuggestionService {
         return SpotSuggestionResponse.from(suggestion);
     }
 
+    // 내 제보 목록 조회
     @Transactional(readOnly = true)
     public PageResponse<SpotSuggestionResponse> getMySuggestionList(UUID userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -109,13 +121,21 @@ public class SpotSuggestionService {
         return PageResponse.from(result.map(SpotSuggestionResponse::from));
     }
 
-    // 전체 제보 목록 조회
+    // 전체 제보 목록 조회 : 삭제된 것 제외
     @Transactional(readOnly = true)
     public PageResponse<SpotSuggestionResponse> getSpotSuggestionList(SuggestionStatus statusFilter, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<SpotSuggestion> result = (statusFilter != null)
-                ? spotSuggestionRepository.findByStatus(statusFilter, pageable)
-                : spotSuggestionRepository.findAllBy(pageable);
+                ? spotSuggestionRepository.findByStatusAndDeletedAtIsNull(statusFilter, pageable)
+                : spotSuggestionRepository.findAllByDeletedAtIsNull(pageable);
+        return PageResponse.from(result.map(SpotSuggestionResponse::from));
+    }
+
+    // 삭제된 제보 목록 조회
+    @Transactional(readOnly = true)
+    public PageResponse<SpotSuggestionResponse> getDeletedSpotSuggestionList(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<SpotSuggestion> result = spotSuggestionRepository.findByDeletedAtIsNotNull(pageable);
         return PageResponse.from(result.map(SpotSuggestionResponse::from));
     }
 

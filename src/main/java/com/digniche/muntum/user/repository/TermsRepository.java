@@ -42,7 +42,7 @@ public interface TermsRepository extends JpaRepository<Terms, UUID> {
     void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 
     @Modifying
-    @Query("UPDATE Terms t SET t.updatedBy = NULL WHERE t.updatedBy = :userId")
+    @Query("UPDATE Terms t SET t.updatedBy = :systemUuid WHERE t.updatedBy = :userId")
     void replaceUpdatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
 
     @Modifying

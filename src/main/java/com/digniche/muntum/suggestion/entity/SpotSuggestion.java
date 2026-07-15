@@ -52,6 +52,12 @@ public class SpotSuggestion extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private SuggestionStatus status = SuggestionStatus.PENDING;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
     @Builder
     public SpotSuggestion(
             User informer,
@@ -64,6 +70,15 @@ public class SpotSuggestion extends BaseEntity {
         this.address = address;
         this.reason = reason;
         this.status = SuggestionStatus.PENDING;
+    }
+    // 논리 삭제: 제보자 목록에 노출 목적
+    public void softDelete(UUID deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 
     public void update(String programName, String address, String reason) {

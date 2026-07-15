@@ -1,6 +1,7 @@
 package com.digniche.muntum.program.controller;
 
 import com.digniche.muntum.global.ApiResponse;
+import com.digniche.muntum.global.analytics.AnalyticsEvents;
 import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.program.dto.request.*;
 import com.digniche.muntum.program.dto.response.ProgramCardResponse;
@@ -39,6 +40,8 @@ public class ProgramController {
 
     private final ProgramService programService;
     private final ProgramImageService programImageService;
+
+    private final AnalyticsEvents analyticsEvents;
 
     // 프로그램 등록
     @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
@@ -109,7 +112,11 @@ public class ProgramController {
         UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
 
         PageResponse<ProgramCardResponse> response = programService.getPrograms(userId, search, keywordNames, chip, sort, order, page, size);
-         return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
+
+        // Analytics
+        analyticsEvents.programSearched(userId, search, keywordNames, chip, response.totalElements());
+
+        return ResponseEntity.ok(ApiResponse.success("프로그램 목록 조회에 성공했습니다.", response));
     }
 
     // 섹션별 목록 조회 : 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
@@ -178,9 +185,15 @@ public class ProgramController {
      */
     @GetMapping("/{program_id}")
     public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(
-            @PathVariable("program_id") UUID programId
+            @PathVariable("program_id") UUID programId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         ProgramResponse response = programService.getProgram(programId);
+        UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
+
+        // Analytics
+        analyticsEvents.programDetailViewed(userId, programId);
+
         return ResponseEntity.ok(ApiResponse.success("프로그램 조회에 성공했습니다.", response));
     }
 

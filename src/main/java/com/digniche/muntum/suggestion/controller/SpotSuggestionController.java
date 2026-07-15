@@ -2,6 +2,7 @@ package com.digniche.muntum.suggestion.controller;
 
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.global.analytics.AnalyticsEvents;
 import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.suggestion.dto.request.SpotSuggestionRequest;
 import com.digniche.muntum.suggestion.dto.request.SuggestionStatusUpdateRequest;
@@ -29,6 +30,7 @@ import java.util.UUID;
 public class SpotSuggestionController {
 
     private final SpotSuggestionService spotSuggestionService;
+    private final AnalyticsEvents analyticsEvents;
 
     // 제보 등록
     @PreAuthorize("isAuthenticated()")
@@ -39,6 +41,10 @@ public class SpotSuggestionController {
     ) {
         SpotSuggestionResponse response =
                 spotSuggestionService.createSpotSuggestion(userPrincipal.getUserId(), request);
+
+        // Analytics
+        analyticsEvents.spotSuggested(userPrincipal.getUserId());
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("제보가 등록되었습니다.", response));
     }
@@ -67,6 +73,18 @@ public class SpotSuggestionController {
         PageResponse<SpotSuggestionResponse> response =
                 spotSuggestionService.getSpotSuggestionList(status, page, size);
         return ResponseEntity.ok(ApiResponse.success("제보 전체 목록 조회에 성공했습니다.", response));
+    }
+
+    // 삭제된 제보 목록 조회 - 관리자 전용
+    @PreAuthorize("hasAnyRole('MANAGER')")
+    @GetMapping("/manager/del-suggestion")
+    public ResponseEntity<ApiResponse<PageResponse<SpotSuggestionResponse>>> getDeletedSpotSuggestions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        PageResponse<SpotSuggestionResponse> response =
+                spotSuggestionService.getDeletedSpotSuggestionList(page, size);
+        return ResponseEntity.ok(ApiResponse.success("삭제된 제보 목록 조회에 성공했습니다.", response));
     }
 
     /**
@@ -114,9 +132,10 @@ public class SpotSuggestionController {
     @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/{suggestion_id}")
     public ResponseEntity<ApiResponse<Void>> deleteSpotSuggestion(
-            @PathVariable("suggestion_id") UUID suggestionId
+            @PathVariable("suggestion_id") UUID suggestionId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        spotSuggestionService.deleteSpotSuggestion(suggestionId);
+        spotSuggestionService.deleteSpotSuggestion(suggestionId, userPrincipal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("제보가 삭제되었습니다.", null));
     }
 }

@@ -74,6 +74,10 @@ aws:
     domain: ${aws.cloudfront.domain}
 
 
+# 사용자 분석 모니터링
+amplitude:
+  api-key: ${amplitude.api-key}
+
 
 # Observability
 management:

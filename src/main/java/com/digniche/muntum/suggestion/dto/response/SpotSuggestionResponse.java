@@ -21,7 +21,8 @@ public record SpotSuggestionResponse(
         String reason,
         SuggestionStatus status,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        boolean deleted
 ) {
     // FetchType.LAZY 필드가 있으므로 from은 반드시 서비스의 @Transactional 안에서 호출
     public static SpotSuggestionResponse from(SpotSuggestion suggestion) {
@@ -37,7 +38,8 @@ public record SpotSuggestionResponse(
                 suggestion.getReason(),
                 suggestion.getStatus(),
                 suggestion.getCreatedAt(),
-                suggestion.getUpdatedAt()
+                suggestion.getUpdatedAt(),
+                suggestion.isDeleted()
         );
     }
 }

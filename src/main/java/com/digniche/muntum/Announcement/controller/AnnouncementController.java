@@ -10,6 +10,7 @@ import com.digniche.muntum.global.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +60,7 @@ public class AnnouncementController {
     // 공지 목록 조회
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<AnnouncementResponse>>> listAnnouncements(
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("공지사항 목록이 조회되었습니다", announcementService.getAnnouncements(pageable)));
     }
 
@@ -67,7 +68,7 @@ public class AnnouncementController {
     @PreAuthorize("hasRole('MANAGER')")
     @GetMapping("/manager")
     public ResponseEntity<ApiResponse<PageResponse<AnnouncementForManagerResponse>>> listAnnouncementsForManager(
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("공지사항 목록이 삭제된 것까지 모두 조회되었습니다.", announcementService.getAnnouncementsForManager(pageable)));
     }
 
