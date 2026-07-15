@@ -1,7 +1,6 @@
 package com.digniche.muntum.user.entity;
 
 import com.digniche.muntum.common.entity.BaseEntity;
-import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -15,12 +14,7 @@ import java.util.UUID;
  * 약관 원문 엔티티
  */
 @Entity
-@Table(name = "terms", uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_terms_type_version",
-                        columnNames = {"type", "version"}
-                )
-        },
+@Table(name = "terms", uniqueConstraints = {@UniqueConstraint(name = "uk_terms_type_version", columnNames = {"type", "version"})},
         indexes = {@Index(name = "idx_terms_type", columnList = "type")}
 )
 @Getter
@@ -29,12 +23,7 @@ public class Terms extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
     // 약관 유형

@@ -11,20 +11,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "user_terms_agreements",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_user_terms_user_version",
-                        columnNames = {"user_id", "version"}
-                )
-        },
-        indexes = {
-                @Index(
-                        name = "idx_user_terms_user_id",
-                        columnList = "user_id"
-                )
-        }
+@Table(name = "user_terms_agreements",
+        uniqueConstraints = {@UniqueConstraint(name = "uk_user_terms_user_version", columnNames = {"user_id", "version"})},
+        indexes = {@Index(name = "idx_user_terms_user_id", columnList = "user_id")}
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -32,12 +21,7 @@ public class UserTermsAgreement extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)

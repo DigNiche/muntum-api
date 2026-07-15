@@ -10,9 +10,8 @@ import com.digniche.muntum.global.redis.RefreshTokenService;
 import com.digniche.muntum.global.security.jwt.JwtProvider;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
-import com.digniche.muntum.user.entity.User;
-import com.digniche.muntum.user.entity.UserStatus;
-import com.digniche.muntum.user.entity.UserTermsAgreement;
+import com.digniche.muntum.user.entity.*;
+import com.digniche.muntum.user.repository.TermsRepository;
 import com.digniche.muntum.user.repository.UserRepository;
 import com.digniche.muntum.user.repository.UserTermsAgreementRepository;
 import com.digniche.muntum.user.service.UserService;
@@ -37,6 +36,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final UserTermsAgreementRepository userTermsAgreementRepository;
+    private final TermsRepository termsRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
@@ -69,11 +69,17 @@ public class AuthService {
 
         // 사용자 약관 동의 (필수)
         LocalDateTime agreedAt = user.getCreatedAt();
+        // -- 여기부터 : 약관 버전 리팩토링 후 삭제
+        Terms activeTermsOfService = termsRepository.findByTypeAndActiveTrueAndDeletedAtIsNull(UserTermsType.TERMS_OF_SERVICE)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACTIVE_TERMS_NOT_FOUND));
+        Terms activePrivcyPolicy = termsRepository.findByTypeAndActiveTrueAndDeletedAtIsNull(UserTermsType.PRIVACY_POLICY)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACTIVE_TERMS_NOT_FOUND));
+        // -- 여기까지
         UserTermsAgreement temrs = UserTermsAgreement.builder()
                 .user(user)
                 .termsOfServiceAt(agreedAt)
                 .privacyPolicyAt(agreedAt)
-                .version(request.userTermsAgreementVersion())
+                .version(activeTermsOfService.getVersion()) //request.userTermsAgreementVersion())
                 .build();
         userTermsAgreementRepository.save(temrs);
 
