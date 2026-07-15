@@ -38,7 +38,7 @@ public class PasswordResetService {
 
     // 인증번호 생성 및 이메일 발송
     @Transactional(readOnly = true)
-    public void sendVerificationCode(String email) {
+    public long sendVerificationCode(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -47,6 +47,8 @@ public class PasswordResetService {
         mailService.sendPasswordResetCode(user.getEmail(), code);
 
         log.debug("비밀번호 재설정 인증번호 발송: email={}", user.getEmail());
+
+        return CODE_TTL.getSeconds();
     }
 
     // 인증번호 확인 후 1회용 재설정 토큰 발급

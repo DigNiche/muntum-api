@@ -7,6 +7,7 @@ import com.digniche.muntum.auth.dto.request.VerifyCodeRequest;
 import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
+import com.digniche.muntum.auth.dto.response.PasswordFindResponse;
 import com.digniche.muntum.auth.dto.response.SignupResponse;
 import com.digniche.muntum.auth.dto.response.VerifyCodeResponse;
 import com.digniche.muntum.auth.service.AuthService;
@@ -75,11 +76,11 @@ public class AuthController {
 
     // 비밀번호 찾기 - 인증번호 발송
     @PostMapping("/password/find")
-    public ResponseEntity<ApiResponse<Void>> findPassword(@RequestBody @Valid PasswordFindRequest request) {
-        passwordResetService.sendVerificationCode(request.email());
+    public ResponseEntity<ApiResponse<PasswordFindResponse>> findPassword(@RequestBody @Valid PasswordFindRequest request) {
+        long expireIn = passwordResetService.sendVerificationCode(request.email());
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("인증번호가 이메일로 발송되었습니다.", null));
+                .body(ApiResponse.success("인증번호가 이메일로 발송되었습니다.", new PasswordFindResponse(expireIn)));
     }
 
 
