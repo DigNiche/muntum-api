@@ -2,6 +2,7 @@ package com.digniche.muntum.scrap.controller;
 
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.global.analytics.AnalyticsEvents;
 import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.program.dto.response.ProgramCardResponse;
 import com.digniche.muntum.scrap.service.ScrapService;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class ScrapController {
 
     private final ScrapService scrapService;
+    private final AnalyticsEvents analyticsEvents;
 
     /**
      * 스크랩 등록 (로그인 사용자)
@@ -34,6 +36,10 @@ public class ScrapController {
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         scrapService.createScrap(userPrincipal.getUserId(), programId);
+
+        // Analytics
+        analyticsEvents.programScrapped(userPrincipal.getUserId(), programId);
+
         return ApiResponse.success("스크랩이 등록되었습니다.", null);
     }
 
@@ -70,6 +76,9 @@ public class ScrapController {
                         page,
                         size
                 );
+
+        // Analytics
+        analyticsEvents.scrapListViewed(userPrincipal.getUserId());
 
         return ApiResponse.success("스크랩 목록 조회에 성공했습니다.", response);
     }

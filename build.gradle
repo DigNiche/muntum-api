@@ -67,6 +67,10 @@ dependencies {
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
  //   testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Amplitude
+    implementation 'com.amplitude:java-sdk:1.+'
+    implementation 'org.json:json:20240303'
 }
 
 tasks.named('test') {
