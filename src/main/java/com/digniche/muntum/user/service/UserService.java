@@ -162,11 +162,12 @@ public class UserService {
         UserRole role = user.getRole();
 
         if (role == UserRole.MANAGER) {
-            // 제보의 생성/수정/검토자/제보자 시스템 UUID 처리
+            // 제보의 생성/수정/검토자/제보자/삭제자 시스템 UUID 처리
             spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
             spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.replaceReviewedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.replaceInformerWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.clearReviewedBy(userId);
+            spotSuggestionRepository.clearInformer(userId);
+            spotSuggestionRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
             // 키워드의 생성/수정/삭제자 시스템 UUID 처리
             keywordRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
             keywordRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
@@ -187,7 +188,7 @@ public class UserService {
             // 제보의 생성자/수정자/제보자 시스템 UUID 처리
             spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
             spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.replaceInformerWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.clearInformer(userId);
             // 프로그램의 생성자/수정자 Null 처리 및 시스템 UUID 처리
             programRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
             programRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
@@ -196,7 +197,7 @@ public class UserService {
             // 제보의 생성자/수정자/제보자 Null 처리 및 시스템 UUID 처리
             spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
             spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.replaceInformerWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.clearInformer(userId);
         }
 
         // 사용자 데이터 삭제 : 약관 동의 이력, 스크랩, 취향 키어드

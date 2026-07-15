@@ -69,6 +69,18 @@ public class SpotSuggestionController {
         return ResponseEntity.ok(ApiResponse.success("제보 전체 목록 조회에 성공했습니다.", response));
     }
 
+    // 삭제된 제보 목록 조회 - 관리자 전용
+    @PreAuthorize("hasAnyRole('MANAGER')")
+    @GetMapping("/manager/del-suggestion")
+    public ResponseEntity<ApiResponse<PageResponse<SpotSuggestionResponse>>> getDeletedSpotSuggestions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        PageResponse<SpotSuggestionResponse> response =
+                spotSuggestionService.getDeletedSpotSuggestionList(page, size);
+        return ResponseEntity.ok(ApiResponse.success("삭제된 제보 목록 조회에 성공했습니다.", response));
+    }
+
     /**
      * 제보 단건 조회 - 작성자 본인 또는 관리자
      */
@@ -114,9 +126,10 @@ public class SpotSuggestionController {
     @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/{suggestion_id}")
     public ResponseEntity<ApiResponse<Void>> deleteSpotSuggestion(
-            @PathVariable("suggestion_id") UUID suggestionId
+            @PathVariable("suggestion_id") UUID suggestionId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        spotSuggestionService.deleteSpotSuggestion(suggestionId);
+        spotSuggestionService.deleteSpotSuggestion(suggestionId, userPrincipal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("제보가 삭제되었습니다.", null));
     }
 }
