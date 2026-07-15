@@ -2,6 +2,7 @@ package com.digniche.muntum.suggestion.controller;
 
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.global.analytics.AnalyticsEvents;
 import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.suggestion.dto.request.SpotSuggestionRequest;
 import com.digniche.muntum.suggestion.dto.request.SuggestionStatusUpdateRequest;
@@ -29,6 +30,7 @@ import java.util.UUID;
 public class SpotSuggestionController {
 
     private final SpotSuggestionService spotSuggestionService;
+    private final AnalyticsEvents analyticsEvents;
 
     // 제보 등록
     @PreAuthorize("isAuthenticated()")
@@ -39,6 +41,10 @@ public class SpotSuggestionController {
     ) {
         SpotSuggestionResponse response =
                 spotSuggestionService.createSpotSuggestion(userPrincipal.getUserId(), request);
+
+        // Analytics
+        analyticsEvents.spotSuggested(userPrincipal.getUserId());
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("제보가 등록되었습니다.", response));
     }

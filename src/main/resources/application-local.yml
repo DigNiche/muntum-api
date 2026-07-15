@@ -72,6 +72,10 @@ storage:
     base-url: http://localhost:${server.port}/uploads
 # secrets 파일 적용
 
+# 사용자 분석 모니터링
+amplitude:
+  api-key: ${amplitude.api-key}
+
 # Observability
 management:
   endpoints:
