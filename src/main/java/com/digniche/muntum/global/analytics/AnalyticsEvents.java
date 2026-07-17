@@ -45,4 +45,11 @@ public class AnalyticsEvents {
     public void tasteKeywordsSelected(UUID userId, List<String> keywordNames) {
         analyticsService.track(userId, "taste_keywords_selected", Map.of("keywordNames", keywordNames));
     }
+    public void signupCompleted(UUID userId, boolean isReactivation) {
+        analyticsService.track(userId, "signup_completed", Map.of("is_reactivation", isReactivation));
+    }
+
+    public void onboardingCompleted(UUID userId, int keywordCount) {
+        analyticsService.track(userId, "onboarding_completed", Map.of("keyword_count", keywordCount));
+    }
 }
