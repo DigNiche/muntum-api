@@ -24,6 +24,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.digniche.muntum.global.analytics.event.OnboardingCompletedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -40,6 +42,7 @@ public class TasteService {
     private final KeywordRepository keywordRepository;
     private final UserRepository userRepository;
     private final UserKeywordRepository userKeywordRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 키워드 선택(온보딩 생성 / 마이페이지 수정)
     @Transactional
@@ -53,7 +56,10 @@ public class TasteService {
         userKeywordRepository.deleteAllByUserId(userId);
 
         User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        user.updateTasteSelected(!request.selectKeywords().isEmpty());
+        boolean wasTasteSelected = user.isTasteSelected();
+        boolean tasteSelected = !request.selectKeywords().isEmpty();
+
+        user.updateTasteSelected(tasteSelected);
 
         List<UserKeyword> userKeywords = keywords.stream()
                 .map(k -> UserKeyword.builder().user(user).keyword(k).build())
@@ -61,6 +67,9 @@ public class TasteService {
 
         userKeywordRepository.saveAll(userKeywords);
 
+        if (!wasTasteSelected && tasteSelected) {
+            eventPublisher.publishEvent(new OnboardingCompletedEvent(user.getId(), keywords.size()));
+        }
         return keywords.stream().map(KeywordResponse::from).toList();
     }
 

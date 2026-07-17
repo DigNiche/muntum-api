@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.digniche.muntum.global.analytics.event.SignupCompletedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -40,6 +42,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 회원가입
     @Transactional
@@ -57,7 +60,9 @@ public class AuthService {
             request.email(), UserStatus.DELETED, UserService.MASKING_LETTER_PREFIX
         );
 
-        if (withdrawnUser.isPresent()) {
+        boolean isReactivation = withdrawnUser.isPresent();
+
+        if (isReactivation) {
             // 재가입 로직 : 기본 정보 복구
             user = withdrawnUser.get();
             log.debug("재가입 처리: 마스킹된 이메일={}, 이전 생성일={}", user.getEmail(), user.getCreatedAt());
@@ -82,6 +87,8 @@ public class AuthService {
                 .version(activeTermsOfService.getVersion()) //request.userTermsAgreementVersion())
                 .build();
         userTermsAgreementRepository.save(temrs);
+
+        eventPublisher.publishEvent(new SignupCompletedEvent(user.getId(), isReactivation));
 
         return new SignupResponse(user.getId(), user.getEmail(), user.getCreatedAt());
     }
