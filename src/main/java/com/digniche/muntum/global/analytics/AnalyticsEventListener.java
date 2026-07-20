@@ -15,7 +15,7 @@ public class AnalyticsEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleSignupCompleted(SignupCompletedEvent event) {
-        analyticsEvents.signupCompleted(event.userId(), event.isReactivation());
+        analyticsEvents.signupCompleted(event.userId());
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
