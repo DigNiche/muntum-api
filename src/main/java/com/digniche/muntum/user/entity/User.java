@@ -28,7 +28,7 @@ public class User extends BaseEntity {
     )
     private UUID id;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email",nullable = false, unique = true)
     private String email;
 
     @Column(name = "email_verified", nullable = false)
@@ -37,7 +37,7 @@ public class User extends BaseEntity {
     @Column(name = "email_verified_at")
     private LocalDateTime emailVerifiedAt;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String password;
 
     @Column(name = "nickname", unique = true, length = 50)

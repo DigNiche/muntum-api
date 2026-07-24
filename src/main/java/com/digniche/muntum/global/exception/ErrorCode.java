@@ -22,6 +22,7 @@ public enum ErrorCode {
     NOT_AUTHENTICATED("A008", "인증되지 않은 사용자 입니다", HttpStatus.UNAUTHORIZED),
     REFRESH_TOKEN_NOT_FOUND("A009", "Refresh Token이 존재하지 않습니다", HttpStatus.UNAUTHORIZED),
     INVALID_REFRESH_TOKEN("A010", "유효하지 않은 Refresh Token입니다", HttpStatus.UNAUTHORIZED),
+    PASSWORD_LOGIN_NOT_AVAILABLE( "A015", "소셜 로그인으로 가입한 계정입니다. 해당 소셜 로그인으로 로그인해 주세요.", HttpStatus.BAD_REQUEST),
 
     // 비밀번호 재설정
     VERIFICATION_CODE_EXPIRED("A011", "인증번호가 만료되었습니다. 다시 요청해주세요", HttpStatus.BAD_REQUEST),
