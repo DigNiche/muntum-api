@@ -28,7 +28,7 @@ public class User extends BaseEntity {
     )
     private UUID id;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email",nullable = false, unique = true)
     private String email;
 
     @Column(name = "email_verified", nullable = false)
@@ -37,7 +37,7 @@ public class User extends BaseEntity {
     @Column(name = "email_verified_at")
     private LocalDateTime emailVerifiedAt;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String password;
 
     @Column(name = "nickname", unique = true, length = 50)
@@ -135,8 +135,31 @@ public class User extends BaseEntity {
     public void maskDeletedUserInfo(String addMaskingLetter, String withdrawalNicknamePrefix) {
         this.email = this.email + addMaskingLetter;
         this.nickname = withdrawalNicknamePrefix + addMaskingLetter;
-        this.password = this.password + addMaskingLetter;
+        if (this.password != null) {
+            this.password = this.password + addMaskingLetter;
+        }
         this.profileImageUrl = null;
     }
+    /**
+     * 소셜 로그인 신규 사용자 생성
+     */
+    public static User createSocialUser(
+            String email,
+            boolean emailVerified
+    ) {
+        User user = new User();
 
+        user.email = email;
+        user.password = null;
+        user.role = UserRole.AUDIENCE;
+        user.status = UserStatus.ACTIVE;
+        user.emailVerified = emailVerified;
+        user.tasteSelected = false;
+
+        if (emailVerified) {
+            user.emailVerifiedAt = LocalDateTime.now();
+        }
+
+        return user;
+    }
 }
