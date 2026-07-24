@@ -19,28 +19,21 @@ import java.util.UUID;
  */
 public interface ScrapRepository extends JpaRepository<Scrap, UUID> {
 
-    /**
-     * 재등록 분기용
-     * 삭제 여부와 상관없이 특정 사용자-프로그램 스크랩 row를 찾는다.
-     * (restore 대상을 잡아야 하므로 deletedAt 조건을 넣지 않는다.)
-     */
     Optional<Scrap> findByUserIdAndProgramId(UUID userId, UUID programId);
-    Optional<Scrap> findByUserIdAndProgramIdAndDeletedAtIsNull(UUID userId, UUID programId);
+
     /**
      * 내 스크랩 목록 조회
      * Program을 fetch join하여 N+1 문제를 방지한다.
-     * 삭제된 스크랩(s.deletedAt)과 삭제된 프로그램(p.deletedAt)은 제외한다.
+     * 삭제된 프로그램(p.deletedAt)은 제외한다.
      * countQuery도 동일 조건으로 맞춰 content 개수와 totalElements가 어긋나지 않게 한다.
      */
     @Query(
             value = "SELECT s FROM Scrap s JOIN FETCH s.program p " +
                     "WHERE s.user.id = :userId " +
-                    "AND s.deletedAt IS NULL " +
                     "AND p.deletedAt IS NULL " +
                     "AND p.status IN :statuses",
             countQuery = "SELECT COUNT(s) FROM Scrap s JOIN s.program p " +
                     "WHERE s.user.id = :userId " +
-                    "AND s.deletedAt IS NULL " +
                     "AND p.deletedAt IS NULL " +
                     "AND p.status IN :statuses"
     )
@@ -64,7 +57,6 @@ public interface ScrapRepository extends JpaRepository<Scrap, UUID> {
     SELECT s.user.id, COUNT(s)
     FROM Scrap s
     WHERE s.user.id IN :userIds
-    AND s.deletedAt IS NULL
     GROUP BY s.user.id
 """)
     List<Object[]> countByUserIds(@Param("userIds") Collection<UUID> userIds);

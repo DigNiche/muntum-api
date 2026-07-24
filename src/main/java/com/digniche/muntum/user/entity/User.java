@@ -66,10 +66,6 @@ public class User extends BaseEntity {
     @Column(name = "deleted_by")
     private UUID deletedBy = null;
 
-    @Column(name = "reactivated_at")
-    private LocalDateTime reactivatedAt = null;
-
-
     @Builder
     public User(
             String email,
@@ -143,19 +139,4 @@ public class User extends BaseEntity {
         this.profileImageUrl = null;
     }
 
-    // 사용자 소프트 삭제 복구(재가입)
-    public void reactivate(String email, String password) {
-        this.email = email;
-        this.password = password;
-        this.nickname = null;
-        this.reactivatedAt = LocalDateTime.now();
-        this.deletedAt = null;
-        this.deletedBy = null;
-        this.emailVerified = false;
-        this.emailVerifiedAt = null;
-        this.status = UserStatus.ACTIVE;
-        this.tasteSelected = false;
-        this.lastLoginAt = null;
-
-    }
 }

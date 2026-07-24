@@ -25,7 +25,6 @@ import com.digniche.muntum.global.analytics.event.SignupCompletedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -48,29 +47,14 @@ public class AuthService {
     @Transactional
     public SignupResponse signup(SignUpRequest request) {
 
-        User user;
         String encodedPassword = passwordEncoder.encode(request.password());
 
         // 신규 가입자 이메일 중복 방지
         if (userRepository.existsByEmailAndStatusNot(request.email(), UserStatus.DELETED)) {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
-        // 탈퇴 이력 보유 사용자의 재가입 과정에서 이중 가입 방지
-        Optional<User> withdrawnUser = userRepository.findWithdrawnUserForReactivation(
-            request.email(), UserStatus.DELETED, UserService.MASKING_LETTER_PREFIX
-        );
 
-        boolean isReactivation = withdrawnUser.isPresent();
-
-        if (isReactivation) {
-            // 재가입 로직 : 기본 정보 복구
-            user = withdrawnUser.get();
-            log.debug("재가입 처리: 마스킹된 이메일={}, 이전 생성일={}", user.getEmail(), user.getCreatedAt());
-            user.reactivate(request.email(), encodedPassword);
-        } else {
-            // 신규 가입 로직
-            user = userRepository.save(request.toEntity(encodedPassword));
-        }
+        User user = userRepository.save(request.toEntity(encodedPassword));
 
         // 사용자 약관 동의 (필수)
         LocalDateTime agreedAt = user.getCreatedAt();
@@ -88,7 +72,7 @@ public class AuthService {
                 .build();
         userTermsAgreementRepository.save(temrs);
 
-        eventPublisher.publishEvent(new SignupCompletedEvent(user.getId(), isReactivation));
+        eventPublisher.publishEvent(new SignupCompletedEvent(user.getId()));
 
         return new SignupResponse(user.getId(), user.getEmail(), user.getCreatedAt());
     }

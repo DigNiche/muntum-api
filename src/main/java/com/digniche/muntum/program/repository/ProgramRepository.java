@@ -120,7 +120,6 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     JOIN s.program p
     WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
-    AND s.deletedAt IS NULL
     GROUP BY p
     ORDER BY COUNT(s) DESC, p.createdAt DESC, p.id DESC
     """,
@@ -130,7 +129,6 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     JOIN s.program p
     WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
-    AND s.deletedAt IS NULL
     """
     )
     Page<Program> findProgramsOrderByScrapCount(
@@ -397,8 +395,8 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
 
     // 바운딩 박스 내 프로그램 — 스크랩 수(지금핫한) 정렬. 단일선택이라 HOT일 땐 다른 필터 없음
     @Query("""
-    SELECT p FROM Program p
-    LEFT JOIN Scrap s ON s.program = p AND s.deletedAt IS NULL
+    SELECT p FROM Scrap s
+    JOIN s.program p
     WHERE p.status IN :statuses AND p.deletedAt IS NULL
     AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL
     AND p.latitude BETWEEN :swLat AND :neLat

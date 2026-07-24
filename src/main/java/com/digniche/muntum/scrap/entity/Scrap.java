@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -54,26 +53,11 @@ public class Scrap extends BaseEntity {
     @JoinColumn(name = "program_id", nullable = false)
     private Program program;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
-
-
 
     @Builder
     public Scrap(User user, Program program) {
         this.user = user;
         this.program = program;
     }
-
-
-    /**
-     * 관심 등록 복구
-     */
-    public void restore() {
-        this.deletedAt = null;
-        this.deletedBy = null;
-    }
 }
+

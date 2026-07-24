@@ -46,8 +46,7 @@ public class ScrapService {
     /**
      * 스크랩 등록
      * - 기존 row 없음            → 새로 저장
-     * - 기존 row 있고 활성        → 멱등(아무것도 안 함)
-     * - 기존 row 있고 삭제됨      → 복구(restore)
+     * - 기존 row 있음            → 멱등(아무것도 안 함)
      */
     @Transactional
     public void createScrap(UUID userId, UUID programId) {
@@ -57,10 +56,7 @@ public class ScrapService {
         scrapRepository.findByUserIdAndProgramId(userId, programId)
                 .ifPresentOrElse(
                         scrap -> {
-                            if (scrap.getDeletedAt() != null) {
-                                scrap.restore();
-                            }
-                            // 활성 상태면 아무것도 안 함 = 멱등 처리
+                            // 이미 스크랩한 상태면 아무것도 안 함 = 멱등 처리
                         },
                         () -> scrapRepository.save(
                                 Scrap.builder()
@@ -78,7 +74,7 @@ public class ScrapService {
     @Transactional
     public void deleteScrap(UUID userId, UUID programId) {
         Scrap scrap = scrapRepository
-                .findByUserIdAndProgramIdAndDeletedAtIsNull(userId, programId)
+                .findByUserIdAndProgramId(userId, programId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SCRAP_NOT_FOUND));
         scrapRepository.delete(scrap);
     }

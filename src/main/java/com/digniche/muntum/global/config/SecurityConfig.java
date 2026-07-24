@@ -63,11 +63,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/announcements/manager").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/announcements/manager").authenticated()
+
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/v1/announcements", "/api/v1/announcements/**",
-                                                        "/api/v1/auth", "/api/v1/auth/**",
                                                         "/api/v1/keywords/tagged", "/api/v1/keywords/top",
                                                         "/api/v1/programs", "/api/v1/programs/**"
                         ).permitAll()
