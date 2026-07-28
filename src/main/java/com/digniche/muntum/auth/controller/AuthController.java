@@ -1,5 +1,6 @@
 package com.digniche.muntum.auth.controller;
 
+
 import com.digniche.muntum.auth.dto.request.PasswordFindRequest;
 import com.digniche.muntum.auth.dto.request.PasswordResetRequest;
 import com.digniche.muntum.auth.dto.request.RefreshTokenReissueRequest;
@@ -21,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.digniche.muntum.auth.dto.request.SocialLoginRequest;
+import com.digniche.muntum.auth.service.SocialLoginService;
 
 /**
  * 인증/인가 컨트롤러
@@ -32,6 +35,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final SocialLoginService socialLoginService;
+
 
     // 회원가입
     @PostMapping("/signup")
@@ -101,5 +106,23 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("비밀번호가 재설정되었습니다.", null));
+    }
+
+    // 소셜 로그인
+    @PostMapping("/social/login")
+    public ResponseEntity<ApiResponse<AuthenticationResponse>>
+    socialLogin(
+            @RequestBody @Valid SocialLoginRequest request
+    ) {
+        AuthenticationResponse response =
+                socialLoginService.login(request);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(
+                        ApiResponse.success(
+                                "소셜 로그인이 완료되었습니다.",
+                                response
+                        )
+                );
     }
 }

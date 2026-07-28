@@ -29,3 +29,7 @@ management:
   metrics:
     tags:
       application: Muntum
+
+social:
+  apple:
+    client-id: ${APPLE_CLIENT_ID:co.digniche.muntum}

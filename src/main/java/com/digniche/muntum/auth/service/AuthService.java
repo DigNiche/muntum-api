@@ -83,7 +83,11 @@ public class AuthService {
     public AuthenticationResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
+        if (user.getPassword() == null) {
+            throw new BusinessException(
+                    ErrorCode.PASSWORD_LOGIN_NOT_AVAILABLE
+            );
+        }
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         }
