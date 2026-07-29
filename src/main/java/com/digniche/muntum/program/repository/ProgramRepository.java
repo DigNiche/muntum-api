@@ -53,19 +53,36 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     Page<Program> findByDeletedAtIsNull(Pageable pageable);
     Page<Program> findByStatusAndDeletedAtIsNull(ProgramStatus status, Pageable pageable);
 
-    // 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
+    /*
+    * 마감일이 이번달인 목록 중 마감일이 오늘 날짜와 가까운 순으로 정렬
+    * 정렬 키
+    *   - 1. 미종료(0) / 종료(1) 그룹 분리
+    *   - 2. 미종료 그룹 내부: endDate 오름차순(마감임박 순)
+    *                     : 종료 그룹은 이 키가 Null로 균일해 영향 없음
+    *   - 3. 종료 그룹 내부: endDate 내림차순(최근 종료 순)
+    *   - 4. p.id DESC: 같은 endDate 다수일 때 페이징 중복/누락 방지
+    */
     @Query("""
     SELECT p FROM Program p
-    WHERE p.status = :status
+    WHERE p.status IN :statuses 
     AND p.deletedAt IS NULL
     AND p.endDate IS NOT NULL
-    AND p.endDate >= :today
+    AND p.endDate >= :monthStart
     AND p.endDate <= :monthEnd
-    ORDER BY ABS(DATEDIFF(p.endDate, :today)) ASC
+    ORDER BY CASE WHEN p.endDate >= :today THEN 0 ELSE 1 END ASC,  
+             CASE WHEN p.endDate >= :today THEN p.endDate END ASC,
+             p.endDate DESC,
+             p.id DESC
     """)
-    Page<Program> findByStatusOrderByClosestEndDate(@Param("status") ProgramStatus status, @Param("today") LocalDate today, @Param("monthEnd") LocalDate monthEnd, Pageable pageable);
+    Page<Program> findMonthlyProgramsOrderByEndDate(
+            @Param("statuses") Collection<ProgramStatus> statuses,
+            @Param("today") LocalDate today,
+            @Param("monthStart") LocalDate monthStart,
+            @Param("monthEnd") LocalDate monthEnd,
+            Pageable pageable);
 
     // 인기 키워드를 많이 가진 프로그램 순 → 매칭 없는 프로그램은 최신 등록순으로 뒤에
+    // 단, 종료된 프로그램은 목록 꼬리로(그 안에서 매칭 순)
     @Query(
             value = """
         SELECT p FROM Program p
@@ -83,7 +100,10 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             )
         )
         GROUP BY p
-        ORDER BY COUNT(pk) DESC, p.createdAt DESC, p.id DESC
+        ORDER BY CASE WHEN p.endDate IS NOT NULL AND p.endDate < :today THEN 1 ELSE 0 END ASC,
+                 COUNT(pk) DESC,
+                 p.createdAt DESC,
+                 p.id DESC
     """,
             countQuery = """
         SELECT COUNT(p) FROM Program p
@@ -104,6 +124,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     Page<Program> findProgramsByKeywordIds(
             @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("keywordIds") List<UUID> keywordIds,
+            @Param("today") LocalDate today,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
             @Param("programType") ProgramType programType,
@@ -197,7 +218,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("weekEnd") LocalDate weekEnd,
             Pageable pageable
     );
-    // hot-keywords 폴백: 인기 키워드가 하나도 없을 때 전체를 최신 등록순으로
+    // hot-keywords 폴백: 인기 키워드가 하나도 없을 때 전체를 최신 등록순으로 (종료된 것은 뒤로)
     @Query("""
     SELECT p FROM Program p
     WHERE p.status IN :statuses
@@ -212,10 +233,13 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             AND (p.endDate IS NULL OR p.endDate >= :weekStart)
         )
     )
-    ORDER BY p.createdAt DESC, p.id DESC
+    ORDER BY CASE WHEN p.endDate IS NOT NULL AND p.endDate < :today THEN 1 ELSE 0 END ASC,
+             p.createdAt DESC,
+             p.id DESC
 """)
     Page<Program> findFilteredProgramsOrderByLatest(
             @Param("statuses") Collection<ProgramStatus> statuses,
+            @Param("today") LocalDate today,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
             @Param("programType") ProgramType programType,

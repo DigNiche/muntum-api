@@ -155,11 +155,13 @@ public class ProgramService {
     @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getProgramsByClosestEndDate(Pageable pageable) {
         LocalDate today = LocalDate.now();
+        LocalDate monthStart = today.withDayOfMonth(1);
         LocalDate monthEnd = today.with(TemporalAdjusters.lastDayOfMonth());
 
-        Page<Program> programPage = programRepository.findByStatusOrderByClosestEndDate(
-                ProgramStatus.ACTIVE,
+        Page<Program> programPage = programRepository.findMonthlyProgramsOrderByEndDate(
+                PUBLIC_VIEWABLE,
                 today,
+                monthStart,
                 monthEnd,
                 pageable
         );
@@ -179,19 +181,22 @@ public class ProgramService {
                 .map(Keyword::getId)
                 .toList();
 
+        LocalDate today = LocalDate.now();
         ProgramFilterCondition filter = createFilterCondition(chip);
         Page<Program> programPage;
         if (topKeywordIds.isEmpty()) {
             programPage = programRepository.findFilteredProgramsOrderByLatest(
-                    ACTIVE_ONLY,
+                    PUBLIC_VIEWABLE,
+                    today,
                     filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
                     filter.weekStart(), filter.weekEnd(),
                     pageable
             );
         } else {
             programPage = programRepository.findProgramsByKeywordIds(
-                    ACTIVE_ONLY,
+                    PUBLIC_VIEWABLE,
                     topKeywordIds,
+                    today,
                     filter.freeOnly(),
                     filter.noReservationOnly(),
                     filter.programType(),
