@@ -1,5 +1,6 @@
 package com.digniche.muntum.auth.service;
 
+import com.digniche.muntum.auth.dto.response.EmailVerificationSendResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.global.mail.MailService;
@@ -36,7 +37,7 @@ public class EmailVerificationService {
     private final SecureRandom secureRandom = new SecureRandom();
 
     // 인증번호 생성 및 이메일 발송
-    public long sendCode(String email) {
+    public EmailVerificationSendResponse sendCode(String email) {
         String rawEmail = email.trim();
         String normalizedEmail = normalize(rawEmail);
 
@@ -66,7 +67,10 @@ public class EmailVerificationService {
 
         log.debug("회원가입 인증번호 발송: email={}", normalizedEmail);
 
-        return CODE_TTL.getSeconds();
+        return new EmailVerificationSendResponse(
+                CODE_TTL.getSeconds(),
+                COOLDOWN_TTL.getSeconds()
+        );
     }
 
     // 인증번호 확인 후 1회용 가입 토큰 발급

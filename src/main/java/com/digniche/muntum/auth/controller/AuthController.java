@@ -44,11 +44,10 @@ public class AuthController {
     @PostMapping("/email/send-code")
     public ResponseEntity<ApiResponse<EmailVerificationSendResponse>> sendEmailVerificationCode(
             @RequestBody @Valid EmailVerificationSendRequest request) {
-        long expiresIn = emailVerificationService.sendCode(request.email());
-
+        EmailVerificationSendResponse res = emailVerificationService.sendCode(request.email());
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("인증번호가 이메일로 발송되었습니다.",
-                        new EmailVerificationSendResponse(expiresIn)));
+                        res));
     }
 
     // 회원가입: 이메일 인증번호 확인
