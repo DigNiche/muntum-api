@@ -22,15 +22,20 @@ public enum ErrorCode {
     NOT_AUTHENTICATED("A008", "인증되지 않은 사용자 입니다", HttpStatus.UNAUTHORIZED),
     REFRESH_TOKEN_NOT_FOUND("A009", "Refresh Token이 존재하지 않습니다", HttpStatus.UNAUTHORIZED),
     INVALID_REFRESH_TOKEN("A010", "유효하지 않은 Refresh Token입니다", HttpStatus.UNAUTHORIZED),
-    PASSWORD_LOGIN_NOT_AVAILABLE( "A015", "소셜 로그인으로 가입한 계정입니다. 해당 소셜 로그인으로 로그인해 주세요.", HttpStatus.BAD_REQUEST),
-    INVALID_SOCIAL_TOKEN("A016", "유효하지 않은 소셜 로그인 토큰입니다", HttpStatus.UNAUTHORIZED),
-    SOCIAL_EMAIL_REQUIRED("A017", "소셜 로그인에 이메일 정보가 필요합니다", HttpStatus.BAD_REQUEST),
-    UNSUPPORTED_SOCIAL_PROVIDER("A018", "지원하지 않는 소셜 로그인 제공자입니다", HttpStatus.BAD_REQUEST),
     // 비밀번호 재설정
     VERIFICATION_CODE_EXPIRED("A011", "인증번호가 만료되었습니다. 다시 요청해주세요", HttpStatus.BAD_REQUEST),
     INVALID_VERIFICATION_CODE("A012", "인증번호가 일치하지 않습니다", HttpStatus.BAD_REQUEST),
     TOO_MANY_VERIFICATION_ATTEMPTS("A013", "인증 시도 횟수를 초과했습니다. 다시 요청해주세요", HttpStatus.TOO_MANY_REQUESTS),
     INVALID_RESET_TOKEN("A014", "유효하지 않거나 만료된 요청입니다. 처음부터 다시 시도해주세요", HttpStatus.BAD_REQUEST),
+    // 소셜 로그인
+    PASSWORD_LOGIN_NOT_AVAILABLE( "A015", "소셜 로그인으로 가입한 계정입니다. 해당 소셜 로그인으로 로그인해 주세요.", HttpStatus.BAD_REQUEST),
+    INVALID_SOCIAL_TOKEN("A016", "유효하지 않은 소셜 로그인 토큰입니다", HttpStatus.UNAUTHORIZED),
+    SOCIAL_EMAIL_REQUIRED("A017", "소셜 로그인에 이메일 정보가 필요합니다", HttpStatus.BAD_REQUEST),
+    UNSUPPORTED_SOCIAL_PROVIDER("A018", "지원하지 않는 소셜 로그인 제공자입니다", HttpStatus.BAD_REQUEST),
+    // 회원가입 시 이메일 인증
+    INVALID_SIGNUP_TOKEN("A019", "이메일 인증이 만료되었습니다. 처음부터 다시 시도해주세요", HttpStatus.BAD_REQUEST),
+    VERIFICATION_CODE_COOLDOWN("A020", "잠시 후 다시 요청해주세요", HttpStatus.TOO_MANY_REQUESTS),
+    VERIFICATION_SEND_LIMIT_EXCEEDED("A021", "인증번호 발송 횟수를 초과했습니다. 24시간 후 다시 시도해주세요", HttpStatus.TOO_MANY_REQUESTS),
 
     // 사용자 정보
     NICKNAME_ALREADY_EXISTS("U001", "이미 사용 중인 닉네임입니다", HttpStatus.CONFLICT),
