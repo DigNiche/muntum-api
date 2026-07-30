@@ -66,8 +66,7 @@ public class SocialLoginService {
         /*
          * 앱이 전달한 Identity Token 검증
          */
-        SocialUserInfo socialUser =
-                verifier.verify(request);
+        SocialUserInfo socialUser = verifier.verify(request);
 
         /*
          * Apple authorizationCode 교환 및

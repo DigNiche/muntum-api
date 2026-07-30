@@ -388,110 +388,44 @@ public class UserService {
 
         if (role == UserRole.MANAGER) {
             // 제보의 생성/수정/검토자/제보자/삭제자 시스템 UUID 처리
-            spotSuggestionRepository.replaceCreatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            spotSuggestionRepository.replaceUpdatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
+            spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
             spotSuggestionRepository.clearReviewedBy(userId);
             spotSuggestionRepository.clearInformer(userId);
-            spotSuggestionRepository.replaceDeletedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
+            spotSuggestionRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
 
             // 키워드의 생성/수정/삭제자 시스템 UUID 처리
-            keywordRepository.replaceCreatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            keywordRepository.replaceUpdatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            keywordRepository.replaceDeletedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
+            keywordRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            keywordRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            keywordRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
 
             // 프로그램의 생성자/수정자/삭제자 시스템 UUID 처리
-            programRepository.replaceCreatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            programRepository.replaceUpdatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            programRepository.replaceDeletedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-
-            // 공지의 생성자/수정자/삭제자 시스템 UUID 처리
-            announcementRepository.replaceCreatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            announcementRepository.replaceUpdatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            announcementRepository.replaceDeletedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-
-            // 약관의 생성자/수정자/삭제자 시스템 UUID 처리
-            termsRepository.replaceCreatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            termsRepository.replaceUpdatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            termsRepository.replaceDeletedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
+            programRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            programRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            programRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
+            // 공지의 생성자/수정자/삭제자
+            announcementRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            announcementRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            announcementRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
+            // 약관의 생성자/수정자/삭제자
+            termsRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            termsRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+            termsRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
 
         } else if (role == UserRole.CURATOR) {
             // 제보의 생성자/수정자/제보자 시스템 UUID 처리
-            spotSuggestionRepository.replaceCreatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            spotSuggestionRepository.replaceUpdatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
+            spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
             spotSuggestionRepository.clearInformer(userId);
 
-            // 프로그램의 생성자/수정자 시스템 UUID 처리
-            programRepository.replaceCreatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            programRepository.replaceUpdatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
+            // 프로그램의 생성자/수정자 Null 처리 및 시스템 UUID 처리
+            programRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            programRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
 
-        } else {
-            // AUDIENCE
-            // 제보의 생성자/수정자/제보자 시스템 UUID 처리
-            spotSuggestionRepository.replaceCreatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
-            spotSuggestionRepository.replaceUpdatedByWithSystem(
-                    userId,
-                    SYSTEM_UUID
-            );
+        } else { // AUDIENCE
+            // 제보의 생성자/수정자/제보자 Null 처리 및 시스템 UUID 처리
+            spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
+            spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
             spotSuggestionRepository.clearInformer(userId);
         }
 
@@ -505,16 +439,15 @@ public class UserService {
          * social_accounts가 users를 외래키로 참조하기 때문임.
          */
         socialAccountRepository.deleteAllByUserId(userId);
-
+        // 탈퇴 후 재가입을 위한 이메일 마스킹 처리(비식별화). DB의 Email 컬럼 Unique 제약 유지.
+        //        String maskingLetter = MASKING_LETTER_PREFIX + user.getId();
+        //        user.maskDeletedUserInfo(maskingLetter, WITHDRAWAL_NICKNAME_PREFIX);
+        //        user.softDelete(userId);
         // 현재 Access Token 블랙리스트 등록
-        long remainingMillis =
-                authService.calculateTokenTtl(accessToken);
+        long remainingMillis = authService.calculateTokenTtl(accessToken);
 
         if (remainingMillis > 0) {
-            accessTokenService.addToWithdrawlList(
-                    accessToken,
-                    remainingMillis
-            );
+            accessTokenService.addToWithdrawlList(accessToken, remainingMillis);
         }
 
         // Refresh Token 제거
@@ -523,5 +456,6 @@ public class UserService {
         // 회원 삭제
         userRepository.delete(user);
     }
+
 
 }
