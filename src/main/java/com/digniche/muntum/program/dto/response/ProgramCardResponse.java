@@ -6,6 +6,7 @@ import com.digniche.muntum.program.entity.ProgramType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,11 +27,15 @@ public record ProgramCardResponse(
         ProgramStatus status,
         String thumbnailUrl,
         List<ProgramKeywordResponse> keywords,   // 키워드 이름 목록
-        boolean ended
+        boolean ended,
+        boolean isNew
 ) {
     public static ProgramCardResponse from(Program program, String thumbnailUrl, List<ProgramKeywordResponse> keywords) {
         boolean ended = program.getEndDate() != null
                 && program.getEndDate().isBefore(LocalDate.now());
+        boolean isNew = program.getCreatedAt() != null
+                && !program.getCreatedAt()
+                .isBefore(LocalDateTime.now().minusWeeks(2));
         return new ProgramCardResponse(
                 program.getId(),
                 program.getTitle(),
@@ -48,7 +53,8 @@ public record ProgramCardResponse(
                 program.getStatus(),
                 thumbnailUrl,
                 keywords,
-                ended
+                ended,
+                isNew
         );
     }
 }
