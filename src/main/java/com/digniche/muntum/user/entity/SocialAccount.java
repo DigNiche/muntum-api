@@ -47,16 +47,29 @@ public class SocialAccount extends BaseEntity {
     @Column(name = "provider_email")
     private String providerEmail;
 
+    @Column(
+            name = "provider_refresh_token",
+            columnDefinition = "TEXT"
+    )
+    private String providerRefreshToken;
+
     @Builder
     public SocialAccount(
             User user,
             SocialProvider provider,
             String providerUserId,
-            String providerEmail
+            String providerEmail,
+            String providerRefreshToken
     ) {
         this.user = user;
         this.provider = provider;
         this.providerUserId = providerUserId;
         this.providerEmail = providerEmail;
+        this.providerRefreshToken=providerRefreshToken;
+    }
+
+    public void updateProviderRefreshToken(
+            String providerRefreshToken
+    ) {this.providerRefreshToken=providerRefreshToken;
     }
 }

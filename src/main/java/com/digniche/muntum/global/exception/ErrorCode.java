@@ -26,6 +26,9 @@ public enum ErrorCode {
     INVALID_SOCIAL_TOKEN("A016", "유효하지 않은 소셜 로그인 토큰입니다", HttpStatus.UNAUTHORIZED),
     SOCIAL_EMAIL_REQUIRED("A017", "소셜 로그인에 이메일 정보가 필요합니다", HttpStatus.BAD_REQUEST),
     UNSUPPORTED_SOCIAL_PROVIDER("A018", "지원하지 않는 소셜 로그인 제공자입니다", HttpStatus.BAD_REQUEST),
+    APPLE_TOKEN_EXCHANGE_FAILED("A019", "Apple 인증 토큰 발급에 실패했습니다", HttpStatus.BAD_GATEWAY),
+    APPLE_TOKEN_REVOKE_FAILED("A020", "Apple 인증 연결 해제에 실패했습니다", HttpStatus.BAD_GATEWAY),
+    SOCIAL_REAUTHENTICATION_REQUIRED("A021", "소셜 로그인 재인증 정보가 필요합니다", HttpStatus.BAD_REQUEST),
     // 비밀번호 재설정
     VERIFICATION_CODE_EXPIRED("A011", "인증번호가 만료되었습니다. 다시 요청해주세요", HttpStatus.BAD_REQUEST),
     INVALID_VERIFICATION_CODE("A012", "인증번호가 일치하지 않습니다", HttpStatus.BAD_REQUEST),
