@@ -129,14 +129,20 @@ public class AppleTokenVerifier implements SocialTokenVerifier {
     ) {
         if (requestedNonce == null
                 || requestedNonce.isBlank()) {
-            return;
+            throw new BusinessException(
+                    ErrorCode.INVALID_SOCIAL_TOKEN
+            );
         }
 
         String tokenNonce =
                 jwt.getClaimAsString("nonce");
 
         if (tokenNonce == null
-                || !secureEquals(tokenNonce, requestedNonce)) {
+                || tokenNonce.isBlank()
+                || !secureEquals(
+                tokenNonce,
+                requestedNonce
+        )) {
             throw new BusinessException(
                     ErrorCode.INVALID_SOCIAL_TOKEN
             );
