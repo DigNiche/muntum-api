@@ -443,18 +443,21 @@ public class UserService {
         //        String maskingLetter = MASKING_LETTER_PREFIX + user.getId();
         //        user.maskDeletedUserInfo(maskingLetter, WITHDRAWAL_NICKNAME_PREFIX);
         //        user.softDelete(userId);
+
+        //        String maskingLetter = MASKING_LETTER_PREFIX + user.getId();
+        //        user.maskDeletedUserInfo(maskingLetter, WITHDRAWAL_NICKNAME_PREFIX);
+        //        user.softDelete(userId);
         // 현재 Access Token 블랙리스트 등록
         long remainingMillis = authService.calculateTokenTtl(accessToken);
 
         if (remainingMillis > 0) {
             accessTokenService.addToWithdrawlList(accessToken, remainingMillis);
         }
-
-        // Refresh Token 제거
         refreshTokenService.delete(userId);
-
-        // 회원 삭제
+        // 회원 탈퇴 N년 후 정보 완전 파기
+        //    @Scheduled(cron = "0 0 3 * * *")
         userRepository.delete(user);
+    }
     }
 
 
