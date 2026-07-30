@@ -20,7 +20,12 @@ import com.digniche.muntum.user.repository.UserRepository;
 import com.digniche.muntum.user.repository.UserTermsAgreementRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.digniche.muntum.auth.social.AppleTokenClient;
+import com.digniche.muntum.auth.social.AppleTokenResponse;
+import com.digniche.muntum.auth.social.SocialTokenCipher;
+import com.digniche.muntum.user.entity.SocialProvider;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,13 +44,15 @@ public class SocialLoginService {
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
 
-    @Transactional
+    private final AppleTokenClient appleTokenClient;
+    private final SocialTokenCipher socialTokenCipher;
+    private final PlatformTransactionManager transactionManager;
+
     public AuthenticationResponse login(
             SocialLoginRequest request
     ) {
         /*
-         * APPLE 요청이면 AppleTokenVerifier 선택
-         * KAKAO 요청이면 추후 KakaoTokenVerifier 선택
+         * 요청 provider에 맞는 검증기 선택
          */
         SocialTokenVerifier verifier = verifiers.stream()
                 .filter(v -> v.supports() == request.provider())
@@ -57,14 +64,116 @@ public class SocialLoginService {
                 );
 
         /*
-         * Apple Identity Token 검증
+         * 앱이 전달한 Identity Token 검증
          */
-        SocialUserInfo socialUser = verifier.verify(request);
+        SocialUserInfo socialUser =
+                verifier.verify(request);
 
         /*
-         * 기존 소셜 계정이면 조회,
-         * 최초 로그인이라면 신규 User와 SocialAccount 생성
+         * Apple authorizationCode 교환 및
+         * refresh token 암호화
+         *
+         * 외부 Apple 서버 호출이므로
+         * DB 트랜잭션 시작 전에 실행
          */
+        String encryptedProviderRefreshToken =
+                prepareProviderRefreshToken(
+                        request,
+                        verifier,
+                        socialUser
+                );
+
+        /*
+         * 아래 DB 작업만 트랜잭션으로 실행
+         */
+        TransactionTemplate transactionTemplate =
+                new TransactionTemplate(transactionManager);
+
+        AuthenticationResponse response =
+                transactionTemplate.execute(status ->
+                        completeLogin(
+                                socialUser,
+                                encryptedProviderRefreshToken
+                        )
+                );
+
+        if (response == null) {
+            throw new BusinessException(
+                    ErrorCode.SERVER_ERROR
+            );
+        }
+
+        return response;
+    }
+
+    private String prepareProviderRefreshToken(
+            SocialLoginRequest request,
+            SocialTokenVerifier verifier,
+            SocialUserInfo socialUser
+    ) {
+        /*
+         * 카카오는 추후 별도 처리
+         */
+        if (request.provider() != SocialProvider.APPLE) {
+            return null;
+        }
+
+        /*
+         * authorizationCode를 Apple 서버에 보내
+         * access token, refresh token, id token 수신
+         */
+        AppleTokenResponse tokenResponse =
+                appleTokenClient.exchangeAuthorizationCode(
+                        request.authorizationCode()
+                );
+
+        if (tokenResponse.idToken() == null
+                || tokenResponse.idToken().isBlank()
+                || tokenResponse.refreshToken() == null
+                || tokenResponse.refreshToken().isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.APPLE_TOKEN_EXCHANGE_FAILED
+            );
+        }
+
+        /*
+         * authorizationCode 교환 결과의 id_token도 검증
+         *
+         * 앱이 보낸 Identity Token의 사용자와
+         * authorizationCode의 사용자가 동일한지 확인
+         */
+        SocialLoginRequest exchangedTokenRequest =
+                new SocialLoginRequest(
+                        SocialProvider.APPLE,
+                        tokenResponse.idToken(),
+                        null,
+                        request.nonce()
+                );
+
+        SocialUserInfo exchangedUser =
+                verifier.verify(exchangedTokenRequest);
+        // 프론트엔드가 줬던 신분증의 유저(socialUser) == 애플이 방금 준 신분증의 유저(exchangedUser) 비교
+        if (!socialUser.providerUserId().equals(
+                exchangedUser.providerUserId()
+        )) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_SOCIAL_TOKEN
+            );
+        }
+
+        /*
+         * DB에는 refresh token 평문이 아닌
+         * AES-GCM 암호문 저장
+         */
+        return socialTokenCipher.encrypt(
+                tokenResponse.refreshToken()
+        );
+    }
+
+    private AuthenticationResponse completeLogin(
+            SocialUserInfo socialUser,
+            String encryptedProviderRefreshToken
+    ) {
         SocialAccount socialAccount =
                 socialAccountRepository
                         .findByProviderAndProviderUserId(
@@ -80,6 +189,16 @@ public class SocialLoginService {
         if (!user.isActive()) {
             throw new BusinessException(
                     ErrorCode.INACTIVE_ACCOUNT
+            );
+        }
+
+        /*
+         * 신규·기존 Apple 회원 모두
+         * 가장 최근에 발급받은 refresh token으로 갱신
+         */
+        if (encryptedProviderRefreshToken != null) {
+            socialAccount.updateProviderRefreshToken(
+                    encryptedProviderRefreshToken
             );
         }
 
