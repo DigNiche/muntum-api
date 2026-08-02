@@ -360,6 +360,10 @@ public class UserService {
                     socialAccount,
                     request
             );
+            log.info(
+                    "[APPLE_WITHDRAW_REAUTH_AND_REVOKE_COMPLETED] userId={}",
+                    userId
+            );
         }
 
         /*
@@ -371,6 +375,10 @@ public class UserService {
 
         transactionTemplate.executeWithoutResult(status ->
                 completeWithdrawal(userId, accessToken)
+        );
+        log.info(
+                "[WITHDRAW_DB_DELETE_COMPLETED] userId={}",
+                userId
         );
     }
     private void completeWithdrawal(

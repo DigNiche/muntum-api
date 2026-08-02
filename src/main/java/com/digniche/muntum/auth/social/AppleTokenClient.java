@@ -9,7 +9,11 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestClientResponseException;
 
+@Slf4j
 @Component
 public class AppleTokenClient {
 
@@ -115,7 +119,7 @@ public class AppleTokenClient {
         );
 
         try {
-            restClient.post()
+            ResponseEntity<Void> response = restClient.post()
                     .uri("/auth/revoke")
                     .contentType(
                             MediaType.APPLICATION_FORM_URLENCODED
@@ -124,7 +128,26 @@ public class AppleTokenClient {
                     .retrieve()
                     .toBodilessEntity();
 
+            log.info(
+                    "[APPLE_REVOKE_SUCCESS] status={}",
+                    response.getStatusCode().value()
+            );
+
+        } catch (RestClientResponseException exception) {
+            log.error(
+                    "[APPLE_REVOKE_FAILED] status={}, responseBody={}",
+                    exception.getStatusCode().value(),
+                    exception.getResponseBodyAsString()
+            );
+            throw new BusinessException(
+                    ErrorCode.APPLE_TOKEN_REVOKE_FAILED
+            );
         } catch (RestClientException exception) {
+            log.error(
+                    "[APPLE_REVOKE_FAILED] requestError={}",
+                    exception.getMessage()
+            );
+
             throw new BusinessException(
                     ErrorCode.APPLE_TOKEN_REVOKE_FAILED
             );
