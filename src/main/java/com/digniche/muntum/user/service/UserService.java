@@ -50,7 +50,7 @@ import com.digniche.muntum.user.entity.SocialProvider;
 import com.digniche.muntum.user.repository.SocialAccountRepository;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
+import com.digniche.muntum.programreaction.repository.ProgramReactionRepository;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -65,6 +65,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final SpotSuggestionRepository spotSuggestionRepository;
     private final ScrapRepository scrapRepository;
+    private final ProgramReactionRepository programReactionRepository;
     private final UserKeywordRepository userKeywordRepository;
     private final KeywordRepository keywordRepository;
     private final ProgramRepository programRepository;
@@ -80,6 +81,7 @@ public class UserService {
     private final AppleTokenClient appleTokenClient;
     private final SocialTokenCipher socialTokenCipher;
     private final PlatformTransactionManager transactionManager;
+
 
     public static final String MASKING_LETTER_PREFIX = "_del_";
     private static final int DATA_RETENTION_DISPOSAL_YEAR = 5;
@@ -440,6 +442,7 @@ public class UserService {
         // 사용자 관련 데이터 삭제
         userTermsAgreementRepository.deleteAllByUserId(userId);
         scrapRepository.deleteAllByUserId(userId);
+        programReactionRepository.deleteAllByUserId(userId);
         userKeywordRepository.deleteAllByUserId(userId);
 
         /*

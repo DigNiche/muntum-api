@@ -188,8 +188,8 @@ public class ProgramController {
             @PathVariable("program_id") UUID programId,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        ProgramResponse response = programService.getProgram(programId);
         UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
+        ProgramResponse response = programService.getProgram(programId, userId);
 
         // Analytics
         analyticsEvents.programDetailViewed(userId, programId);
