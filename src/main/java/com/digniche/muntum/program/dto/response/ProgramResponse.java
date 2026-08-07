@@ -3,6 +3,8 @@ package com.digniche.muntum.program.dto.response;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
+import com.digniche.muntum.programreaction.dto.response.ProgramReactionSummaryResponse;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,14 +39,34 @@ public record ProgramResponse(
         ProgramStatus status,
         List<ProgramImageResponse> images,
         List<ProgramKeywordResponse> keywords,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        ProgramReactionSummaryResponse reaction,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
     /**
-     * 엔티티 -> 응답 DTO 변환
+     * 프로그램 등록·수정·상태 변경 응답 변환
+     *
+     * 반응 정보 포함 X
      */
     public static ProgramResponse from(Program program, List<ProgramImageResponse> images,
                                        List<ProgramKeywordResponse> keywords) {
+        return from(
+                program,
+                images,
+                keywords,
+                null
+        );
+    }
+    /**
+     * 프로그램 상세 조회 응답 변환
+     */
+    public static ProgramResponse from(
+            Program program,
+            List<ProgramImageResponse> images,
+            List<ProgramKeywordResponse> keywords,
+            ProgramReactionSummaryResponse reaction
+    ) {
         return new ProgramResponse(
                 program.getId(),
                 program.getTitle(),
@@ -69,6 +91,7 @@ public record ProgramResponse(
                 program.getStatus(),
                 images,
                 keywords,
+                reaction,
                 program.getCreatedAt(),
                 program.getUpdatedAt()
         );

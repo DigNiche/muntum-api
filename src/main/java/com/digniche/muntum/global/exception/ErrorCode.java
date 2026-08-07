@@ -32,10 +32,14 @@ public enum ErrorCode {
     INVALID_SOCIAL_TOKEN("A016", "유효하지 않은 소셜 로그인 토큰입니다", HttpStatus.UNAUTHORIZED),
     SOCIAL_EMAIL_REQUIRED("A017", "소셜 로그인에 이메일 정보가 필요합니다", HttpStatus.BAD_REQUEST),
     UNSUPPORTED_SOCIAL_PROVIDER("A018", "지원하지 않는 소셜 로그인 제공자입니다", HttpStatus.BAD_REQUEST),
+    APPLE_TOKEN_EXCHANGE_FAILED("A019", "Apple 인증 토큰 발급에 실패했습니다", HttpStatus.BAD_GATEWAY),
+    APPLE_TOKEN_REVOKE_FAILED("A020", "Apple 인증 연결 해제에 실패했습니다", HttpStatus.BAD_GATEWAY),
+    SOCIAL_REAUTHENTICATION_REQUIRED("A021", "소셜 로그인 재인증 정보가 필요합니다", HttpStatus.BAD_REQUEST),
     // 회원가입 시 이메일 인증
-    INVALID_SIGNUP_TOKEN("A019", "이메일 인증이 만료되었습니다. 처음부터 다시 시도해주세요", HttpStatus.BAD_REQUEST),
-    VERIFICATION_CODE_COOLDOWN("A020", "잠시 후 다시 요청해주세요", HttpStatus.TOO_MANY_REQUESTS),
-    VERIFICATION_SEND_LIMIT_EXCEEDED("A021", "인증번호 발송 횟수를 초과했습니다. 24시간 후 다시 시도해주세요", HttpStatus.TOO_MANY_REQUESTS),
+    INVALID_SIGNUP_TOKEN("A022", "이메일 인증이 만료되었습니다. 처음부터 다시 시도해주세요", HttpStatus.BAD_REQUEST),
+    VERIFICATION_CODE_COOLDOWN("A023", "잠시 후 다시 요청해주세요", HttpStatus.TOO_MANY_REQUESTS),
+    VERIFICATION_SEND_LIMIT_EXCEEDED("A024", "인증번호 발송 횟수를 초과했습니다. 24시간 후 다시 시도해주세요", HttpStatus.TOO_MANY_REQUESTS),
+
 
     // 사용자 정보
     NICKNAME_ALREADY_EXISTS("U001", "이미 사용 중인 닉네임입니다", HttpStatus.CONFLICT),

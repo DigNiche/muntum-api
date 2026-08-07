@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.digniche.muntum.program.dto.request.ProgramFilterChip;
+import com.digniche.muntum.programreaction.dto.response.ProgramReactionSummaryResponse;
+import com.digniche.muntum.programreaction.service.ProgramReactionService;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -61,6 +63,7 @@ public class ProgramService {
 
     private static final List<ProgramStatus> PUBLIC_VIEWABLE =
             List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED); // 운영중+운영종료
+    private final ProgramReactionService programReactionService;
 
     // 프로그램 등록
     @Transactional
@@ -155,11 +158,13 @@ public class ProgramService {
     @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getProgramsByClosestEndDate(Pageable pageable) {
         LocalDate today = LocalDate.now();
+        LocalDate monthStart = today.withDayOfMonth(1);
         LocalDate monthEnd = today.with(TemporalAdjusters.lastDayOfMonth());
 
-        Page<Program> programPage = programRepository.findByStatusOrderByClosestEndDate(
-                ProgramStatus.ACTIVE,
+        Page<Program> programPage = programRepository.findMonthlyProgramsOrderByEndDate(
+                PUBLIC_VIEWABLE,
                 today,
+                monthStart,
                 monthEnd,
                 pageable
         );
@@ -179,19 +184,22 @@ public class ProgramService {
                 .map(Keyword::getId)
                 .toList();
 
+        LocalDate today = LocalDate.now();
         ProgramFilterCondition filter = createFilterCondition(chip);
         Page<Program> programPage;
         if (topKeywordIds.isEmpty()) {
             programPage = programRepository.findFilteredProgramsOrderByLatest(
-                    ACTIVE_ONLY,
+                    PUBLIC_VIEWABLE,
+                    today,
                     filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
                     filter.weekStart(), filter.weekEnd(),
                     pageable
             );
         } else {
             programPage = programRepository.findProgramsByKeywordIds(
-                    ACTIVE_ONLY,
+                    PUBLIC_VIEWABLE,
                     topKeywordIds,
+                    today,
                     filter.freeOnly(),
                     filter.noReservationOnly(),
                     filter.programType(),
@@ -291,14 +299,15 @@ public class ProgramService {
      * 조회수 증가가 있으므로 readOnly 트랜잭션이 아니다.
      */
     @Transactional
-    public ProgramResponse getProgram(UUID programId) {
+    public ProgramResponse getProgram(UUID programId, UUID userId) {
         Program program = getPublicViewableProgram(programId);
         List<ProgramImageResponse> images = programImageService.getOrderedImages(programId);
 
         List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(programId).stream()
                 .map(ProgramKeywordResponse::from)
                 .toList();
-        return ProgramResponse.from(program, images, keywords);
+        ProgramReactionSummaryResponse reaction = programReactionService.getReactionSummary(programId, userId);
+        return ProgramResponse.from(program, images, keywords, reaction);
     }
 
     // 프로그램 수정
