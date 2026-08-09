@@ -1,17 +1,10 @@
 package com.digniche.muntum.auth.controller;
 
 
-import com.digniche.muntum.auth.dto.request.PasswordFindRequest;
-import com.digniche.muntum.auth.dto.request.PasswordResetRequest;
-import com.digniche.muntum.auth.dto.request.RefreshTokenReissueRequest;
-import com.digniche.muntum.auth.dto.request.VerifyCodeRequest;
-import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
-import com.digniche.muntum.auth.dto.request.LoginRequest;
-import com.digniche.muntum.auth.dto.request.SignUpRequest;
-import com.digniche.muntum.auth.dto.response.PasswordFindResponse;
-import com.digniche.muntum.auth.dto.response.SignupResponse;
-import com.digniche.muntum.auth.dto.response.VerifyCodeResponse;
+import com.digniche.muntum.auth.dto.request.*;
+import com.digniche.muntum.auth.dto.response.*;
 import com.digniche.muntum.auth.service.AuthService;
+import com.digniche.muntum.auth.service.EmailVerificationService;
 import com.digniche.muntum.auth.service.PasswordResetService;
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.security.UserPrincipal;
@@ -22,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.digniche.muntum.auth.dto.request.SocialLoginRequest;
 import com.digniche.muntum.auth.service.SocialLoginService;
 
 /**
@@ -36,6 +28,7 @@ public class AuthController {
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
     private final SocialLoginService socialLoginService;
+    private final EmailVerificationService emailVerificationService;
 
 
     // 회원가입
@@ -45,6 +38,27 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("회원가입이 완료되었습니다.", res));
+    }
+
+    // 회원가입: 이메일 인증번호 발송
+    @PostMapping("/email/send-code")
+    public ResponseEntity<ApiResponse<EmailVerificationSendResponse>> sendEmailVerificationCode(
+            @RequestBody @Valid EmailVerificationSendRequest request) {
+        EmailVerificationSendResponse res = emailVerificationService.sendCode(request.email());
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("인증번호가 이메일로 발송되었습니다.",
+                        res));
+    }
+
+    // 회원가입: 이메일 인증번호 확인
+    @PostMapping("/email/verify-code")
+    public ResponseEntity<ApiResponse<EmailVerificationConfirmResponse>> confirmEmailVerificationCode(
+            @RequestBody @Valid EmailVerificationConfirmRequest request) {
+        String signupToken = emailVerificationService.verifyCode(request.email(), request.code());
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("이메일 인증이 완료되었습니다.",
+                        new EmailVerificationConfirmResponse(signupToken)));
     }
 
 

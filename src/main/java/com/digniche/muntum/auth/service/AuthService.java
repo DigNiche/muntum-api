@@ -6,6 +6,7 @@ import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
 import com.digniche.muntum.auth.dto.response.SignupResponse;
+import com.digniche.muntum.global.redis.EmailVerificationRedisService;
 import com.digniche.muntum.global.redis.RefreshTokenService;
 import com.digniche.muntum.global.security.jwt.JwtProvider;
 import com.digniche.muntum.global.exception.BusinessException;
@@ -42,10 +43,27 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EmailVerificationRedisService emailVerificationRedisService;
 
     // 회원가입
     @Transactional
     public SignupResponse signup(SignUpRequest request) {
+
+        // 이메일 인증 토큰 검증
+//        String verifiedEmail = emailVerificationRedisService.getEmailBySignupToken(request.signupToken());
+//        if (verifiedEmail == null || !verifiedEmail.equalsIgnoreCase(request.email().trim())) {
+//            throw new BusinessException(ErrorCode.INVALID_SIGNUP_TOKEN);
+//        }
+
+        // [과도기] 위 코드 대신
+        String signupToken = request.signupToken();
+        boolean emailVerified = signupToken != null && !signupToken.isBlank();
+        if (emailVerified) {
+            String verifiedEmail = emailVerificationRedisService.getEmailBySignupToken(signupToken);
+            if (verifiedEmail == null || !verifiedEmail.equalsIgnoreCase(request.email().trim())) {
+                throw new BusinessException(ErrorCode.INVALID_SIGNUP_TOKEN);
+            }
+        }
 
         String encodedPassword = passwordEncoder.encode(request.password());
 
@@ -55,6 +73,11 @@ public class AuthService {
         }
 
         User user = userRepository.save(request.toEntity(encodedPassword));
+//        user.verifyEmail(); // 인증 완료 상태로 생성
+        // [과도기] 위 코드 대신
+        if (emailVerified) {
+            user.verifyEmail();   // 인증을 거친 경우에만 true
+        }
 
         // 사용자 약관 동의 (필수)
         LocalDateTime agreedAt = user.getCreatedAt();
@@ -73,6 +96,13 @@ public class AuthService {
         userTermsAgreementRepository.save(temrs);
 
         eventPublisher.publishEvent(new SignupCompletedEvent(user.getId()));
+
+        // 1회용 토큰 소비
+//        emailVerificationRedisService.deleteSignupToken(request.signupToken());
+        // [과도기] 위 코드 대신
+        if (emailVerified) {
+            emailVerificationRedisService.deleteSignupToken(signupToken);
+        }
 
         return new SignupResponse(user.getId(), user.getEmail(), user.getCreatedAt());
     }
