@@ -176,6 +176,7 @@ public class ProgramService {
     @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getProgramsByHotKeywords(
             int topN,
+            ProgramType programType,
             ProgramFilterChip chip,
             Pageable pageable
     ) {
@@ -185,7 +186,7 @@ public class ProgramService {
                 .toList();
 
         LocalDate today = LocalDate.now();
-        ProgramFilterCondition filter = createFilterCondition(chip);
+        ProgramFilterCondition filter = createFilterCondition(programType, chip);
         Page<Program> programPage;
         if (topKeywordIds.isEmpty()) {
             programPage = programRepository.findFilteredProgramsOrderByLatest(
@@ -551,21 +552,92 @@ public class ProgramService {
                 .replace("_", "\\_");
     }
 
-    private ProgramFilterCondition createFilterCondition(ProgramFilterChip chip) {
+    /*private ProgramFilterCondition createFilterCondition(ProgramType programType, ProgramFilterChip chip) {
         if (chip == null) {
-            return new ProgramFilterCondition(null, null, null, null, null);
+            return new ProgramFilterCondition(null, null, programType,null,  null);
         }
         return switch (chip) {
             case HOT -> throw new BusinessException(ErrorCode.INVALID_ACCESS_SECTION);
-            case FREE           -> new ProgramFilterCondition(true, null, null, null, null);
-            case NO_RESERVATION -> new ProgramFilterCondition(null, true, null, null, null);
+            case FREE           -> new ProgramFilterCondition(true, null, programType,null, null);
+            case NO_RESERVATION -> new ProgramFilterCondition(null, true, programType,null, null);
             case THIS_WEEK -> {
                 LocalDate today = LocalDate.now();
                 LocalDate weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
-                yield new ProgramFilterCondition(null, null, null, today, weekEnd);
+                yield new ProgramFilterCondition( null, null, programType, today, weekEnd);
             }
-            case EXHIBITION, PERFORMANCE, CLASS_EXPERIENCE, FAIR ->
-                    new ProgramFilterCondition(null, null, ProgramType.valueOf(chip.name()), null, null);
+            // 기존 chip=EXHIBITION 방식 당분간 지원
+            case EXHIBITION, PERFORMANCE, CLASS_EXPERIENCE, FAIR -> {
+                ProgramType chipProgramType =
+                        ProgramType.valueOf(chip.name());
+
+                // programType과 chip으로 다른 유형을 보내면
+                if (programType != null && programType != chipProgramType) {
+                    throw new BusinessException(ErrorCode.INVALID_REQUEST);
+                }
+
+                yield new ProgramFilterCondition(
+                        null, null, chipProgramType, null, null
+                );
+            }
+        };
+    }*/
+    // 기존 API
+    private ProgramFilterCondition createFilterCondition(
+            ProgramFilterChip chip
+    ) {
+        return createFilterCondition(null, chip);
+    }
+
+    // 모아보기에서 programType + chip 조합
+    private ProgramFilterCondition createFilterCondition(
+            ProgramType programType,
+            ProgramFilterChip chip
+    ) {
+        if (chip == null) {
+            return new ProgramFilterCondition(
+                    null, null, programType, null, null
+            );
+        }
+
+        return switch (chip) {
+            case HOT ->
+                    throw new BusinessException(
+                            ErrorCode.INVALID_ACCESS_SECTION
+                    );
+
+            case FREE ->
+                    new ProgramFilterCondition(
+                            true, null, programType, null, null
+                    );
+
+            case NO_RESERVATION ->
+                    new ProgramFilterCondition(
+                            null, true, programType, null, null
+                    );
+
+            case THIS_WEEK -> {
+                LocalDate today = LocalDate.now();
+                LocalDate weekEnd = today.with(
+                        TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)
+                );
+
+                yield new ProgramFilterCondition(
+                        null, null, programType, today, weekEnd
+                );
+            }
+
+            case EXHIBITION, PERFORMANCE, CLASS_EXPERIENCE, FAIR -> {
+                ProgramType chipProgramType =
+                        ProgramType.valueOf(chip.name());
+
+                if (programType != null && programType != chipProgramType) {
+                    throw new BusinessException(ErrorCode.INVALID_REQUEST);
+                }
+
+                yield new ProgramFilterCondition(
+                        null, null, chipProgramType, null, null
+                );
+            }
         };
     }
 
