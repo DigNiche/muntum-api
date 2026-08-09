@@ -21,4 +21,12 @@ public class MailService {
         message.setText("인증번호는 [" + code + "] 입니다.\n인증번호는 5분간 유효합니다.");
         mailSender.send(message);
     }
+
+    public void sendSignupVerificationCode(String to, String code) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("[MUNTUM] 이메일 인증번호");
+        message.setText("인증번호는 [" + code + "] 입니다.\n인증번호는 5분간 유효합니다.");
+        mailSender.send(message);
+    }
 }
