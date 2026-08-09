@@ -7,6 +7,7 @@ import com.digniche.muntum.program.dto.request.*;
 import com.digniche.muntum.program.dto.response.ProgramCardResponse;
 import com.digniche.muntum.program.dto.response.ProgramImageResponse;
 import com.digniche.muntum.program.dto.response.ProgramResponse;
+import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.program.service.ProgramImageService;
 import com.digniche.muntum.program.service.ProgramService;
 import jakarta.validation.Valid;
@@ -133,12 +134,13 @@ public class ProgramController {
     // 모아보기 섹션용. chip 적용 가능.
     @GetMapping("/hot-keywords")
     public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getHotKeywordPrograms(
+            @RequestParam(required = false) ProgramType programType,
             @RequestParam(required = false) ProgramFilterChip chip,
             @RequestParam(defaultValue = "5") @Min(value = 1, message = "topN은 1 이상이어야 합니다") int topN,
             @PageableDefault(size = 20) Pageable pageable
     ) {
         PageResponse<ProgramCardResponse> response =
-                programService.getProgramsByHotKeywords(topN, chip, pageable);
+                programService.getProgramsByHotKeywords(topN, programType, chip, pageable);
 
         return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
     }
