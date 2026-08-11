@@ -178,6 +178,7 @@ public class ProgramService {
             int topN,
             ProgramType programType,
             ProgramFilterChip chip,
+            boolean includeEnded,
             Pageable pageable
     ) {
         List<UUID> topKeywordIds = userKeywordRepository.findTopKeywords(PageRequest.of(0, topN))
@@ -187,10 +188,14 @@ public class ProgramService {
 
         LocalDate today = LocalDate.now();
         ProgramFilterCondition filter = createFilterCondition(programType, chip);
+
+        List<ProgramStatus> allowedStatuses =
+                includeEnded ? PUBLIC_VIEWABLE : ACTIVE_ONLY;
+
         Page<Program> programPage;
         if (topKeywordIds.isEmpty()) {
             programPage = programRepository.findFilteredProgramsOrderByLatest(
-                    PUBLIC_VIEWABLE,
+                    allowedStatuses,
                     today,
                     filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
                     filter.weekStart(), filter.weekEnd(),
@@ -198,7 +203,7 @@ public class ProgramService {
             );
         } else {
             programPage = programRepository.findProgramsByKeywordIds(
-                    PUBLIC_VIEWABLE,
+                    allowedStatuses,
                     topKeywordIds,
                     today,
                     filter.freeOnly(),
