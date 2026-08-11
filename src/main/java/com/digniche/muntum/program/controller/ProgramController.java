@@ -136,11 +136,12 @@ public class ProgramController {
     public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>> getHotKeywordPrograms(
             @RequestParam(required = false) ProgramType programType,
             @RequestParam(required = false) ProgramFilterChip chip,
+            @RequestParam(defaultValue = "true") boolean includeEnded,
             @RequestParam(defaultValue = "5") @Min(value = 1, message = "topN은 1 이상이어야 합니다") int topN,
             @PageableDefault(size = 20) Pageable pageable
     ) {
         PageResponse<ProgramCardResponse> response =
-                programService.getProgramsByHotKeywords(topN, programType, chip, pageable);
+                programService.getProgramsByHotKeywords(topN, programType, chip, includeEnded, pageable);
 
         return ResponseEntity.ok(ApiResponse.success("인기 키워드 프로그램 목록 조회에 성공했습니다.", response));
     }
