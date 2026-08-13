@@ -2,7 +2,7 @@ package com.digniche.muntum.user.controller;
 
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.PageResponse;
-import com.digniche.muntum.user.dto.UserProfileResponse;
+import com.digniche.muntum.user.dto.response.UserProfileResponse;
 import com.digniche.muntum.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

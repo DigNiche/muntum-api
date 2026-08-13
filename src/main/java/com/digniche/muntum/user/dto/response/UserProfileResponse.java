@@ -1,4 +1,4 @@
-package com.digniche.muntum.user.dto;
+package com.digniche.muntum.user.dto.response;
 
 import com.digniche.muntum.user.entity.User;
 
@@ -19,7 +19,7 @@ public record UserProfileResponse(
         long scrapCount,
         LocalDate joinedAt
 ) {
-    public static UserProfileResponse of(
+    public static UserProfileResponse from(
             User user,
             long keywordCount,
             long suggestionCount,

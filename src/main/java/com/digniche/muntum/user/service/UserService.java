@@ -30,7 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.digniche.muntum.global.PageResponse;
-import com.digniche.muntum.user.dto.UserProfileResponse;
+import com.digniche.muntum.user.dto.response.UserProfileResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -121,7 +121,7 @@ public class UserService {
         Map<UUID, Long> scrapCounts = toCountMap(scrapRepository.countByUserIds(userIds));
 
         return users.stream()
-                .map(user -> UserProfileResponse.of(
+                .map(user -> UserProfileResponse.from(
                         user,
                         keywordCounts.getOrDefault(user.getId(), 0L),
                         suggestionCounts.getOrDefault(user.getId(), 0L),
