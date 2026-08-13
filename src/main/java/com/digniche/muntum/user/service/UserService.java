@@ -338,6 +338,7 @@ public class UserService {
                 encryptedRefreshToken
         );
     }
+
     // 회원 탈퇴
     public void withdraw(
             UUID userId,
@@ -383,60 +384,59 @@ public class UserService {
                 userId
         );
     }
-    private void completeWithdrawal(
-            UUID userId,
-            String accessToken
-    ) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new BusinessException(
-                                ErrorCode.USER_NOT_FOUND
-                        )
-                );
 
-        UserRole role = user.getRole();
+    private void completeWithdrawal(UUID userId, String accessToken) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        String role = user.getRole().name();
+        UUID withdrawnUuid = AuditorAwareImpl.toWithdrawnUserUuid(role, userId);
 
-        if (role == UserRole.MANAGER) {
-            // 제보의 생성/수정/검토자/제보자/삭제자 시스템 UUID 처리
-            spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.clearReviewedBy(userId);
-            spotSuggestionRepository.clearInformer(userId);
-            spotSuggestionRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
+        switch (role) {
+            case "MANAGER" -> {
+                // 제보의 생성/수정/검토자/제보자/삭제자 시스템 UUID 처리
+                spotSuggestionRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                spotSuggestionRepository.clearReviewedBy(userId);
+                spotSuggestionRepository.clearInformer(userId);
+                spotSuggestionRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-            // 키워드의 생성/수정/삭제자 시스템 UUID 처리
-            keywordRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            keywordRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            keywordRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
+                // 키워드의 생성/수정/삭제자 시스템 UUID 처리
+                keywordRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                keywordRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                keywordRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-            // 프로그램의 생성자/수정자/삭제자 시스템 UUID 처리
-            programRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            programRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            programRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
-            // 공지의 생성자/수정자/삭제자
-            announcementRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            announcementRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            announcementRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
-            // 약관의 생성자/수정자/삭제자
-            termsRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            termsRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            termsRepository.replaceDeletedByWithSystem(userId, SYSTEM_UUID);
+                // 프로그램의 생성자/수정자/삭제자 시스템 UUID 처리
+                programRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                programRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                programRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-        } else if (role == UserRole.CURATOR) {
-            // 제보의 생성자/수정자/제보자 시스템 UUID 처리
-            spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.clearInformer(userId);
+                // 공지의 생성자/수정자/삭제자
+                announcementRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                announcementRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                announcementRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-            // 프로그램의 생성자/수정자 Null 처리 및 시스템 UUID 처리
-            programRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            programRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
+                // 약관의 생성자/수정자/삭제자
+                termsRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                termsRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                termsRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-        } else { // AUDIENCE
-            // 제보의 생성자/수정자/제보자 Null 처리 및 시스템 UUID 처리
-            spotSuggestionRepository.replaceCreatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.replaceUpdatedByWithSystem(userId, SYSTEM_UUID);
-            spotSuggestionRepository.clearInformer(userId);
+            }
+            case "CURATOR" -> {
+                // 제보의 생성자/수정자/제보자 시스템 UUID 처리
+                spotSuggestionRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                spotSuggestionRepository.clearInformer(userId);
+
+                // 프로그램의 생성자/수정자 Null 처리 및 시스템 UUID 처리
+                programRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                programRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+
+            }
+            case "AUDIENCE" -> {
+                // 제보의 생성자/수정자/제보자 Null 처리 및 시스템 UUID 처리
+                spotSuggestionRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                spotSuggestionRepository.clearInformer(userId);
+            }
         }
 
         // 사용자 관련 데이터 삭제

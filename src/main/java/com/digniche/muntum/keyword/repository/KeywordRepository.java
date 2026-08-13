@@ -21,18 +21,18 @@ public interface KeywordRepository extends JpaRepository<Keyword, UUID> {
 
     /**
      * 사용자 삭제 시
-     * - 생성자, 수정자, 삭제자 System UUID로 채우기
+     * - 생성자, 수정자, 삭제자 Withdrawn UUID로 채우기
      */
 
     @Modifying
-    @Query("UPDATE Keyword k SET k.createdBy = :systemUuid WHERE k.createdBy = :userId")
-    void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+    @Query("UPDATE Keyword k SET k.createdBy = :withdrawnUuid WHERE k.createdBy = :userId")
+    void replaceCreatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
     @Modifying
-    @Query("UPDATE Keyword k SET k.updatedBy = :systemUuid WHERE k.updatedBy = :userId")
-    void replaceUpdatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+    @Query("UPDATE Keyword k SET k.updatedBy = :withdrawnUuid WHERE k.updatedBy = :userId")
+    void replaceUpdatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
     @Modifying
-    @Query("UPDATE Keyword k SET k.deletedBy = :systemUuid WHERE k.deletedBy = :userId")
-    void replaceDeletedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+    @Query("UPDATE Keyword k SET k.deletedBy = :withdrawnUuid WHERE k.deletedBy = :userId")
+    void replaceDeletedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 }

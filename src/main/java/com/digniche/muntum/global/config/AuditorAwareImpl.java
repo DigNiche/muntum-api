@@ -18,6 +18,12 @@ public class AuditorAwareImpl implements AuditorAware<UUID> {
 
     public static final UUID SYSTEM_UUID =
         UUID.fromString("99999999-9999-9999-9999-999999999999");
+    public static final String WITHDRAWN_MANAGER_UUID_PREFIX =
+            "88888888-8888-8888-8888-";
+    public static final String WITHDRAWN_CURATOR_UUID_PREFIX =
+            "77777777-7777-7777-7777-";
+    public static final String WITHDRAWN_AUDIENCE_UUID_PREFIX =
+            "66666666-6666-6666-6666-";
 
     @Override
     public Optional<UUID> getCurrentAuditor() {
@@ -30,5 +36,28 @@ public class AuditorAwareImpl implements AuditorAware<UUID> {
                 .filter(principal -> principal instanceof UserPrincipal)    // DB와 일치하는 User 정보
                 .map(principal -> ((UserPrincipal) principal).getUserId())
                 .or(() -> Optional.of(SYSTEM_UUID));
+    }
+
+    public static UUID toWithdrawnUserUuid(String userRole, UUID userId) {
+        String withdrawnId = null;
+
+        switch (userRole) {
+            case "MANAGER" -> withdrawnId = WITHDRAWN_MANAGER_UUID_PREFIX;
+            case "CURATOR" -> withdrawnId = WITHDRAWN_CURATOR_UUID_PREFIX;
+            case "AUDIENCE" -> withdrawnId = WITHDRAWN_AUDIENCE_UUID_PREFIX;
+        }
+
+        if (withdrawnId != null) {
+            String originalId = userId.toString();
+            String suffix = originalId.substring(originalId.lastIndexOf('-') + 1);
+            return UUID.fromString(withdrawnId + suffix);
+        } else {
+            return SYSTEM_UUID;
+        }
+    }
+
+    private static String lastGroup(UUID id) {
+        String s = id.toString();
+        return s.substring(s.lastIndexOf('-') + 1); // UUID 마지막 12자리
     }
 }
