@@ -79,8 +79,7 @@ jobs:
             exit 0
           fi
 
-          MESSAGE=$(printf 'Muntum 운영 서버 배포 완료!\n%s' "$PR_TITLE")
-
+          MESSAGE=$(printf '**Muntum API 운영 배포 완료**\n\n**Service** · Muntum API\n**Changes** · %s' "$PR_TITLE")
           PAYLOAD=$(jq -n \
             --arg content "$MESSAGE" \
             '{content: $content, allowed_mentions: {parse: []}}')
