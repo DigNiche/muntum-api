@@ -4,6 +4,10 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -57,3 +61,31 @@ jobs:
             -o StrictHostKeyChecking=no \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
             "sudo systemctl start muntum && sleep 10 && sudo journalctl -u muntum -n 50 --no-pager"
+          
+          
+      - name: Discord deployment success notification
+        if: ${{ success() }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          PR_TITLE=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
+            --jq 'map(select(.base.ref == "main" and .merged_at != null)) | .[0].title // empty')
+
+          if [ -z "$PR_TITLE" ]; then
+            echo "연결된 PR이 없어 Discord 알림 생략합니다."
+            exit 0
+          fi
+
+          MESSAGE=$(printf 'Muntum 운영 서버 배포 완료!\n%s' "$PR_TITLE")
+
+          PAYLOAD=$(jq -n \
+            --arg content "$MESSAGE" \
+            '{content: $content, allowed_mentions: {parse: []}}')
+
+          curl --fail-with-body \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK_URL"
