@@ -15,6 +15,10 @@ import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import com.digniche.muntum.search.service.RecentSearchService;
+import com.digniche.muntum.user.dto.response.CuratorInfoResponse;
+import com.digniche.muntum.user.entity.User;
+import com.digniche.muntum.user.entity.UserRole;
+import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -52,6 +56,7 @@ public class ProgramService {
     private final ProgramImageRepository programImageRepository;
     private final ProgramKeywordRepository programKeywordRepository;
     private final UserKeywordRepository userKeywordRepository;
+    private final UserRepository userRepository;
     private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
     private final ProgramKeywordService programKeywordService;
@@ -308,7 +313,12 @@ public class ProgramService {
                 .map(ProgramKeywordResponse::from)
                 .toList();
         ProgramReactionSummaryResponse reaction = programReactionService.getReactionSummary(programId, userId);
-        return ProgramResponse.from(program, images, keywords, reaction);
+
+        // 큐레이터
+        User user = userRepository.findById(program.getCreatedBy()).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        String nickname = (user.getRole().equals(UserRole.MANAGER)) ? "문틈" : user.getNickname();
+        CuratorInfoResponse curator = CuratorInfoResponse.from(user.getId(), user.getRole(), nickname);
+        return ProgramResponse.from(program, images, keywords, reaction, curator);
     }
 
     // 프로그램 수정

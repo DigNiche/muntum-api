@@ -4,6 +4,7 @@ import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.programreaction.dto.response.ProgramReactionSummaryResponse;
+import com.digniche.muntum.user.dto.response.CuratorInfoResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.math.BigDecimal;
@@ -41,6 +42,7 @@ public record ProgramResponse(
         List<ProgramKeywordResponse> keywords,
         @JsonInclude(JsonInclude.Include.NON_NULL)
         ProgramReactionSummaryResponse reaction,
+        CuratorInfoResponse curator,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -55,6 +57,7 @@ public record ProgramResponse(
                 program,
                 images,
                 keywords,
+                null,
                 null
         );
     }
@@ -65,7 +68,8 @@ public record ProgramResponse(
             Program program,
             List<ProgramImageResponse> images,
             List<ProgramKeywordResponse> keywords,
-            ProgramReactionSummaryResponse reaction
+            ProgramReactionSummaryResponse reaction,
+            CuratorInfoResponse curator
     ) {
         return new ProgramResponse(
                 program.getId(),
@@ -92,6 +96,7 @@ public record ProgramResponse(
                 images,
                 keywords,
                 reaction,
+                curator,
                 program.getCreatedAt(),
                 program.getUpdatedAt()
         );
