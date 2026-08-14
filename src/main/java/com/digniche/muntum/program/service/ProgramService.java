@@ -1,6 +1,7 @@
 package com.digniche.muntum.program.service;
 
 import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.global.config.AuditorAwareImpl;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.keyword.entity.Keyword;
@@ -15,6 +16,10 @@ import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import com.digniche.muntum.search.service.RecentSearchService;
+import com.digniche.muntum.user.dto.response.CuratorProfileResponse;
+import com.digniche.muntum.user.entity.User;
+import com.digniche.muntum.user.entity.UserRole;
+import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -49,21 +54,21 @@ import java.util.stream.Collectors;
 public class ProgramService {
 
     private final ProgramRepository programRepository;
-    private final ProgramImageRepository programImageRepository;
     private final ProgramKeywordRepository programKeywordRepository;
+    private final UserRepository userRepository;
     private final UserKeywordRepository userKeywordRepository;
-    private final GeocodingService geocodingService;
     private final ProgramImageService programImageService;
     private final ProgramKeywordService programKeywordService;
     private final KeywordRepository keywordRepository;
+    private final GeocodingService geocodingService;
     private final RecentSearchService recentSearchService;
-    private static final int MAP_MAX_RESULTS = 200;
-    private static final List<ProgramStatus> ACTIVE_ONLY =
-            List.of(ProgramStatus.ACTIVE); // 현재 운영중
-
-    private static final List<ProgramStatus> PUBLIC_VIEWABLE =
-            List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED); // 운영중+운영종료
     private final ProgramReactionService programReactionService;
+
+    private static final int MAP_MAX_RESULTS = 200;
+    private static final List<ProgramStatus> ACTIVE_ONLY = List.of(ProgramStatus.ACTIVE); // 현재 운영중
+    private static final List<ProgramStatus> PUBLIC_VIEWABLE = List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED); // 운영중+운영종료
+    private static final String WITHDRAWN_MANAGER_NICKNAME = "문틈";
+    private static final String WITHDRAWN_CURATOR_NICKNAME = "익명의 큐레이터";
 
     // 프로그램 등록
     @Transactional
@@ -297,7 +302,7 @@ public class ProgramService {
 
     /**
      * 프로그램 단건 조회
-     * 조회수 증가가 있으므로 readOnly 트랜잭션이 아니다.
+     * - 조회수 증가가 있으므로 readOnly 트랜잭션이 아니다.
      */
     @Transactional
     public ProgramResponse getProgram(UUID programId, UUID userId) {
@@ -308,7 +313,9 @@ public class ProgramService {
                 .map(ProgramKeywordResponse::from)
                 .toList();
         ProgramReactionSummaryResponse reaction = programReactionService.getReactionSummary(programId, userId);
-        return ProgramResponse.from(program, images, keywords, reaction);
+        CuratorProfileResponse curator = getCuratorProfile(program.getCreatedBy());
+
+        return ProgramResponse.from(program, images, keywords, reaction, curator);
     }
 
     // 프로그램 수정
@@ -581,64 +588,59 @@ public class ProgramService {
             }
         };
     }*/
+
+
     // 기존 API
-    private ProgramFilterCondition createFilterCondition(
-            ProgramFilterChip chip
-    ) {
+    private ProgramFilterCondition createFilterCondition(ProgramFilterChip chip) {
         return createFilterCondition(null, chip);
     }
 
     // 모아보기에서 programType + chip 조합
-    private ProgramFilterCondition createFilterCondition(
-            ProgramType programType,
-            ProgramFilterChip chip
-    ) {
+    private ProgramFilterCondition createFilterCondition(ProgramType programType, ProgramFilterChip chip) {
         if (chip == null) {
-            return new ProgramFilterCondition(
-                    null, null, programType, null, null
-            );
+            return new ProgramFilterCondition(null, null, programType, null, null);
         }
 
         return switch (chip) {
-            case HOT ->
-                    throw new BusinessException(
-                            ErrorCode.INVALID_ACCESS_SECTION
-                    );
-
-            case FREE ->
-                    new ProgramFilterCondition(
-                            true, null, programType, null, null
-                    );
-
-            case NO_RESERVATION ->
-                    new ProgramFilterCondition(
-                            null, true, programType, null, null
-                    );
-
+            case HOT -> throw new BusinessException(ErrorCode.INVALID_ACCESS_SECTION);
+            case FREE -> new ProgramFilterCondition(true, null, programType, null, null);
+            case NO_RESERVATION -> new ProgramFilterCondition(null, true, programType, null, null);
             case THIS_WEEK -> {
                 LocalDate today = LocalDate.now();
-                LocalDate weekEnd = today.with(
-                        TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)
-                );
+                LocalDate weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
 
-                yield new ProgramFilterCondition(
-                        null, null, programType, today, weekEnd
-                );
+                yield new ProgramFilterCondition(null, null, programType, today, weekEnd);
             }
-
             case EXHIBITION, PERFORMANCE, CLASS_EXPERIENCE, FAIR -> {
-                ProgramType chipProgramType =
-                        ProgramType.valueOf(chip.name());
+                ProgramType chipProgramType = ProgramType.valueOf(chip.name());
 
-                if (programType != null && programType != chipProgramType) {
-                    throw new BusinessException(ErrorCode.INVALID_REQUEST);
-                }
+                if (programType != null && programType != chipProgramType) throw new BusinessException(ErrorCode.INVALID_REQUEST);
 
-                yield new ProgramFilterCondition(
-                        null, null, chipProgramType, null, null
-                );
+                yield new ProgramFilterCondition(null, null, chipProgramType, null, null);
             }
         };
+    }
+
+    // 큐레이터 소개 카드 생성
+    private CuratorProfileResponse getCuratorProfile(UUID createdBy) {
+        String curator = createdBy.toString();
+        String prefix = curator.substring(0, AuditorAwareImpl.WITHDRAWN_MANAGER_UUID_PREFIX.length());
+//        String suffix = curator.substring(curator.length() - 4).toUpperCase();
+
+        // 탈퇴한 관리자 / 큐레이터
+        switch (prefix) {
+            case AuditorAwareImpl.WITHDRAWN_MANAGER_UUID_PREFIX -> {
+                return CuratorProfileResponse.from(createdBy, UserRole.MANAGER.name(), WITHDRAWN_MANAGER_NICKNAME); //  + " " + suffix);
+            }
+            case AuditorAwareImpl.WITHDRAWN_CURATOR_UUID_PREFIX -> {
+                return CuratorProfileResponse.from(createdBy, UserRole.CURATOR.name(), WITHDRAWN_CURATOR_NICKNAME); // + " " + suffix);
+            }
+        }
+
+        // Active 관리자 / 큐레이터
+        User user = userRepository.findById(createdBy).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        String nickname = (user.getRole().equals(UserRole.MANAGER)) ? WITHDRAWN_MANAGER_NICKNAME : user.getNickname();
+        return CuratorProfileResponse.from(user.getId(), user.getRole().name(), nickname);
     }
 
     @Transactional

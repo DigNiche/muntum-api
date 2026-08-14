@@ -4,6 +4,7 @@ import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.programreaction.dto.response.ProgramReactionSummaryResponse;
+import com.digniche.muntum.user.dto.response.CuratorProfileResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.math.BigDecimal;
@@ -39,33 +40,42 @@ public record ProgramResponse(
         ProgramStatus status,
         List<ProgramImageResponse> images,
         List<ProgramKeywordResponse> keywords,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        ProgramReactionSummaryResponse reaction,
+        @JsonInclude(JsonInclude.Include.NON_NULL) ProgramReactionSummaryResponse reaction,
+        @JsonInclude(JsonInclude.Include.NON_NULL) CuratorProfileResponse curator,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
     /**
-     * 프로그램 등록·수정·상태 변경 응답 변환
-     *
-     * 반응 정보 포함 X
+     * 프로그램 '등록·수정·상태변경' 응답 변환
+     * - 프로그램 정보, 이미지, 키워드
      */
-    public static ProgramResponse from(Program program, List<ProgramImageResponse> images,
-                                       List<ProgramKeywordResponse> keywords) {
+    public static ProgramResponse from(
+            Program program,
+            List<ProgramImageResponse> images,
+            List<ProgramKeywordResponse> keywords
+    ) {
         return from(
                 program,
                 images,
                 keywords,
+                null,
                 null
         );
     }
+
+
     /**
-     * 프로그램 상세 조회 응답 변환
+     * 프로그램 '상세 조회' 응답 변환
+     * - 프로그램 정보, 이미지, 키워드
+     * - 반응 정보 포함
+     * - 큐레이터 소개 포함
      */
     public static ProgramResponse from(
             Program program,
             List<ProgramImageResponse> images,
             List<ProgramKeywordResponse> keywords,
-            ProgramReactionSummaryResponse reaction
+            ProgramReactionSummaryResponse reaction,
+            CuratorProfileResponse curator
     ) {
         return new ProgramResponse(
                 program.getId(),
@@ -92,6 +102,7 @@ public record ProgramResponse(
                 images,
                 keywords,
                 reaction,
+                curator,
                 program.getCreatedAt(),
                 program.getUpdatedAt()
         );
