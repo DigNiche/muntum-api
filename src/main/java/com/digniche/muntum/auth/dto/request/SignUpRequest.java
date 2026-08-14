@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotBlank;
 public record SignUpRequest(
         @NotBlank @Email String email,
         @NotBlank String password,
-        String signupToken,
+        @NotBlank String signupToken,
         UserRole role,
         String userTermsAgreementVersion
 
