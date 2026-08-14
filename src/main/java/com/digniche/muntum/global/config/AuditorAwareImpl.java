@@ -55,9 +55,4 @@ public class AuditorAwareImpl implements AuditorAware<UUID> {
             return SYSTEM_UUID;
         }
     }
-
-    private static String lastGroup(UUID id) {
-        String s = id.toString();
-        return s.substring(s.lastIndexOf('-') + 1); // UUID 마지막 12자리
-    }
 }
