@@ -38,16 +38,16 @@ public interface SpotSuggestionRepository extends JpaRepository<SpotSuggestion, 
 
     /**
      * 사용자 삭제 시
-     * - 생성자 / 수정자 / 제보자 / 검토자 / 삭제자 System UUID로 채우기
+     * - 생성자 / 수정자 / 제보자 / 검토자 / 삭제자 Withdrawn UUID로 채우기
      */
 
     @Modifying
-    @Query("UPDATE SpotSuggestion s SET s.createdBy = :systemUuid WHERE s.createdBy = :userId")
-    void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+    @Query("UPDATE SpotSuggestion s SET s.createdBy = :withdrawnUuid WHERE s.createdBy = :userId")
+    void replaceCreatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
     @Modifying
-    @Query("UPDATE SpotSuggestion s SET s.updatedBy = :systemUuid WHERE s.updatedBy = :userId")
-    void replaceUpdatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+    @Query("UPDATE SpotSuggestion s SET s.updatedBy = :withdrawnUuid WHERE s.updatedBy = :userId")
+    void replaceUpdatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
     @Modifying
     @Query("UPDATE SpotSuggestion s SET s.informer = null WHERE s.informer.id = :userId")
@@ -58,8 +58,8 @@ public interface SpotSuggestionRepository extends JpaRepository<SpotSuggestion, 
     void clearReviewedBy(@Param("userId") UUID userId);
 
     @Modifying
-    @Query("UPDATE SpotSuggestion s SET s.deletedBy = :systemUuid WHERE s.deletedBy = :userId")
-    void replaceDeletedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+    @Query("UPDATE SpotSuggestion s SET s.deletedBy = :withdrawnUuid WHERE s.deletedBy = :userId")
+    void replaceDeletedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
 
     // 사용자별 제보 개수 집계 (프로필/사용자 관리 조회용)

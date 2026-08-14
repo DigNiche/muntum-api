@@ -34,18 +34,18 @@ public interface TermsRepository extends JpaRepository<Terms, UUID> {
 
     /**
      * 사용자 삭제 시
-     * - 생성자, 수정자, 삭제자 System UUID로 채우기
+     * - 생성자, 수정자, 삭제자 Withdrawn UUID로 채우기
      */
 
     @Modifying
-    @Query("UPDATE Terms t SET t.createdBy = :systemUuid WHERE t.createdBy = :userId")
-    void replaceCreatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+    @Query("UPDATE Terms t SET t.createdBy = :withdrawnUuid WHERE t.createdBy = :userId")
+    void replaceCreatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
     @Modifying
-    @Query("UPDATE Terms t SET t.updatedBy = :systemUuid WHERE t.updatedBy = :userId")
-    void replaceUpdatedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+    @Query("UPDATE Terms t SET t.updatedBy = :withdrawnUuid WHERE t.updatedBy = :userId")
+    void replaceUpdatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
     @Modifying
-    @Query("UPDATE Terms t SET t.deletedBy = :systemUuid WHERE t.deletedBy = :userId")
-    void replaceDeletedByWithSystem(@Param("userId") UUID userId, @Param("systemUuid") UUID systemUuid);
+    @Query("UPDATE Terms t SET t.deletedBy = :withdrawnUuid WHERE t.deletedBy = :userId")
+    void replaceDeletedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 }
