@@ -62,7 +62,7 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        User user = userRepository.save(request.toEntity(encodedPassword));
+        User user = userRepository.save(request.toEntity(encodedPassword, UserRole.AUDIENCE));
         user.verifyEmail(); // 인증 완료 상태로 생성
 
         // 사용자 약관 동의 (필수)
