@@ -2,6 +2,7 @@ package com.digniche.muntum.curator.service;
 
 import com.digniche.muntum.curator.dto.request.CuratorApplicationCreateRequest;
 import com.digniche.muntum.curator.dto.request.CuratorApplicationStatusUpdateRequest;
+import com.digniche.muntum.curator.dto.response.CuratorApplicationCardResponse;
 import com.digniche.muntum.curator.dto.response.CuratorApplicationResponse;
 import com.digniche.muntum.curator.dto.response.ReviewerProfileResponse;
 import com.digniche.muntum.curator.entity.CuratorApplication;
@@ -94,9 +95,9 @@ public class CuratorApplicationService {
      * 특정 사용자의 본인 지원 내역 전체 목록 조회
      */
     @Transactional(readOnly = true)
-    public PageResponse<CuratorApplicationResponse> getMyApplications(UUID applicantId, Pageable pageable) {
+    public PageResponse<CuratorApplicationCardResponse> getMyApplications(UUID applicantId, Pageable pageable) {
         Page<CuratorApplication> applications = getApplicationsByApplicant(applicantId, pageable);
-        return PageResponse.from(applications.map(this::toCuratorApplicationResponse));
+        return PageResponse.from(applications.map(CuratorApplicationCardResponse::from));
     }
 
 
@@ -104,11 +105,11 @@ public class CuratorApplicationService {
      * 관리자의 지원자 지원 내역 전체 목록 조회 (상태 필터 선택적)
      */
     @Transactional(readOnly = true)
-    public PageResponse<CuratorApplicationResponse> getAllApplications(CuratorApplicationStatus status, Pageable pageable) {
+    public PageResponse<CuratorApplicationCardResponse> getAllApplications(CuratorApplicationStatus status, Pageable pageable) {
         Page<CuratorApplication> applications =
                 (status != null) ? curatorApplicationRepository.findByStatus(status, pageable) : curatorApplicationRepository.findAll(pageable);
 
-        return PageResponse.from(applications.map(this::toCuratorApplicationResponse));
+        return PageResponse.from(applications.map(CuratorApplicationCardResponse::from));
     }
 
     /**
@@ -160,7 +161,7 @@ public class CuratorApplicationService {
      */
     private void approve(CuratorApplication application, User reviewer) {
         application.approve(reviewer);
-        reviewer.promoteToCurator();
+        application.getApplicant().promoteToCurator();
     }
 
     /**
@@ -187,13 +188,6 @@ public class CuratorApplicationService {
      */
     private boolean isManager(UserRole userRole) {
         return userRole == UserRole.MANAGER;
-    }
-
-    /**
-     * 응답 DTO 변환
-     */
-    private CuratorApplicationResponse toCuratorApplicationResponse(CuratorApplication application) {
-        return CuratorApplicationResponse.from(application, displayReviewerProfile(application.getReviewedBy()));
     }
 
 

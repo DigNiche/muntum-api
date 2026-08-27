@@ -2,6 +2,7 @@ package com.digniche.muntum.curator.controller;
 
 import com.digniche.muntum.curator.dto.request.CuratorApplicationCreateRequest;
 import com.digniche.muntum.curator.dto.request.CuratorApplicationStatusUpdateRequest;
+import com.digniche.muntum.curator.dto.response.CuratorApplicationCardResponse;
 import com.digniche.muntum.curator.dto.response.CuratorApplicationResponse;
 import com.digniche.muntum.curator.entity.CuratorApplicationStatus;
 import com.digniche.muntum.curator.service.CuratorApplicationService;
@@ -82,11 +83,11 @@ public class CuratorApplicationController {
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<PageResponse<CuratorApplicationResponse>>> viewMyApplicationList(
+    public ResponseEntity<ApiResponse<PageResponse<CuratorApplicationCardResponse>>> viewMyApplicationList(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        PageResponse<CuratorApplicationResponse> response = curatorApplicationService.getMyApplications(userPrincipal.getUserId(), pageable);
+        PageResponse<CuratorApplicationCardResponse> response = curatorApplicationService.getMyApplications(userPrincipal.getUserId(), pageable);
         return ResponseEntity.ok(ApiResponse.success("나의 큐레이터 전체 지원 목록 조회에 성공했습니다.", response));
     }
 
@@ -97,11 +98,11 @@ public class CuratorApplicationController {
      */
     @PreAuthorize("hasAnyRole('MANAGER')")
     @GetMapping("/manager")
-    public ResponseEntity<ApiResponse<PageResponse<CuratorApplicationResponse>>> viewAllApplicationList(
+    public ResponseEntity<ApiResponse<PageResponse<CuratorApplicationCardResponse>>> viewAllApplicationList(
             @RequestParam(required = false) CuratorApplicationStatus status,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        PageResponse<CuratorApplicationResponse> response = curatorApplicationService.getAllApplications(status, pageable);
+        PageResponse<CuratorApplicationCardResponse> response = curatorApplicationService.getAllApplications(status, pageable);
         return ResponseEntity.ok(ApiResponse.success("지원 전체 목록 조회에 성공했습니다.", response));
     }
 

@@ -3,7 +3,7 @@ package com.digniche.muntum.curator.dto.response;
 import java.util.UUID;
 
 /**
- * 사용자 기본 프로필 정보 응답 DTO
+ * 검토자 기본 프로필 정보 응답 DTO
  */
 public record ReviewerProfileResponse(
         UUID userId,

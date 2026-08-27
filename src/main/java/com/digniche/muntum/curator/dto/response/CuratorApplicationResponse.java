@@ -7,11 +7,12 @@ import com.digniche.muntum.curator.entity.CuratorApplicationStatus;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * 큐레이터 지원서 상세 조회 응답 DTO
+ */
 public record CuratorApplicationResponse(
         UUID id,
-        UUID applicantId,
-        String applicantNickname,
-        String applicantEmail,
+        ApplicantProfileResponse applicant,
 //        String applicantProfileImageUrl,
         String programName,
         String tagline,
@@ -26,9 +27,7 @@ public record CuratorApplicationResponse(
     public static CuratorApplicationResponse from(CuratorApplication application, ReviewerProfileResponse reviewer) {
         return new CuratorApplicationResponse(
                 application.getId(),
-                application.getApplicant().getId(),
-                application.getApplicant().getNickname(),
-                application.getApplicant().getEmail(),
+                ApplicantProfileResponse.from(application.getApplicant()),
 //                application.getApplicant().getProfileImageUrl(),
                 application.getProgramName(),
                 application.getTagline(),
