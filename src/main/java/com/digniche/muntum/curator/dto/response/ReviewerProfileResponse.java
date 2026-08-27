@@ -1,7 +1,5 @@
 package com.digniche.muntum.curator.dto.response;
 
-import com.digniche.muntum.user.entity.User;
-
 import java.util.UUID;
 
 /**

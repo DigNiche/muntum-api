@@ -1,8 +1,6 @@
 package com.digniche.muntum.user.entity;
 
 import com.digniche.muntum.common.entity.BaseEntity;
-import com.digniche.muntum.user.entity.UserRole;
-import com.digniche.muntum.user.entity.UserStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
