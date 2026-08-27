@@ -20,12 +20,7 @@ public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
     @Column(name = "email",nullable = false, unique = true)
@@ -113,6 +108,7 @@ public class User extends BaseEntity {
     public void updateTasteSelected(boolean selected) {
         this.tasteSelected = selected;
     }
+    public void promoteToCurator() { this.role = UserRole.CURATOR; }
     //비밀번호 변경
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
@@ -124,14 +120,8 @@ public class User extends BaseEntity {
     }
 
     /**
-     * 사용자 소프트삭제
+     * 사용자 소프트 삭제로 인한 타 Entity의 사용자 정보 마스킹
      */
-//    public void softDelete(UUID deletedBy) {
-//        this.status = UserStatus.DELETED;
-//        this.deletedAt = LocalDateTime.now();
-//        this.deletedBy = deletedBy;
-//    }
-
     public void maskDeletedUserInfo(String addMaskingLetter, String withdrawalNicknamePrefix) {
         this.email = this.email + addMaskingLetter;
         this.nickname = withdrawalNicknamePrefix + addMaskingLetter;
@@ -140,6 +130,7 @@ public class User extends BaseEntity {
         }
         this.profileImageUrl = null;
     }
+
     /**
      * 소셜 로그인 신규 사용자 생성
      */

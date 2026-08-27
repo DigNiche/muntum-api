@@ -24,6 +24,8 @@ public class AuditorAwareImpl implements AuditorAware<UUID> {
             "77777777-7777-7777-7777-";
     public static final String WITHDRAWN_AUDIENCE_UUID_PREFIX =
             "66666666-6666-6666-6666-";
+    public static final String MUNTUM_OFFICIAL_NICKNAME = "문틈";
+    public static final String MUNTUM_OFFICIAL_EMAIL = "muntum510@gmail.com";
 
     @Override
     public Optional<UUID> getCurrentAuditor() {

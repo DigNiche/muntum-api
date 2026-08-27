@@ -4,6 +4,8 @@ import com.digniche.muntum.Announcement.repository.AnnouncementRepository;
 import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.auth.service.AccessTokenService;
 import com.digniche.muntum.auth.service.AuthService;
+import com.digniche.muntum.curator.dto.response.CuratorApplicationResponse;
+import com.digniche.muntum.curator.repository.CuratorApplicationRepository;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
@@ -71,6 +73,7 @@ public class UserService {
     private final ProgramRepository programRepository;
     private final UserTermsAgreementRepository userTermsAgreementRepository;
     private final AnnouncementRepository announcementRepository;
+    private final CuratorApplicationRepository curatorApplicationRepository;
     private final TermsRepository termsRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
@@ -419,6 +422,10 @@ public class UserService {
                 termsRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 termsRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
+                // 큐레이터 지원서의 검토자/수정자
+                curatorApplicationRepository.replaceReviewedByWith(userId, withdrawnUuid);
+                curatorApplicationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+
             }
             case "CURATOR" -> {
                 // 제보의 생성자/수정자/제보자 시스템 UUID 처리
@@ -444,6 +451,7 @@ public class UserService {
         scrapRepository.deleteAllByUserId(userId);
         programReactionRepository.deleteAllByUserId(userId);
         userKeywordRepository.deleteAllByUserId(userId);
+        curatorApplicationRepository.deleteAllByUserId(userId);
 
         /*
          * users보다 먼저 삭제해야 함.
