@@ -11,12 +11,14 @@ public record ApplicantProfileResponse(
         UUID userId,
         String nickname,
         String email
+//        String profileImageUrl
 ) {
     public static ApplicantProfileResponse from(User applicant) {
         return new ApplicantProfileResponse(
                 applicant.getId(),
                 applicant.getNickname(),
                 applicant.getEmail()
+//                applicant.getProfileImageUrl()
         );
     }
 }

@@ -63,14 +63,9 @@ public class CuratorApplicationService {
      * - 지원 이력 없는 경우 null 반환
      */
     @Transactional(readOnly = true)
-    public CuratorApplicationResponse getLatestApplication(UUID applicantId) {
+    public CuratorApplicationCardResponse getLatestApplication(UUID applicantId) {
         return curatorApplicationRepository.findFirstByApplicant_IdOrderByCreatedAtDesc(applicantId)
-                .map(application -> {
-                    ReviewerProfileResponse reviewerProfile = (application.getReviewedBy() != null)
-                            ? displayReviewerProfile(application.getReviewedBy())
-                            : null;
-                    return CuratorApplicationResponse.from(application, reviewerProfile);
-                })
+                .map(CuratorApplicationCardResponse::from)
                 .orElse(null);
     }
 
@@ -86,7 +81,12 @@ public class CuratorApplicationService {
             throw new BusinessException(ErrorCode.CURATOR_APPLICATION_ACCESS_DENIED);
         }
 
-        ReviewerProfileResponse reviewerProfile = displayReviewerProfile(application.getReviewedBy());
+        // 검토자 정보 확인
+        ReviewerProfileResponse reviewerProfile = null;
+
+        if (!(application.getStatus().equals(CuratorApplicationStatus.PENDING))) {
+            reviewerProfile = displayReviewerProfile(application.getReviewedBy());
+        }
 
         return CuratorApplicationResponse.from(application, reviewerProfile);
     }
@@ -151,7 +151,7 @@ public class CuratorApplicationService {
             return ReviewerProfileResponse.from(reviewerId, MUNTUM_OFFICIAL_NICKNAME, MUNTUM_OFFICIAL_EMAIL);
         } else {
             User reviewer = getUser(reviewerId);
-            return ReviewerProfileResponse.from(reviewer.getId(), reviewer.getNickname(), reviewer.getEmail());
+            return ReviewerProfileResponse.from(reviewerId, reviewer.getNickname(), reviewer.getEmail());
         }
     }
 

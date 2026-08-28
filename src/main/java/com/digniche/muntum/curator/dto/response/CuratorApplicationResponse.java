@@ -13,31 +13,25 @@ import java.util.UUID;
 public record CuratorApplicationResponse(
         UUID id,
         ApplicantProfileResponse applicant,
-//        String applicantProfileImageUrl,
         String programName,
         String tagline,
         String curation,
-        CuratorApplicationStatus status,
-        CuratorApplicationRejectReason rejectReason,
-        String rejectReasonMessage,
+        ApplicantStatusInfoResponse statusInfo,
         ReviewerProfileResponse reviewer,
-        LocalDateTime reviewedAt,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {
     public static CuratorApplicationResponse from(CuratorApplication application, ReviewerProfileResponse reviewer) {
         return new CuratorApplicationResponse(
                 application.getId(),
                 ApplicantProfileResponse.from(application.getApplicant()),
-//                application.getApplicant().getProfileImageUrl(),
                 application.getProgramName(),
                 application.getTagline(),
                 application.getCuration(),
-                application.getStatus(),
-                application.getRejectReason(),
-                application.getRejectReason() != null ? application.getRejectReason().getMessage() : null,
-                reviewer,
-                application.getReviewedAt(),
-                application.getCreatedAt()
+                ApplicantStatusInfoResponse.from(application),reviewer,
+                application.getCreatedAt(),
+                application.getUpdatedAt()
+
         );
     }
 }

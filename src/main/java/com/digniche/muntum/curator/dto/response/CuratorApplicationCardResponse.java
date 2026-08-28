@@ -1,8 +1,6 @@
 package com.digniche.muntum.curator.dto.response;
 
 import com.digniche.muntum.curator.entity.CuratorApplication;
-import com.digniche.muntum.curator.entity.CuratorApplicationRejectReason;
-import com.digniche.muntum.curator.entity.CuratorApplicationStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,24 +10,18 @@ import java.util.UUID;
  */
 public record CuratorApplicationCardResponse(
         UUID id,
-        String programName,
-        String tagline,
-        String applicantNickname,
-//        String applicantProfileImageUrl,
-        CuratorApplicationStatus status,
-        LocalDateTime reviewedAt,
-        LocalDateTime createdAt
+        ApplicantProfileResponse applicant,
+        ApplicantStatusInfoResponse statusInfo,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {
     public static CuratorApplicationCardResponse from(CuratorApplication application) {
         return new CuratorApplicationCardResponse(
                 application.getId(),
-                application.getProgramName(),
-                application.getTagline(),
-                application.getApplicant().getNickname(),
-//                application.getApplicant().getProfileImageUrl(),
-                application.getStatus(),
-                application.getReviewedAt(),
-                application.getCreatedAt()
+                ApplicantProfileResponse.from(application.getApplicant()),
+                ApplicantStatusInfoResponse.from(application),
+                application.getCreatedAt(),
+                application.getUpdatedAt()
         );
     }
 }

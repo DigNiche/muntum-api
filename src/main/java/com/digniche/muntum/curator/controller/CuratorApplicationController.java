@@ -55,10 +55,10 @@ public class CuratorApplicationController {
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me/latest")
-    public ResponseEntity<ApiResponse<CuratorApplicationResponse>> viewMyApplication(
+    public ResponseEntity<ApiResponse<CuratorApplicationCardResponse>> viewMyApplication(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        CuratorApplicationResponse response =
+        CuratorApplicationCardResponse response =
                 curatorApplicationService.getLatestApplication(userPrincipal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("내 최신 지원 조회에 성공했습니다.", response));
     }
