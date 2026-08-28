@@ -4,7 +4,6 @@ import com.digniche.muntum.curator.entity.CuratorApplication;
 import com.digniche.muntum.curator.entity.CuratorApplicationRejectReason;
 import com.digniche.muntum.curator.entity.CuratorApplicationStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 

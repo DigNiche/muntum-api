@@ -1,8 +1,6 @@
 package com.digniche.muntum.curator.dto.response;
 
 import com.digniche.muntum.curator.entity.CuratorApplication;
-import com.digniche.muntum.curator.entity.CuratorApplicationRejectReason;
-import com.digniche.muntum.curator.entity.CuratorApplicationStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
