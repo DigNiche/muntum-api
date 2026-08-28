@@ -110,7 +110,7 @@ public class CuratorApplicationController {
      * 큐레이터 지원 심사 -> 승인 및 반려
      */
     @PreAuthorize("hasAnyRole('MANAGER')")
-    @PatchMapping("/{application_id}/status")
+    @PatchMapping("/{application_id}")
     public ResponseEntity<ApiResponse<CuratorApplicationResponse>> evaluateApplication(
             @PathVariable("application_id") UUID applicationId,
             @AuthenticationPrincipal UserPrincipal userPrincipal,
