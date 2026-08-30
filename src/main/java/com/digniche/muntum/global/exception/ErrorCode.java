@@ -63,6 +63,15 @@ public enum ErrorCode {
     INVALID_IMAGE_FILE("I003", "유효하지 않은 이미지 파일입니다", HttpStatus.BAD_REQUEST),
     TOO_MANY_PROGRAM_IMAGES("I004", "이미지는 최대 5개까지 등록할 수 있습니다.", HttpStatus.BAD_REQUEST),
 
+    // 큐레이션
+    CURATION_NOT_FOUND("CU001", "존재하지 않는 큐레이션입니다", HttpStatus.NOT_FOUND),
+    CURATION_ALREADY_EXISTS("CU002", "이미 해당 프로그램에 작성한 큐레이션이 있습니다", HttpStatus.CONFLICT),
+    CURATION_NOT_EDITABLE("CU003", "승인된 큐레이션은 수정할 수 없습니다", HttpStatus.CONFLICT),
+    CURATION_ALREADY_REVIEWED("CU004", "이미 심사가 완료된 큐레이션입니다", HttpStatus.CONFLICT),
+    REJECTION_REASON_REQUIRED("CU005", "반려 사유는 필수입니다", HttpStatus.BAD_REQUEST),
+    CURATION_IMAGE_REQUIRED("CU006", "큐레이션 이미지는 최소 1개 등록해야 합니다", HttpStatus.BAD_REQUEST),
+    TOO_MANY_CURATION_IMAGES("CU007", "큐레이션 이미지는 최대 5개까지 등록할 수 있습니다", HttpStatus.BAD_REQUEST),
+    CURATION_IMAGE_NOT_FOUND("CU008", "존재하지 않는 큐레이션 이미지입니다", HttpStatus.NOT_FOUND),
     // 카카오 GeoCoordinate
     ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 
