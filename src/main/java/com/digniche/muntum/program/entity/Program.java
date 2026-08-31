@@ -127,7 +127,7 @@ public class Program extends BaseEntity {
         this.title = title;
         this.programType = programType;
         this.tagline = tagline;
-        this.curation = curation;
+        this.curation = curation != null ? curation : "";
         this.reserved = reserved;  // @NotNull + @Valid로 보장됨
         this.free = free; // 나머지 String/날짜 필드는 this.x = x 그대로
         this.price = price;
@@ -199,6 +199,11 @@ public class Program extends BaseEntity {
 
     public void setLongitude(BigDecimal longitude) {
         this.longitude = longitude;
+    }
+
+    public void softDelete(UUID deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
     }
 }
 

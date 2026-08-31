@@ -13,13 +13,10 @@ import com.digniche.muntum.program.dto.response.*;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
-import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import com.digniche.muntum.search.service.RecentSearchService;
 import com.digniche.muntum.user.dto.response.CuratorProfileResponse;
-import com.digniche.muntum.user.entity.User;
-import com.digniche.muntum.user.entity.UserRole;
-import com.digniche.muntum.user.repository.UserRepository;
+import com.digniche.muntum.user.service.CuratorProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -55,7 +52,6 @@ public class ProgramService {
 
     private final ProgramRepository programRepository;
     private final ProgramKeywordRepository programKeywordRepository;
-    private final UserRepository userRepository;
     private final UserKeywordRepository userKeywordRepository;
     private final ProgramImageService programImageService;
     private final ProgramKeywordService programKeywordService;
@@ -63,45 +59,76 @@ public class ProgramService {
     private final GeocodingService geocodingService;
     private final RecentSearchService recentSearchService;
     private final ProgramReactionService programReactionService;
+    private final CuratorProfileService curatorProfileService;
 
+    private static final List<ProgramStatus> MANAGER_VIEWABLE = List.of(ProgramStatus.ACTIVE, ProgramStatus.HIDDEN, ProgramStatus.ENDED);
     private static final int MAP_MAX_RESULTS = 200;
     private static final List<ProgramStatus> ACTIVE_ONLY = List.of(ProgramStatus.ACTIVE); // 현재 운영중
     private static final List<ProgramStatus> PUBLIC_VIEWABLE = List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED); // 운영중+운영종료
-    private static final String WITHDRAWN_MANAGER_NICKNAME = "문틈";
-    private static final String WITHDRAWN_CURATOR_NICKNAME = "익명의 큐레이터";
 
-    // 프로그램 등록
+    // 일반 프로그램 등록 api
     @Transactional
-    public ProgramResponse createProgram(ProgramCreateRequest request, List<MultipartFile> files) {
-        Program program = request.toEntity();
+    public ProgramResponse createProgram(ProgramCreateRequest request, List<MultipartFile> files
+    ) {
+        Program savedProgram = createProgramWithAssets(request, files);
 
-        if (request.operatingPeriod() != null) {
-            List<LocalDate> operatingPeriod = validateProgramPeriod(request.operatingPeriod());
-            program.updateOperatingPeriod(operatingPeriod);
-        }
+        List<ProgramImageResponse> images = programImageService.getOrderedImages(savedProgram.getId());
 
-        // 프로그램 등록 시 주소 → 좌표 변환
-        GeoCoordinate coord = geocodingService.getCoordinate(request.address())
-                .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
-
-        program.setLatitude(BigDecimal.valueOf(coord.latitude()));
-        program.setLongitude(BigDecimal.valueOf(coord.longitude()));
-
-        Program savedProgram = programRepository.save(program);
-
-        // 이미지 및 키워드 저장
-        if (files != null && !files.isEmpty()) {
-            programImageService.uploadImages(savedProgram, files);
-        }
-        List<ProgramImageResponse> images = programImageService.getOrderedImages(program.getId());
-
-        programKeywordService.saveKeywords(savedProgram, request.keywordNames());
-
-        List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(savedProgram.getId()).stream()
+        List<ProgramKeywordResponse> keywords = programKeywordService.getKeywords(savedProgram.getId())
+                .stream()
                 .map(ProgramKeywordResponse::from)
                 .toList();
         return ProgramResponse.from(savedProgram, images, keywords);
     }
+
+    //프로그램 생성 공통 로직 (신규 프로그램 생성, 승인에서 재사용)
+    @Transactional
+    public Program createProgramWithAssets(
+            ProgramCreateRequest request,
+            List<MultipartFile> files
+    ) {
+        Program program = request.toEntity();
+
+        if (request.operatingPeriod() != null) {
+            List<LocalDate> operatingPeriod =
+                    validateProgramPeriod(request.operatingPeriod());
+
+            program.updateOperatingPeriod(operatingPeriod);
+        }
+
+        GeoCoordinate coord =
+                geocodingService.getCoordinate(request.address())
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        ErrorCode.ADDRESS_NOT_FOUD
+                                )
+                        );
+
+        program.setLatitude(
+                BigDecimal.valueOf(coord.latitude())
+        );
+        program.setLongitude(
+                BigDecimal.valueOf(coord.longitude())
+        );
+
+        Program savedProgram =
+                programRepository.save(program);
+
+        if (files != null && !files.isEmpty()) {
+            programImageService.uploadImages(
+                    savedProgram,
+                    files
+            );
+        }
+
+        programKeywordService.saveKeywords(
+                savedProgram,
+                request.keywordNames()
+        );
+
+        return savedProgram;
+    }
+
 
     /**
      * 프로그램 목록 조회 + 검색 통합 진입점 (합의 1: 서비스 최상단 디스패치)
@@ -318,7 +345,7 @@ public class ProgramService {
                 .map(ProgramKeywordResponse::from)
                 .toList();
         ProgramReactionSummaryResponse reaction = programReactionService.getReactionSummary(programId, userId);
-        CuratorProfileResponse curator = getCuratorProfile(program.getCreatedBy());
+        CuratorProfileResponse curator = curatorProfileService.getCuratorProfile(program.getCreatedBy());
 
         return ProgramResponse.from(program, images, keywords, reaction, curator);
     }
@@ -387,10 +414,7 @@ public class ProgramService {
     @Transactional
     public void deleteProgram(UUID programId, UUID deletedBy) {
         Program program = getExistingProgram(programId);
-
-        programImageService.deleteImages(programId);
-        programKeywordRepository.deleteAllByProgramId(programId);
-        programRepository.delete(program);
+        program.softDelete(deletedBy);
     }
 
     /**
@@ -625,7 +649,7 @@ public class ProgramService {
             }
         };
     }
-
+/*
     // 큐레이터 소개 카드 생성
     private CuratorProfileResponse getCuratorProfile(UUID createdBy) {
         String curator = createdBy.toString();
@@ -646,7 +670,7 @@ public class ProgramService {
         User user = userRepository.findById(createdBy).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         String nickname = (user.getRole().equals(UserRole.MANAGER)) ? WITHDRAWN_MANAGER_NICKNAME : user.getNickname();
         return CuratorProfileResponse.from(user.getId(), user.getRole().name(), nickname);
-    }
+    }*/
 
     @Transactional
     public ProgramResponse updateProgramStatus(UUID programId, ProgramStatus status) {
@@ -661,5 +685,77 @@ public class ProgramService {
                 .toList();
 
         return ProgramResponse.from(program, images, keywords);
+    }
+
+    /**
+     * 관리자 프로그램 검색 메서드
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<ProgramCardResponse>
+    getProgramsForManager(String search, int page, int size
+    ) {
+        boolean hasSearch =
+                search != null && !search.isBlank();
+
+        Page<Program> programPage;
+
+        if (hasSearch) {
+            String trimmed = search.trim();
+
+            String pattern = "%" + escapeLike(trimmed) + "%";
+
+            Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+
+            programPage =
+                    programRepository.searchProgramsByText(MANAGER_VIEWABLE, pattern, LocalDate.now(), null, null, null, null, null, pageable);
+        } else {
+            Pageable pageable =
+                    PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt").and(
+                                    Sort.by(Sort.Direction.DESC, "id"))
+                    );
+
+            programPage =
+                    programRepository.findProgramsWithFilter(MANAGER_VIEWABLE, null, null, null, null, null, pageable);
+        }
+
+        return PageResponse.from(
+                toCardResponsePage(programPage)
+        );
+    }
+    /**
+     * 관리자 프로그램 상세
+     */
+    @Transactional(readOnly = true)
+    public ProgramResponse getProgramForManager(
+            UUID programId
+    ) {
+        Program program =
+                programRepository
+                        .findByIdAndDeletedAtIsNullAndStatusIn(
+                                programId,
+                                MANAGER_VIEWABLE
+                        )
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        ErrorCode.PROGRAM_NOT_FOUND
+                                )
+                        );
+
+        List<ProgramImageResponse> images =
+                programImageService.getOrderedImages(
+                        programId
+                );
+
+        List<ProgramKeywordResponse> keywords =
+                programKeywordService.getKeywords(programId)
+                        .stream()
+                        .map(ProgramKeywordResponse::from)
+                        .toList();
+
+        return ProgramResponse.from(
+                program,
+                images,
+                keywords
+        );
     }
 }

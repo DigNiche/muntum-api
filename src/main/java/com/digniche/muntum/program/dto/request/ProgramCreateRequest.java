@@ -25,7 +25,6 @@ public record ProgramCreateRequest(
         @Size(max = 255, message = "태그라인은 255자를 넘을 수 없습니다.")
         String tagline,
 
-        @NotBlank(message = "큐레이션 내용은 필수입니다.")
         String curation,
 
         @NotNull(message = "예약 필요 여부는 필수입니다.")

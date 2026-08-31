@@ -45,7 +45,7 @@ public class ProgramController {
     private final AnalyticsEvents analyticsEvents;
 
     // 프로그램 등록
-    @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER')")
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProgramResponse>> registerProgram(
             @RequestPart("program") @Valid ProgramCreateRequest request,
@@ -56,7 +56,7 @@ public class ProgramController {
     }
 
     // 프로그램 수정
-    @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER')")
     @PutMapping(value = "/{program_id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProgramResponse>> rewriteProgram(
             @PathVariable("program_id") UUID programId,
@@ -68,7 +68,7 @@ public class ProgramController {
     }
 
     // 프로그램 이미지 수정 (전체 교체. null이면 전체 삭제로 동작)
-    @PreAuthorize("hasAnyRole('CURATOR', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER')")
     @PatchMapping(value = "/{program_id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<List<ProgramImageResponse>>> updateProgramImages(
             @PathVariable("program_id") UUID programId,

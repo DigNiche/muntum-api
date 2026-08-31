@@ -50,7 +50,7 @@ public class CurationImage extends BaseEntity {
                     name = "fk_program_curation_images_curation"
             )
     )
-    private Curation Curation;
+    private Curation curation;
 
     @Column(
             name = "image_url",
@@ -67,11 +67,11 @@ public class CurationImage extends BaseEntity {
 
     @Builder
     public CurationImage(
-            Curation Curation,
+            Curation curation,
             String imageUrl,
             int displayOrder
     ) {
-        this.Curation = Curation;
+        this.curation = curation;
         this.imageUrl = imageUrl;
         this.displayOrder = displayOrder;
     }

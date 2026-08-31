@@ -93,7 +93,13 @@ public interface CurationRepository
     Optional<Curation> findByIdForUpdate(
             @Param("curationId") UUID curationId
     );
-
+    /**
+     * 상태별 목록 조회 추가
+     */
+    Page<Curation> findAllByStatus(
+            CurationStatus status,
+            Pageable pageable
+    );
     /**
      * 여러 사용자의 큐레이션 개수 일괄 집계
      *
@@ -109,5 +115,10 @@ public interface CurationRepository
     List<Object[]> countByCuratorIds(
             @Param("curatorIds")
             Collection<UUID> curatorIds
+    );
+
+    Page<Curation> findAllByCuratorId(
+            UUID curatorId,
+            Pageable pageable
     );
 }
