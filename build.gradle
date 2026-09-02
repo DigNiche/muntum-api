@@ -62,6 +62,13 @@ dependencies {
     implementation platform('software.amazon.awssdk:bom:2.41.1')
     implementation 'software.amazon.awssdk:s3'
 
+    // Flyway (DB migration)
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
+    // Testcontainers : Flyway(CI에서 실제 MySQL로 마이그레이션 검증)
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:mysql'
+
     // Actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 //    testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
