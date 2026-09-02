@@ -1,4 +1,4 @@
-# 운영 배포 (운영 브랜치로 Push 시, 진행)
+# 운영 배포 (운영 브랜치로 Push 시): 빌드·테스트 → 승인 → RDS 스냅샷 → 배포 → health check
 
 name: Deploy to EC2
 
@@ -7,28 +7,115 @@ on:
     branches: [ main ]
 
 permissions:
+  id-token: write        # OIDC (AWS assume-role)
   contents: read
   pull-requests: read
 
 jobs:
-  deploy:
+  prepare:
+    name: Build & Migration Summary
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'corretto'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build with Gradle
+      - run: chmod +x gradlew
+
+      - name: Build & test (Flyway 마이그레이션 검증 포함)
         run: ./gradlew build
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/muntum-0.0.1-SNAPSHOT.jar
+          retention-days: 1
+
+      - name: 마이그레이션 요약 (승인자용)
+        run: |
+          BEFORE='${{ github.event.before }}'
+          {
+            echo "## 🗄️ DB 마이그레이션 요약"
+            echo ""
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              FILES=$(ls src/main/resources/db/migration/V*.sql 2>/dev/null || true)
+              echo "_이전 커밋 정보 없음 — 전체 기준_"
+            else
+              FILES=$(git diff --name-only --diff-filter=A "$BEFORE" "${{ github.sha }}" -- 'src/main/resources/db/migration/V*.sql' || true)
+            fi
+            if [ -z "$FILES" ]; then
+              echo "**이번 배포에 새 마이그레이션 없음** (스키마 변경 없음)."
+            else
+              for f in $FILES; do
+                echo ""
+                echo "### \`$(basename "$f")\`"
+                T=""
+                grep -qiE 'DROP[[:space:]]+(TABLE|COLUMN)' "$f" && T="$T \`⚠DROP\`"
+                grep -qiE 'NOT[[:space:]]+NULL'            "$f" && T="$T \`⚠NOT NULL\`"
+                grep -qiE 'RENAME|CHANGE[[:space:]]+COLUMN' "$f" && T="$T \`⚠RENAME\`"
+                grep -qiE 'UNIQUE'                          "$f" && T="$T \`UNIQUE\`"
+                grep -qiE 'FOREIGN[[:space:]]+KEY|REFERENCES' "$f" && T="$T \`FK\`"
+                grep -qiE 'ADD[[:space:]]+COLUMN'           "$f" && T="$T \`ADD COLUMN\`"
+                [ -n "$T" ] && { echo "태그:$T"; echo ""; }
+                echo '```sql'; cat "$f"; echo '```'
+              done
+            fi
+            echo ""
+            echo "### ✅ 승인자 체크리스트"
+            echo "- [ ] 의도된 변경인지 확인"
+            echo "- [ ] Destructive DDL(DROP/RENAME) 영향 확인"
+            echo "- [ ] NOT NULL / UNIQUE / FK 변경 영향 확인"
+            echo "- [ ] CI(FlywayMigrationValidationTest) 통과 확인"
+            echo "- [ ] Roll-forward 계획 확인"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Snapshot & Deploy
+    needs: prepare
+    runs-on: ubuntu-latest
+    environment: production        # ← 승인 게이트 + OIDC sub 조건 충족
+
+    steps:
+      - name: Download jar
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/
+
+      - name: AWS 자격 증명 (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::179260491784:role/FlywayServiceRoleForRDSAboutMigration
+          aws-region: ap-northeast-2
+
+      - name: RDS 스냅샷 생성
+        id: snapshot
+        run: |
+          SNAP_ID="muntum-predeploy-${GITHUB_SHA::7}-$(date +%Y%m%d%H%M%S)"
+          aws rds create-db-snapshot \
+            --db-instance-identifier muntum-api-mysql-rds \
+            --db-snapshot-identifier "$SNAP_ID" \
+            --tags "Key=commit,Value=${GITHUB_SHA}" "Key=runId,Value=${GITHUB_RUN_ID}"
+          echo "id=$SNAP_ID" >> "$GITHUB_OUTPUT"
+          echo "### 📸 스냅샷: \`$SNAP_ID\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 스냅샷 available 대기
+        run: aws rds wait db-snapshot-available --db-snapshot-identifier "${{ steps.snapshot.outputs.id }}"
+
+      - name: 오래된 predeploy 스냅샷 정리 (최근 14개 유지)
+        run: |
+          OLD=$(aws rds describe-db-snapshots --snapshot-type manual \
+            --query "reverse(sort_by(DBSnapshots[?starts_with(DBSnapshotIdentifier,'muntum-predeploy-')],&SnapshotCreateTime))[14:].DBSnapshotIdentifier" \
+            --output text)
+          for s in $OLD; do echo "delete $s"; aws rds delete-db-snapshot --db-snapshot-identifier "$s"; done
 
       - name: Configure SSH
         run: |
@@ -57,14 +144,25 @@ jobs:
             build/libs/muntum-0.0.1-SNAPSHOT.jar \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/muntum/app/muntum.jar
 
-      - name: Deploy on EC2
+      - name: Start service (앱 부팅 시 Flyway migrate → Hibernate validate)
         run: |
           ssh -i ~/.ssh/muntum-key.pem \
             -o StrictHostKeyChecking=no \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "sudo systemctl start muntum && sleep 10 && sudo journalctl -u muntum -n 50 --no-pager"
-          
-          
+            "sudo systemctl start muntum && sleep 10 && sudo journalctl -u muntum -n 80 --no-pager"
+
+      - name: Health check (EC2 로컬)
+        run: |
+          ssh -i ~/.ssh/muntum-key.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} '
+              for i in $(seq 1 20); do
+                c=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || true)
+                [ "$c" = "200" ] && { echo healthy; exit 0; }
+                echo "try $i: $c"; sleep 6
+              done
+              echo "health check 실패"; exit 1
+            '
+
       - name: Discord deployment success notification
         if: ${{ success() }}
         continue-on-error: true
@@ -75,18 +173,24 @@ jobs:
           PR_TITLE=$(gh api \
             "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
             --jq 'map(select(.base.ref == "main" and .merged_at != null)) | .[0].title // empty')
-
           if [ -z "$PR_TITLE" ]; then
             echo "연결된 PR이 없어 Discord 알림 생략합니다."
             exit 0
           fi
+          MESSAGE=$(printf '**Muntum API 운영 배포 완료**\n\n**Changes** · %s\n**Snapshot** · %s' \
+            "$PR_TITLE" "${{ steps.snapshot.outputs.id }}")
+          curl --fail-with-body -H "Content-Type: application/json" \
+            -d "$(jq -n --arg c "$MESSAGE" '{content:$c, allowed_mentions:{parse:[]}}')" \
+            "$DISCORD_WEBHOOK_URL"
 
-          MESSAGE=$(printf '**Muntum API 운영 배포 완료**\n\n**Service** · Muntum API\n**Changes** · %s' "$PR_TITLE")
-          PAYLOAD=$(jq -n \
-            --arg content "$MESSAGE" \
-            '{content: $content, allowed_mentions: {parse: []}}')
-
-          curl --fail-with-body \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD" \
+      - name: Discord 실패 알림
+        if: ${{ failure() }}
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          MESSAGE=$(printf '**⚠️ Muntum API 배포 실패**\n\n복구 지점 스냅샷: %s\ncommit: %s' \
+            "${{ steps.snapshot.outputs.id }}" "${{ github.sha }}")
+          curl --fail-with-body -H "Content-Type: application/json" \
+            -d "$(jq -n --arg c "$MESSAGE" '{content:$c, allowed_mentions:{parse:[]}}')" \
             "$DISCORD_WEBHOOK_URL"

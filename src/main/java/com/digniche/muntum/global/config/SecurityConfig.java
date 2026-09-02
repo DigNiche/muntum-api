@@ -68,10 +68,12 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()   // 배포 health check용
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/announcements", "/api/v1/announcements/**",
                                                         "/api/v1/keywords/tagged", "/api/v1/keywords/top",
                                                         "/api/v1/programs", "/api/v1/programs/**"
+
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
