@@ -65,9 +65,6 @@ dependencies {
     // Flyway (DB migration)
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
-    // Testcontainers : Flyway(CI에서 실제 MySQL로 마이그레이션 검증)
-    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-    testImplementation 'org.testcontainers:mysql'
 
     // Actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -78,6 +75,10 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.18.0'
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    // Testcontainers : Flyway(CI에서 실제 MySQL로 마이그레이션 검증)
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:mysql'
  //   testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // Amplitude
