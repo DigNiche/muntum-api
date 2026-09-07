@@ -1,0 +1,32 @@
+# 테스트/CI 전용 프로파일 — 반드시 @ActiveProfiles("test") 로만 사용
+# (공통 application.yaml 의 기본 프로파일이 prod 라, 안 붙이면 prod secrets 를 찾다 실패함)
+#
+# 목적: Testcontainers MySQL 에 Flyway 마이그레이션을 V1 부터 전부 적용한 뒤
+#       모든 @Entity 를 Hibernate validate 로 대조한다. (Step 6: FlywayMigrationValidationTest)
+#
+# DataSource(url/username/password)는 여기 두지 않는다. 테스트 클래스가 주입한다:
+#   @Container @ServiceConnection
+#   static MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.45")
+#       .withCommand("--character-set-server=utf8mb4",
+#                    "--collation-server=utf8mb4_general_ci")
+#       .withEnv("TZ", "Asia/Seoul");
+
+spring:
+  # 슬라이스 테스트가 DataSource를 H2로 바꾸지 못하게(= 실제 MySQL 컨테이너 사용)
+  test:
+    database:
+      replace: none
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
