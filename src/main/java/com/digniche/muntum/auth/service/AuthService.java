@@ -1,7 +1,6 @@
 package com.digniche.muntum.auth.service;
 
 import com.digniche.muntum.auth.dto.request.RefreshTokenReissueRequest;
-import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
@@ -15,7 +14,6 @@ import com.digniche.muntum.user.entity.*;
 import com.digniche.muntum.user.repository.TermsRepository;
 import com.digniche.muntum.user.repository.UserRepository;
 import com.digniche.muntum.user.repository.UserTermsAgreementRepository;
-import com.digniche.muntum.user.service.UserService;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +60,7 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        User user = userRepository.save(request.toEntity(encodedPassword));
+        User user = userRepository.save(request.toEntity(encodedPassword, UserRole.AUDIENCE));
         user.verifyEmail(); // 인증 완료 상태로 생성
 
         // 사용자 약관 동의 (필수)
