@@ -19,7 +19,10 @@ public class AdminController {
 
     private final UserService userService;
 
-    // 사용자 관리 - 사용자 목록 조회 (닉네임 또는 이메일 검색)
+    /**
+     * 사용자 목록 조회
+     * - 닉네임/이메일로 검색하여 조회
+     */
     @PreAuthorize("hasAnyRole('MANAGER')")
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<PageResponse<UserProfileResponse>>> getUsers(
