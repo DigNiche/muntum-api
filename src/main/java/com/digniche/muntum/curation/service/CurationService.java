@@ -169,7 +169,8 @@ public class CurationService {
                 curationRepository
                         .existsByProgram_IdAndCuratorId(
                                 program.getId(),
-                                curation.getCuratorId()
+                                curation.getCuratorId(),
+                                curation.getId()
                         );
 
         if (alreadyExists) {

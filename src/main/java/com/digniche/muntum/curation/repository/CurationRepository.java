@@ -60,7 +60,8 @@ public interface CurationRepository
      */
     boolean existsByProgram_IdAndCuratorId(
             UUID programId,
-            UUID curatorId
+            UUID curatorId,
+            UUID curationId
     );
 
     /**

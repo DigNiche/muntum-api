@@ -194,22 +194,5 @@ public class CurationController {
         );
     }
 
-    @PatchMapping("/{curationId}/unpublish")
-    public ResponseEntity<ApiResponse<Void>> unpublishCuration(
-            @PathVariable UUID curationId,
-            @AuthenticationPrincipal UserPrincipal userPrincipal
-    ) {
-        curationService.unpublishCuration(
-                curationId,
-                userPrincipal.getUserId()
-        );
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        "큐레이션 공개가 중단되었습니다.",
-                        null
-                )
-        );
-    }
 }
 
