@@ -225,13 +225,17 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             value = """
     SELECT p
     FROM Program p
-    JOIN ProgramKeyword pk ON pk.program = p
+    LEFT JOIN ProgramKeyword pk
+        ON pk.program = p
+        AND pk.keyword.id IN :keywordIds
     WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
-    AND pk.keyword.id IN :keywordIds
     AND p.id <> :excludeProgramId
     GROUP BY p
     ORDER BY COUNT(pk) DESC,
+             CASE
+                 WHEN COUNT(pk) = 0 THEN p.createdAt
+             END DESC,
              CASE
                  WHEN p.endDate IS NULL THEN 2
                  WHEN p.endDate < :today THEN 1
@@ -244,15 +248,13 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
              p.id DESC
     """,
                 countQuery = """
-    SELECT COUNT(DISTINCT p)
+    SELECT COUNT(p)
     FROM Program p
-    JOIN ProgramKeyword pk ON pk.program = p
     WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
-    AND pk.keyword.id IN :keywordIds
     AND p.id <> :excludeProgramId
     """
-    )
+        )
     Page<Program> findRelatedProgramsByKeywordIds(
             @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("keywordIds") List<UUID> keywordIds,
@@ -515,4 +517,20 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     @Query("UPDATE Program p SET p.deletedBy = :withdrawnUuid WHERE p.deletedBy = :userId")
     void replaceDeletedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
+    /*
+    최신 프로그램 조회
+     */
+    @Query("""
+    SELECT p
+    FROM Program p
+    WHERE p.status IN :statuses
+    AND p.deletedAt IS NULL
+    AND p.id <> :excludeProgramId
+    ORDER BY p.createdAt DESC, p.id DESC
+    """)
+    Page<Program> findRecentProgramsExcludingCurrent(
+            @Param("statuses") Collection<ProgramStatus> statuses,
+            @Param("excludeProgramId") UUID excludeProgramId,
+            Pageable pageable
+    );
 }

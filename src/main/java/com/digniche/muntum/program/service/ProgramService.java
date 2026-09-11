@@ -787,22 +787,29 @@ public class ProgramService {
                 Sort.unsorted()
         );
 
-        // 4. 키워드가 하나도 없다면 관련 프로그램 없음
+        Page<Program> programPage;
+
         if (keywordIds.isEmpty()) {
-            return PageResponse.from(Page.empty(pageable));
+            // 현재 프로그램에 키워드가 없으면 최신 프로그램으로 fallback
+            programPage =
+                    programRepository.findRecentProgramsExcludingCurrent(
+                            PUBLIC_VIEWABLE,
+                            currentProgram.getId(),
+                            pageable
+                    );
+        } else {
+            // 같은 키워드 프로그램 우선
+            // 부족하면 최신 프로그램으로 자동 fallback
+            programPage =
+                    programRepository.findRelatedProgramsByKeywordIds(
+                            PUBLIC_VIEWABLE,
+                            keywordIds,
+                            currentProgram.getId(),
+                            LocalDate.now(),
+                            pageable
+                    );
         }
 
-        // 5. 같은 키워드를 가진 프로그램 조회
-        Page<Program> programPage =
-                programRepository.findRelatedProgramsByKeywordIds(
-                        PUBLIC_VIEWABLE,
-                        keywordIds,
-                        currentProgram.getId(),
-                        LocalDate.now(),
-                        pageable
-                );
-
-        // 6. 기존 프로그램 카드 응답 형식 재사용
         return PageResponse.from(
                 toCardResponsePage(programPage)
         );
