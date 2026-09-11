@@ -57,6 +57,10 @@ public class CuratorApplicationService {
         return CuratorApplicationResponse.from(application, null);
     }
 
+    /**
+     * TODO: 관람객의 큐레이터 지원서 수정
+     */
+
 
     /**
      * 특정 사용자의 가장 최근의 지원 내역 조회

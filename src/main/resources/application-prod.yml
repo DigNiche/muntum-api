@@ -73,6 +73,10 @@ aws:
   cloudfront:
     domain: ${aws.cloudfront.domain}
 
+storage:
+  profile:
+    default-url: ${aws.cloudfront.domain}
+
 
 # 사용자 분석 모니터링
 amplitude:

@@ -7,15 +7,19 @@ import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.user.dto.request.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.request.PasswordChangeRequest;
 import com.digniche.muntum.user.dto.request.TermsConsentListRequest;
+import com.digniche.muntum.user.dto.response.UserProfileImageResponse;
+import com.digniche.muntum.user.service.UserProfileImageService;
 import com.digniche.muntum.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.digniche.muntum.user.dto.response.UserProfileResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 사용자 컨트롤러
@@ -26,6 +30,7 @@ import com.digniche.muntum.user.dto.response.UserProfileResponse;
 public class UserController {
 
     private final UserService userService;
+    private final UserProfileImageService userProfileImageService;
 
     // 내 프로필 조회 (마이페이지 프로필 + 계정관리)
     @PreAuthorize("isAuthenticated()")
@@ -44,6 +49,25 @@ public class UserController {
             @RequestBody @Valid NicknameUpdateRequest request) {
         userService.setNickname(userPrincipal.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success("닉네임이 설정되었습니다.", null));
+    }
+
+    // 프로필 이미지 설정
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<UserProfileImageResponse>> replaceProfileImage(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestPart(value="profileImage", required=true) MultipartFile image) {
+        UserProfileImageResponse response = userProfileImageService.uploadProfileImage(userPrincipal.getUserId(), image);
+        return ResponseEntity.ok(ApiResponse.success("프로필 이미지가 변경되었습니다.", response));
+    }
+
+    // 프로필 이미지 삭제 (기본 이미지로 초기화)
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/profile-image")
+    public ResponseEntity<ApiResponse<UserProfileImageResponse>> deleteProfileImage(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        UserProfileImageResponse response = userProfileImageService.deleteProfileImage(userPrincipal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("프로필 이미지가 기본 이미지로 변경되었습니다.", response));
     }
 
     // 사용자 약관 동의

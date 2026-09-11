@@ -37,7 +37,9 @@ public class ProgramImageService {
             "image/jpeg", "image/png", "image/webp", "image/gif"
     );
 
-    // 이미지 업로드
+    /**
+     * 프로그램 이미지 업로드
+     */
     @Transactional
     public void uploadImages(Program program, List<MultipartFile> files) {
         // 이미지 파일 검증
@@ -53,7 +55,9 @@ public class ProgramImageService {
         programImageRepository.saveAll(images);
     }
 
-    // 이미지 수정
+    /**
+     * 프로그램 이미지 수정
+     */
     @Transactional
     public void replaceImages(Program program, List<MultipartFile> files) {
         // 이미지 검증
@@ -109,7 +113,7 @@ public class ProgramImageService {
     // 썸네일 이미지 단건 조회
     @Transactional(readOnly = true)
     public String getThumbnail(UUID programId) {
-        ProgramImage img = programImageRepository.findByProgramIdAndDisplayOrder(programId, THUMBNAIL_ORDER).orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_IMAGE_NOT_FOUND));
+        ProgramImage img = programImageRepository.findByProgramIdAndDisplayOrder(programId, THUMBNAIL_ORDER).orElseThrow(() -> new BusinessException(ErrorCode.IMAGE_NOT_FOUND));
         return img.getImageUrl();
     }
 
@@ -140,7 +144,7 @@ public class ProgramImageService {
             throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE);
         }
         if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE);
+            throw new BusinessException(ErrorCode.UNSUPPORTED_IMAGE_TYPE);
         }
     }
 
