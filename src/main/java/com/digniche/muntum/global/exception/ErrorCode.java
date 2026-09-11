@@ -51,6 +51,16 @@ public enum ErrorCode {
     TERMS_VERSION_ALREADY_EXISTS("T004", "이미 존재하는 약관 버전입니다", HttpStatus.CONFLICT),
     ACTIVE_TERMS_NOT_FOUND("T005", "게시된 약관이 존재하지 않습니다", HttpStatus.INTERNAL_SERVER_ERROR),
 
+    // 큐레이터 지원
+    CURATOR_APPLICATION_NOT_FOUND("CA001", "존재하지 않는 지원서입니다", HttpStatus.NOT_FOUND),
+    CURATOR_APPLICATION_ACCESS_DENIED("CA002", "해당 지원서에 접근할 권한이 없습니다", HttpStatus.FORBIDDEN),
+    CURATOR_APPLICATION_ALREADY_PENDING("CA003", "이미 심사 중인 지원서가 있습니다", HttpStatus.CONFLICT),
+    CURATOR_APPLICATION_INVALID_APPLICANT_ROLE("CA004", "큐레이터 지원은 관람객만 가능합니다", HttpStatus.FORBIDDEN),
+    CURATOR_APPLICATION_STATUS_CHANGE_DENIED("CA005", "심사 중인 상태의 지원서만 상태 변경이 가능합니다", HttpStatus.BAD_REQUEST),
+    INVALID_CURATOR_APPLICATION_STATUS_TRANSITION("CA006", "허용되지 않는 상태 변경입니다", HttpStatus.BAD_REQUEST),
+    CURATOR_APPLICATION_REASON_REQUIRED("CA007", "반려 사유는 필수입니다", HttpStatus.BAD_REQUEST),
+
+
     // 프로그램
     PROGRAM_NOT_FOUND("P001", "존재하지 않는 프로그램입니다", HttpStatus.NOT_FOUND),
     INVALID_PROGRAM_PERIOD("P002", "프로그램 종료일은 시작일보다 빠를 수 없습니다.", HttpStatus.BAD_REQUEST),

@@ -21,20 +21,10 @@ public class Keyword extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(
-            name = "name",
-            nullable = false,
-            unique = true,
-            length = 50
-    )
+    @Column(name = "name", nullable = false, unique = true, length = 50)
     private String name;
 
     @Column(name = "is_active", nullable = false)
