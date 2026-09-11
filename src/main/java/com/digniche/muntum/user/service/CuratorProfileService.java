@@ -1,9 +1,12 @@
 package com.digniche.muntum.user.service;
 
+import com.digniche.muntum.curation.entity.CurationStatus;
+import com.digniche.muntum.curation.repository.CurationRepository;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.user.dto.response.CuratorProfileResponse;
+import com.digniche.muntum.user.dto.response.MyCuratorProfileResponse;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserRole;
 import com.digniche.muntum.user.repository.UserRepository;
@@ -28,15 +31,13 @@ public class CuratorProfileService {
 
     private static final String MANAGER_NICKNAME = "문틈";
     private static final String WITHDRAWN_CURATOR_NICKNAME = "익명의 큐레이터";
-
+    private final CurationRepository curationRepository;
     private final UserRepository userRepository;
 
     /**
      * 큐레이터 한 명 조회
      */
-    public CuratorProfileResponse getCuratorProfile(
-            UUID curatorId
-    ) {
+    public CuratorProfileResponse getCuratorProfile(UUID curatorId) {
         return getCuratorProfiles(List.of(curatorId))
                 .get(curatorId);
     }
@@ -54,7 +55,6 @@ public class CuratorProfileService {
 
         Set<UUID> uniqueIds =
                 new LinkedHashSet<>(curatorIds);
-
         List<UUID> activeUserIds =
                 uniqueIds.stream()
                         .filter(id ->
@@ -87,6 +87,41 @@ public class CuratorProfileService {
         }
 
         return result;
+    }
+
+    public MyCuratorProfileResponse getMyCuratorProfile(
+            UUID curatorId
+    ) {
+        CuratorProfileResponse profile =
+                getCuratorProfile(curatorId);
+
+        long approvedCount =
+                curationRepository.countByCuratorIdAndStatus(
+                        curatorId,
+                        CurationStatus.APPROVED
+                );
+
+        long pendingCount =
+                curationRepository.countByCuratorIdAndStatus(
+                        curatorId,
+                        CurationStatus.PENDING
+                );
+
+        long changesRequestedCount =
+                curationRepository.countByCuratorIdAndStatus(
+                        curatorId,
+                        CurationStatus.CHANGES_REQUESTED
+                );
+
+        return new MyCuratorProfileResponse(
+                profile.curatorId(),
+                profile.role(),
+                profile.nickname(),
+                profile.profileImageUrl(),
+                approvedCount,
+                pendingCount,
+                changesRequestedCount
+        );
     }
 
     private CuratorProfileResponse createProfile(

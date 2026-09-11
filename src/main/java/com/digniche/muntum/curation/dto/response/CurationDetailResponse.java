@@ -1,6 +1,7 @@
 package com.digniche.muntum.curation.dto.response;
 
 import com.digniche.muntum.curation.entity.Curation;
+import com.digniche.muntum.curation.entity.CurationPublicationStatus;
 import com.digniche.muntum.curation.entity.CurationStatus;
 
 import java.time.LocalDateTime;
@@ -16,11 +17,11 @@ public record CurationDetailResponse(
         String content,
         List<CurationImageResponse> images,
         CurationStatus status,
-        String rejectionReason,
+        CurationPublicationStatus publicationStatus,
+        String changeRequestReason,
         LocalDateTime reviewedAt,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        LocalDateTime publishedAt
+        LocalDateTime updatedAt
 ) {
     public static CurationDetailResponse from(
             Curation curation,
@@ -37,11 +38,11 @@ public record CurationDetailResponse(
                 curation.getContent(),
                 images,
                 curation.getStatus(),
-                curation.getRejectionReason(),
+                curation.getPublicationStatus(),
+                curation.getChangeRequestReason(),
                 curation.getReviewedAt(),
                 curation.getCreatedAt(),
-                curation.getUpdatedAt(),
-                curation.getPublishedAt()
+                curation.getUpdatedAt()
         );
     }
 }

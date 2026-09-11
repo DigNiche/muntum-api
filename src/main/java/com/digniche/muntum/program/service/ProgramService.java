@@ -1,5 +1,8 @@
 package com.digniche.muntum.program.service;
 
+import com.digniche.muntum.curation.dto.response.PublicCurationSummaryResponse;
+import com.digniche.muntum.curation.entity.CurationPublicationStatus;
+import com.digniche.muntum.curation.service.PublicCurationQueryService;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
 import com.digniche.muntum.global.exception.BusinessException;
@@ -60,6 +63,7 @@ public class ProgramService {
     private final RecentSearchService recentSearchService;
     private final ProgramReactionService programReactionService;
     private final CuratorProfileService curatorProfileService;
+    private final PublicCurationQueryService publicCurationQueryService;
 
     private static final List<ProgramStatus> MANAGER_VIEWABLE = List.of(ProgramStatus.ACTIVE, ProgramStatus.HIDDEN, ProgramStatus.ENDED);
     private static final int MAP_MAX_RESULTS = 200;
@@ -346,8 +350,10 @@ public class ProgramService {
                 .toList();
         ProgramReactionSummaryResponse reaction = programReactionService.getReactionSummary(programId, userId);
         CuratorProfileResponse curator = curatorProfileService.getCuratorProfile(program.getCreatedBy());
-
-        return ProgramResponse.from(program, images, keywords, reaction, curator);
+        List<PublicCurationSummaryResponse> curations =
+                publicCurationQueryService
+                        .getAllSummaries(programId);
+        return ProgramResponse.from(program, images, keywords, reaction, curator, curations);
     }
 
     // 프로그램 수정
@@ -370,8 +376,7 @@ public class ProgramService {
         }
 
         program.update(
-                request.title(), request.programType(), request.tagline(),
-                request.curation(), request.reserved(), request.free(),
+                request.title(), request.programType(), request.description(), request.reserved(), request.free(),
                 request.price(), request.venueName(), request.venueMeta(),
                 request.address(),
                 request.officialUrl(),
@@ -540,7 +545,7 @@ public class ProgramService {
 
         // 4. 조회 + 공통 후처리
         Page<Program> programPage = programRepository.searchProgramsByText(
-                PUBLIC_VIEWABLE, pattern, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
+                PUBLIC_VIEWABLE, pattern, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), CurationPublicationStatus.PUBLISHED, pageable);
         // 로그인 유저면 최근 검색어 저장 (trimmed 재사용, 게스트=null 제외)
         if (userId != null) {
             recentSearchService.save(userId, trimmed);
@@ -707,7 +712,7 @@ public class ProgramService {
             Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
 
             programPage =
-                    programRepository.searchProgramsByText(MANAGER_VIEWABLE, pattern, LocalDate.now(), null, null, null, null, null, pageable);
+                    programRepository.searchProgramsByText(MANAGER_VIEWABLE, pattern, LocalDate.now(), null, null, null, null, null, CurationPublicationStatus.PUBLISHED,pageable);
         } else {
             Pageable pageable =
                     PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt").and(
@@ -756,6 +761,50 @@ public class ProgramService {
                 program,
                 images,
                 keywords
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ProgramCardResponse> getRelatedPrograms(
+            UUID programId,
+            int page,
+            int size
+    ) {
+        // 1. 현재 프로그램이 실제 공개 가능한 프로그램인지 확인
+        Program currentProgram = getPublicViewableProgram(programId);
+
+        // 2. 현재 프로그램의 키워드 ID 조회
+        List<UUID> keywordIds = programKeywordService.getKeywords(programId)
+                .stream()
+                .map(programKeyword -> programKeyword.getKeyword().getId())
+                .distinct()
+                .toList();
+
+        // 3. 페이지 설정
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.unsorted()
+        );
+
+        // 4. 키워드가 하나도 없다면 관련 프로그램 없음
+        if (keywordIds.isEmpty()) {
+            return PageResponse.from(Page.empty(pageable));
+        }
+
+        // 5. 같은 키워드를 가진 프로그램 조회
+        Page<Program> programPage =
+                programRepository.findRelatedProgramsByKeywordIds(
+                        PUBLIC_VIEWABLE,
+                        keywordIds,
+                        currentProgram.getId(),
+                        LocalDate.now(),
+                        pageable
+                );
+
+        // 6. 기존 프로그램 카드 응답 형식 재사용
+        return PageResponse.from(
+                toCardResponsePage(programPage)
         );
     }
 }

@@ -47,10 +47,24 @@ public interface CurationImageRepository
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-        DELETE FROM ProgramCurationImage image
-        WHERE image.programCuration.id = :curationId
+        DELETE FROM CurationImage image
+        WHERE image.curation.id = :curationId
     """)
-    int deleteAllByCurationId(
+    void deleteAllByCurationId(
             @Param("curationId") UUID curationId
+    );
+
+    /**
+     * 대표 이미지 일괄 조회
+     */
+    @Query("""
+    SELECT image
+    FROM CurationImage image
+    WHERE image.curation.id IN :curationIds
+      AND image.displayOrder = 1
+""")
+    List<CurationImage> findThumbnailsByCurationIds(
+            @Param("curationIds")
+            Collection<UUID> curationIds
     );
 }

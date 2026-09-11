@@ -22,11 +22,9 @@ public record ProgramUpdateRequest(
         @NotNull(message = "프로그램 유형은 필수입니다.")
         ProgramType programType,
 
-        @NotBlank(message = "태그라인은 필수입니다.")
-        @Size(max = 255, message = "태그라인은 255자를 넘을 수 없습니다.")
-        String tagline,
-
-        String curation,
+        @NotBlank(message = "프로그램 소개는 필수입니다.")
+        @Size(max = 5000, message = "프로그램 소개는 5000자를 넘을 수 없습니다.")
+        String description,
 
         @NotNull(message = "예약 필요 여부는 필수입니다.")
         Boolean reserved,
@@ -85,8 +83,7 @@ public record ProgramUpdateRequest(
                 return Program.builder()
                         .title(title)
                         .programType(programType)
-                        .tagline(tagline)
-                        .curation(curation)
+                        .description(description)
                         .reserved(reserved)
                         .free(free)
                         .price(price)

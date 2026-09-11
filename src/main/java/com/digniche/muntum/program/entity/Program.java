@@ -37,12 +37,21 @@ public class Program extends BaseEntity {
     @Enumerated(EnumType.STRING) //Enum 이름을 DB 문자열로 저장
     @Column(name = "type", nullable = false, length = 20)
     private ProgramType programType;
-
+    /**
+     * 구버전 호환용
+     */
     @Column(name = "tagline", nullable = false, length = 255)
     private String tagline;
-
+    /**
+     * 구버전 호환용
+     */
     @Column(columnDefinition = "TEXT", nullable = false)
     private String curation;
+    /**
+     * 신규 일반 프로그램 소개글
+     */
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "is_reserved", nullable = false)
     private boolean reserved = false;
@@ -106,8 +115,7 @@ public class Program extends BaseEntity {
     public Program(
             String title,
             ProgramType  programType,
-            String tagline,
-            String curation,
+            String description,
             Boolean reserved,
             Boolean free,
             String price,
@@ -126,8 +134,13 @@ public class Program extends BaseEntity {
     ) {
         this.title = title;
         this.programType = programType;
-        this.tagline = tagline;
-        this.curation = curation != null ? curation : "";
+        this.description = description;
+        /*
+         * 기존 DB NOT NULL 제약 대응용.
+         * 신규 코드에서는 값을 사용하지 않는다.
+         */
+        this.tagline = "";
+        this.curation = "";
         this.reserved = reserved;  // @NotNull + @Valid로 보장됨
         this.free = free; // 나머지 String/날짜 필드는 this.x = x 그대로
         this.price = price;
@@ -152,8 +165,7 @@ public class Program extends BaseEntity {
     public void update(
             String title,
             ProgramType programType,
-            String tagline,
-            String curation,
+            String description,
             Boolean reserved,
             Boolean free,
             String price,
@@ -168,8 +180,7 @@ public class Program extends BaseEntity {
     ) {
         if (title != null) this.title = title;
         if (programType != null) this.programType = programType;
-        if (tagline != null) this.tagline = tagline;
-        if (curation != null) this.curation = curation;
+        if (description != null) this.description = description;
         if (reserved != null) this.reserved = reserved;
         if (free != null) this.free = free;
         if (price != null) this.price = price;

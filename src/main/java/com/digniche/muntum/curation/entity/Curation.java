@@ -1,6 +1,8 @@
 package com.digniche.muntum.curation.entity;
 
 import com.digniche.muntum.common.entity.BaseEntity;
+import com.digniche.muntum.global.exception.BusinessException;
+import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.program.entity.Program;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -13,7 +15,7 @@ import java.util.UUID;
 
 @Entity
 @Table(
-        name = "program_curations",
+        name = "curations",
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_program_curations_program_curator",
@@ -31,7 +33,7 @@ import java.util.UUID;
                 ),
                 @Index(
                         name = "idx_program_curations_program_status",
-                        columnList = "program_id, status, published_at"
+                        columnList = "program_id, status"
                 )
         }
 )
@@ -109,11 +111,20 @@ public class Curation extends BaseEntity {
     )
     private CurationStatus status = CurationStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
     @Column(
-            name = "rejection_reason",
+            name = "publication_status",
+            nullable = false,
+            length = 20
+    )
+    private CurationPublicationStatus publicationStatus
+            = CurationPublicationStatus.UNPUBLISHED;
+
+    @Column(
+            name = "change_request_reason",
             length = 1000
     )
-    private String rejectionReason;
+    private String changeRequestReason;
 
     @Column(
             name = "reviewed_by",
@@ -123,9 +134,6 @@ public class Curation extends BaseEntity {
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
-
-    @Column(name = "published_at")
-    private LocalDateTime publishedAt;
 
     @Builder
     public Curation(
@@ -141,5 +149,75 @@ public class Curation extends BaseEntity {
         this.tagline = tagline;
         this.content = content;
         this.status = CurationStatus.PENDING;
+        this.publicationStatus =
+                CurationPublicationStatus.UNPUBLISHED;
+    }
+
+    public void approve(
+            Program program,
+            UUID reviewerId
+    ) {
+        this.program = program;
+        this.status = CurationStatus.APPROVED;
+        this.publicationStatus =
+                CurationPublicationStatus.PUBLISHED;
+        this.changeRequestReason = null;
+        this.reviewedBy = reviewerId;
+        this.reviewedAt = LocalDateTime.now();
+    }
+
+    public void requestChanges(
+            UUID reviewerId,
+            String changeRequestReason,
+            CurationPublicationStatus requestedPublicationStatus
+    ) {
+        boolean wasPending =
+                this.status == CurationStatus.PENDING;
+
+        this.status = CurationStatus.CHANGES_REQUESTED;
+
+        this.publicationStatus = wasPending
+                ? CurationPublicationStatus.UNPUBLISHED
+                : requestedPublicationStatus;
+
+        this.changeRequestReason = changeRequestReason;
+        this.reviewedBy = reviewerId;
+        this.reviewedAt = LocalDateTime.now();
+    }
+
+    public void updateContent(
+            String submittedProgramTitle,
+            String submittedPlace,
+            String tagline,
+            String content
+    ) {
+        this.submittedProgramTitle = submittedProgramTitle;
+        this.submittedPlace = submittedPlace;
+        this.tagline = tagline;
+        this.content = content;
+    }
+
+    public void resubmit() {
+        if (this.status != CurationStatus.CHANGES_REQUESTED) {
+            throw new BusinessException(
+                    ErrorCode.CURATION_NOT_RESUBMITTABLE
+            );
+        }
+
+        this.status = CurationStatus.PENDING;
+        this.reviewedBy = null;
+        this.reviewedAt = null;
+    }
+
+    public void unpublish() {
+        if (this.status != CurationStatus.APPROVED
+                || this.publicationStatus != CurationPublicationStatus.PUBLISHED) {
+            throw new BusinessException(
+                    ErrorCode.CURATION_NOT_UNPUBLISHABLE
+            );
+        }
+
+        this.publicationStatus =
+                CurationPublicationStatus.UNPUBLISHED;
     }
 }

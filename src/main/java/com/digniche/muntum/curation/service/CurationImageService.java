@@ -13,9 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -176,5 +175,25 @@ public class CurationImageService {
                     exception
             );
         }
+    }
+
+    /**
+     * 대표 이미지 일괄 조회
+     */
+    public Map<UUID, String> getThumbnailMap(
+            Collection<UUID> curationIds
+    ) {
+        if (curationIds == null
+                || curationIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return curationImageRepository
+                .findThumbnailsByCurationIds(curationIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        image -> image.getCuration().getId(),
+                        CurationImage::getImageUrl
+                ));
     }
 }

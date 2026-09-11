@@ -1,5 +1,6 @@
 package com.digniche.muntum.program.dto.response;
 
+import com.digniche.muntum.curation.dto.response.PublicCurationSummaryResponse;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
@@ -20,8 +21,11 @@ public record ProgramResponse(
         UUID id,
         String title,
         ProgramType programType,
+        // 구버전 호환용
         String tagline,
         String curation,
+        //신규 프로그램 포인트 요약
+        String description,
         boolean reserved,
         boolean free,
         String price,
@@ -41,13 +45,15 @@ public record ProgramResponse(
         List<ProgramImageResponse> images,
         List<ProgramKeywordResponse> keywords,
         @JsonInclude(JsonInclude.Include.NON_NULL) ProgramReactionSummaryResponse reaction,
+        //구버전 호환용
         @JsonInclude(JsonInclude.Include.NON_NULL) CuratorProfileResponse curator,
+        //신규 큐레이션 목록
+        @JsonInclude(JsonInclude.Include.NON_NULL) List<PublicCurationSummaryResponse> curations,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
     /**
      * 프로그램 '등록·수정·상태변경' 응답 변환
-     * - 프로그램 정보, 이미지, 키워드
      */
     public static ProgramResponse from(
             Program program,
@@ -58,6 +64,7 @@ public record ProgramResponse(
                 program,
                 images,
                 keywords,
+                null,
                 null,
                 null
         );
@@ -75,7 +82,8 @@ public record ProgramResponse(
             List<ProgramImageResponse> images,
             List<ProgramKeywordResponse> keywords,
             ProgramReactionSummaryResponse reaction,
-            CuratorProfileResponse curator
+            CuratorProfileResponse curator,
+            List<PublicCurationSummaryResponse> curations
     ) {
         return new ProgramResponse(
                 program.getId(),
@@ -83,6 +91,7 @@ public record ProgramResponse(
                 program.getProgramType(),
                 program.getTagline(),
                 program.getCuration(),
+                program.getDescription(),
                 program.isReserved(),
                 program.isFree(),
                 program.getPrice(),
@@ -103,6 +112,7 @@ public record ProgramResponse(
                 keywords,
                 reaction,
                 curator,
+                curations,
                 program.getCreatedAt(),
                 program.getUpdatedAt()
         );

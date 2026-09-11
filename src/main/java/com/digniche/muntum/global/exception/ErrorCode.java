@@ -66,12 +66,15 @@ public enum ErrorCode {
     // 큐레이션
     CURATION_NOT_FOUND("CU001", "존재하지 않는 큐레이션입니다", HttpStatus.NOT_FOUND),
     CURATION_ALREADY_EXISTS("CU002", "이미 해당 프로그램에 작성한 큐레이션이 있습니다", HttpStatus.CONFLICT),
-    CURATION_NOT_EDITABLE("CU003", "승인된 큐레이션은 수정할 수 없습니다", HttpStatus.CONFLICT),
+    CURATION_NOT_EDITABLE("CU003", "현재 상태에서는 큐레이션을 수정할 수 없습니다", HttpStatus.CONFLICT),
     CURATION_ALREADY_REVIEWED("CU004", "이미 심사가 완료된 큐레이션입니다", HttpStatus.CONFLICT),
-    REJECTION_REASON_REQUIRED("CU005", "반려 사유는 필수입니다", HttpStatus.BAD_REQUEST),
+    CHANGE_REQUEST_REASON_REQUIRED("CU005", "수정요청 사유는 필수입니다", HttpStatus.BAD_REQUEST),
     CURATION_IMAGE_REQUIRED("CU006", "큐레이션 이미지는 최소 1개 등록해야 합니다", HttpStatus.BAD_REQUEST),
     TOO_MANY_CURATION_IMAGES("CU007", "큐레이션 이미지는 최대 5개까지 등록할 수 있습니다", HttpStatus.BAD_REQUEST),
     CURATION_IMAGE_NOT_FOUND("CU008", "존재하지 않는 큐레이션 이미지입니다", HttpStatus.NOT_FOUND),
+    CURATION_NOT_DELETABLE("CU009", "현재 상태에서는 큐레이션을 삭제할 수 없습니다.", HttpStatus.CONFLICT),
+    CURATION_NOT_RESUBMITTABLE("CU010", "수정요청 상태의 큐레이션만 다시 등록할 수 있습니다.", HttpStatus.CONFLICT),
+    CURATION_NOT_UNPUBLISHABLE("CU011", "승인된 큐레이션만 공개 중단할 수 있습니다.", HttpStatus.BAD_REQUEST),
     // 카카오 GeoCoordinate
     ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 

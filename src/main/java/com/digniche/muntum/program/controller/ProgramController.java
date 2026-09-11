@@ -11,6 +11,7 @@ import com.digniche.muntum.program.entity.ProgramType;
 import com.digniche.muntum.program.service.ProgramImageService;
 import com.digniche.muntum.program.service.ProgramService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
@@ -219,5 +220,29 @@ public class ProgramController {
         ProgramResponse response = programService.updateProgramStatus(programId, request.status());
         return ResponseEntity.ok(ApiResponse.success("프로그램 상태가 변경되었습니다.", response));
     }
+    /**
+     * 키워드 일치 프로그램 검색
+     */
+    @GetMapping("/{program_id}/related")
+    public ResponseEntity<ApiResponse<PageResponse<ProgramCardResponse>>>
+    getRelatedPrograms(
+            @PathVariable("program_id") UUID programId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(20) int size
+    ) {
 
+        PageResponse<ProgramCardResponse> response =
+                programService.getRelatedPrograms(
+                        programId,
+                        page,
+                        size
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "관련 프로그램 조회에 성공했습니다.",
+                        response
+                )
+        );
+    }
 }

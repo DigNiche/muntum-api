@@ -1,6 +1,7 @@
 package com.digniche.muntum.curation.dto.response;
 
 import com.digniche.muntum.curation.entity.Curation;
+import com.digniche.muntum.curation.entity.CurationPublicationStatus;
 import com.digniche.muntum.curation.entity.CurationStatus;
 
 import java.time.LocalDateTime;
@@ -13,9 +14,9 @@ public record CurationListResponse(
         String submittedPlace,
         String tagline,
         CurationStatus status,
+        CurationPublicationStatus publicationStatus,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        LocalDateTime publishedAt
+        LocalDateTime updatedAt
 ) {
     public static CurationListResponse from(
             Curation curation
@@ -29,9 +30,9 @@ public record CurationListResponse(
                 curation.getSubmittedPlace(),
                 curation.getTagline(),
                 curation.getStatus(),
+                curation.getPublicationStatus(),
                 curation.getCreatedAt(),
-                curation.getUpdatedAt(),
-                curation.getPublishedAt()
+                curation.getUpdatedAt()
         );
     }
 }

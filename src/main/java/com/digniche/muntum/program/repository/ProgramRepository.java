@@ -1,5 +1,6 @@
 package com.digniche.muntum.program.repository;
 
+import com.digniche.muntum.curation.entity.CurationPublicationStatus;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import jakarta.persistence.LockModeType;
@@ -14,6 +15,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
+import com.digniche.muntum.curation.entity.CurationStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -218,6 +220,46 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("weekEnd") LocalDate weekEnd,
             Pageable pageable
     );
+
+    @Query(
+            value = """
+    SELECT p
+    FROM Program p
+    JOIN ProgramKeyword pk ON pk.program = p
+    WHERE p.status IN :statuses
+    AND p.deletedAt IS NULL
+    AND pk.keyword.id IN :keywordIds
+    AND p.id <> :excludeProgramId
+    GROUP BY p
+    ORDER BY COUNT(pk) DESC,
+             CASE
+                 WHEN p.endDate IS NULL THEN 2
+                 WHEN p.endDate < :today THEN 1
+                 ELSE 0
+             END ASC,
+             CASE
+                 WHEN p.endDate >= :today THEN p.endDate
+             END ASC,
+             p.endDate DESC,
+             p.id DESC
+    """,
+                countQuery = """
+    SELECT COUNT(DISTINCT p)
+    FROM Program p
+    JOIN ProgramKeyword pk ON pk.program = p
+    WHERE p.status IN :statuses
+    AND p.deletedAt IS NULL
+    AND pk.keyword.id IN :keywordIds
+    AND p.id <> :excludeProgramId
+    """
+    )
+    Page<Program> findRelatedProgramsByKeywordIds(
+            @Param("statuses") Collection<ProgramStatus> statuses,
+            @Param("keywordIds") List<UUID> keywordIds,
+            @Param("excludeProgramId") UUID excludeProgramId,
+            @Param("today") LocalDate today,
+            Pageable pageable
+    );
     // hot-keywords 폴백: 인기 키워드가 하나도 없을 때 전체를 최신 등록순으로 (종료된 것은 뒤로)
     @Query("""
     SELECT p FROM Program p
@@ -256,9 +298,18 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     AND p.deletedAt IS NULL
     AND (
         p.title LIKE :keyword ESCAPE '\\'
-        OR p.tagline LIKE :keyword ESCAPE '\\'
-        OR p.curation LIKE :keyword ESCAPE '\\'
+        OR p.description LIKE :keyword ESCAPE '\\'
         OR p.venueName LIKE :keyword ESCAPE '\\'
+        OR EXISTS (
+                SELECT c.id
+                FROM Curation c
+                WHERE c.program = p
+                  AND c.publicationStatus = :curationPublicationStatus
+                  AND (
+                      c.tagline LIKE :keyword ESCAPE '\\'
+                      OR c.content LIKE :keyword ESCAPE '\\'
+                  )
+            )
     )
     AND (:freeOnly IS NULL OR p.free = true)
     AND (:noReservationOnly IS NULL OR p.reserved = false)
@@ -272,10 +323,9 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     )
     ORDER BY
         CASE WHEN p.title LIKE :keyword ESCAPE '\\' THEN 0
-             WHEN p.tagline LIKE :keyword ESCAPE '\\' THEN 1
-             WHEN p.curation LIKE :keyword ESCAPE '\\' THEN 2
-             WHEN p.venueName LIKE :keyword ESCAPE '\\' THEN 3
-                  ELSE 4 END ASC,
+             WHEN p.description LIKE :keyword ESCAPE '\\' THEN 1
+             WHEN p.venueName LIKE :keyword ESCAPE '\\' THEN 2
+             ELSE 3 END ASC,
         CASE WHEN p.endDate IS NULL THEN 2
              WHEN p.endDate < :today THEN 1
              ELSE 0 END ASC,
@@ -289,9 +339,18 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     AND p.deletedAt IS NULL
     AND (
         p.title LIKE :keyword ESCAPE '\\'
-        OR p.tagline LIKE :keyword ESCAPE '\\'
-        OR p.curation LIKE :keyword ESCAPE '\\'
+        OR p.description LIKE :keyword ESCAPE '\\'
         OR p.venueName LIKE :keyword ESCAPE '\\'
+        OR EXISTS (
+            SELECT c.id
+            FROM Curation c
+            WHERE c.program = p
+                AND c.publicationStatus = :curationPublicationStatus
+                AND (
+                    c.tagline LIKE :keyword ESCAPE '\\'
+                    OR c.content LIKE :keyword ESCAPE '\\'
+                )
+        )
     )
     AND (:freeOnly IS NULL OR p.free = true)
     AND (:noReservationOnly IS NULL OR p.reserved = false)
@@ -314,6 +373,8 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("programType") ProgramType programType,
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
+            @Param("curationPublicationStatus")
+            CurationPublicationStatus curationPublicationStatus,
             Pageable pageable
     );
 

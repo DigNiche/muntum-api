@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(
-        name = "program_curation_images",
+        name = "curation_images",
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_program_curation_images_order",

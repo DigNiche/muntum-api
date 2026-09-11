@@ -22,7 +22,7 @@ public record CuratorProfileResponse(
         );
     }
     /**
-     * 프로필 이미지 포함
+     * 프로필 이미지 + 큐레이션 수 포함
      */
     public static CuratorProfileResponse from(
             UUID curatorId,
