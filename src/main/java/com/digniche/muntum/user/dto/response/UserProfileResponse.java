@@ -1,38 +1,32 @@
 package com.digniche.muntum.user.dto.response;
 
 import com.digniche.muntum.user.entity.User;
+import com.digniche.muntum.user.entity.UserStatus;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * 사용자 조회 공통 응답 DTO
- * - '마이페이지(프로필/계정관리) 단건 조회'와 '관리자 사용자 관리 목록 조회'에서 함께 사용
+ * 사용자 기본 정보 조회 응답 DTO
  */
 public record UserProfileResponse(
         UUID userId,
         String email,
         String nickname,
+        String profileImageUrl,
         String role,
-        long keywordCount,
-        long suggestionCount,
-        long scrapCount,
+        String status,
         LocalDate joinedAt
 ) {
-    public static UserProfileResponse from(
-            User user,
-            long keywordCount,
-            long suggestionCount,
-            long scrapCount
-    ) {
+    public static UserProfileResponse from(User user) {
         return new UserProfileResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getNickname(),
+                user.getProfileImageUrl(),
                 user.getRole().name(),
-                keywordCount,
-                suggestionCount,
-                scrapCount,
+                user.getStatus().name(),
                 user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate() : null
         );
     }

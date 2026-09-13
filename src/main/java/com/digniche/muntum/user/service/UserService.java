@@ -30,7 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.digniche.muntum.global.PageResponse;
-import com.digniche.muntum.user.dto.response.UserProfileResponse;
+import com.digniche.muntum.user.dto.response.UserProfileDetailResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -95,7 +95,7 @@ public class UserService {
      * 내 프로필 조회
      */
     @Transactional(readOnly = true)
-    public UserProfileResponse getMyProfile(UUID userId) {
+    public UserProfileDetailResponse getMyProfile(UUID userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         return toProfileResponses(List.of(user)).get(0);
     }
@@ -104,14 +104,14 @@ public class UserService {
      * 전체 사용자 목록 조회  - 검색(닉네임/이메일)
      */
     @Transactional(readOnly = true)
-    public PageResponse<UserProfileResponse> getUsers(String search, int page, int size) {
+    public PageResponse<UserProfileDetailResponse> getUsers(String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<User> users = (search == null || search.isBlank())
                 ? userRepository.findAllByStatusNot(UserStatus.DELETED, pageable)
                 : userRepository.searchByNicknameOrEmail(search.trim(), UserStatus.DELETED, pageable);
 
-        List<UserProfileResponse> content = toProfileResponses(users.getContent());
+        List<UserProfileDetailResponse> content = toProfileResponses(users.getContent());
         return PageResponse.from(new PageImpl<>(content, pageable, users.getTotalElements()));
     }
 
@@ -205,7 +205,7 @@ public class UserService {
     /**
      * 조회된 사용자들의 키워드/제보/스크랩 개수를 집계하여 응답 DTO로 변환
      */
-    private List<UserProfileResponse> toProfileResponses(List<User> users) {
+    private List<UserProfileDetailResponse> toProfileResponses(List<User> users) {
         if (users.isEmpty()) { return List.of(); }
         List<UUID> userIds = users.stream().map(User::getId).toList();
 
@@ -213,7 +213,7 @@ public class UserService {
         Map<UUID, Long> suggestionCounts = toCountMap(spotSuggestionRepository.countByInformerIds(userIds));
         Map<UUID, Long> scrapCounts = toCountMap(scrapRepository.countByUserIds(userIds));
 
-        return users.stream().map(user -> UserProfileResponse.from(
+        return users.stream().map(user -> UserProfileDetailResponse.from(
                         user,
                         keywordCounts.getOrDefault(user.getId(), 0L),
                         suggestionCounts.getOrDefault(user.getId(), 0L),
