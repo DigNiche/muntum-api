@@ -1,7 +1,5 @@
 package com.digniche.muntum.user.dto.response;
 
-import com.digniche.muntum.user.entity.UserRole;
-
 import java.util.UUID;
 
 public record CuratorProfileResponse(

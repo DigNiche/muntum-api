@@ -1,10 +1,8 @@
 package com.digniche.muntum.user.dto.response;
 
 import com.digniche.muntum.user.entity.User;
-import com.digniche.muntum.user.entity.UserStatus;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**

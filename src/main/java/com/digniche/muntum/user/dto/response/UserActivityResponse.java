@@ -1,6 +1,5 @@
 package com.digniche.muntum.user.dto.response;
 
-import com.digniche.muntum.user.entity.User;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**

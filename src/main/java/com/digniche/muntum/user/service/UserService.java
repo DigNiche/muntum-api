@@ -18,7 +18,6 @@ import com.digniche.muntum.user.dto.request.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.request.PasswordChangeRequest;
 import com.digniche.muntum.user.dto.request.TermsConsentListRequest;
 import com.digniche.muntum.user.dto.request.TermsConsentRequest;
-import com.digniche.muntum.user.dto.response.UserActivityResponse;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.entity.UserTermsAgreement;

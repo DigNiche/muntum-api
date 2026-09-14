@@ -2,7 +2,6 @@ package com.digniche.muntum.curator.service;
 
 import com.digniche.muntum.curator.dto.request.CuratorApplicationCreateRequest;
 import com.digniche.muntum.curator.dto.request.CuratorApplicationStatusUpdateRequest;
-import com.digniche.muntum.curator.dto.response.ApplicantStatusInfoResponse;
 import com.digniche.muntum.curator.dto.response.CuratorApplicationCardResponse;
 import com.digniche.muntum.curator.dto.response.CuratorApplicationResponse;
 import com.digniche.muntum.curator.dto.response.ReviewerProfileResponse;
@@ -13,7 +12,6 @@ import com.digniche.muntum.curator.repository.CuratorApplicationRepository;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
-import com.digniche.muntum.user.dto.response.UserProfileResponse;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserRole;
 import com.digniche.muntum.user.repository.UserRepository;
