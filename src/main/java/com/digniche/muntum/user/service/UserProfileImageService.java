@@ -106,7 +106,7 @@ public class UserProfileImageService {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE);
         }
-        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
+        if (file.getContentType() == null || !ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
             throw new BusinessException(ErrorCode.UNSUPPORTED_IMAGE_TYPE);
         }
     }

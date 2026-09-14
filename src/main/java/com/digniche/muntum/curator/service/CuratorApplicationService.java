@@ -2,6 +2,7 @@ package com.digniche.muntum.curator.service;
 
 import com.digniche.muntum.curator.dto.request.CuratorApplicationCreateRequest;
 import com.digniche.muntum.curator.dto.request.CuratorApplicationStatusUpdateRequest;
+import com.digniche.muntum.curator.dto.response.ApplicantStatusInfoResponse;
 import com.digniche.muntum.curator.dto.response.CuratorApplicationCardResponse;
 import com.digniche.muntum.curator.dto.response.CuratorApplicationResponse;
 import com.digniche.muntum.curator.dto.response.ReviewerProfileResponse;
@@ -12,6 +13,7 @@ import com.digniche.muntum.curator.repository.CuratorApplicationRepository;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
+import com.digniche.muntum.user.dto.response.UserProfileResponse;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserRole;
 import com.digniche.muntum.user.repository.UserRepository;
@@ -58,8 +60,24 @@ public class CuratorApplicationService {
     }
 
     /**
-     * TODO: 관람객의 큐레이터 지원서 수정
+     * 관람객의 큐레이터 지원서 수정 (대기 상태에서만 가능)
      */
+    @Transactional
+    public CuratorApplicationResponse updateCuratorApplication(UUID applicationId, UUID applicantId, CuratorApplicationCreateRequest request) {
+        CuratorApplication application = getApplicationById(applicationId);
+
+        if (!isOwner(application, applicantId)) {
+            throw new BusinessException(ErrorCode.CURATOR_APPLICATION_ACCESS_DENIED);
+        }
+
+        if (application.getStatus() != CuratorApplicationStatus.PENDING) {
+            throw new BusinessException(ErrorCode.CURATOR_APPLICATION_NOT_EDITABLE);
+        }
+
+        application.updatePortfolio(request.programName(), request.tagline(), request.curation());
+
+        return CuratorApplicationResponse.from(application, null);
+    }
 
 
     /**

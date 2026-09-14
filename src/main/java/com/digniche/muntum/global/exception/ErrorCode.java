@@ -59,6 +59,7 @@ public enum ErrorCode {
     CURATOR_APPLICATION_STATUS_CHANGE_DENIED("CA005", "심사 중인 상태의 지원서만 상태 변경이 가능합니다", HttpStatus.BAD_REQUEST),
     INVALID_CURATOR_APPLICATION_STATUS_TRANSITION("CA006", "허용되지 않는 상태 변경입니다", HttpStatus.BAD_REQUEST),
     CURATOR_APPLICATION_REASON_REQUIRED("CA007", "반려 사유는 필수입니다", HttpStatus.BAD_REQUEST),
+    CURATOR_APPLICATION_NOT_EDITABLE("CA008", "심사가 완료된 지원서는 수정할 수 없습니다", HttpStatus.CONFLICT),
 
 
     // 프로그램

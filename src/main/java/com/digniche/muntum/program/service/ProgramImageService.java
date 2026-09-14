@@ -143,9 +143,10 @@ public class ProgramImageService {
         if (file.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE);
         }
-        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
+        if (file.getContentType() == null || !ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
             throw new BusinessException(ErrorCode.UNSUPPORTED_IMAGE_TYPE);
         }
+
     }
 
     // 스토리지에서 이미지 삭제 : 기존 파일 정리에 실패해도 수정 트랜잭션 자체를 막지 않고 로그만 남기도록
