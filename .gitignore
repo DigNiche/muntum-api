@@ -47,3 +47,6 @@ src/main/resources/secrets-*.yaml
 # Log Files
 *.log
 logs/
+
+# Local file storage (LocalImageStorageService upload target)
+uploads/

@@ -49,6 +49,21 @@ public class CuratorApplicationController {
                 .body(ApiResponse.success("지원서가 제출되었습니다.", response));
     }
 
+    /**
+     * 큐레이터 지원서 수정 (지원자 본인, 대기 상태에서만 가능)
+     */
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/{application_id}")
+    public ResponseEntity<ApiResponse<CuratorApplicationResponse>> updateCuratorApplication(
+            @PathVariable("application_id") UUID applicationId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody CuratorApplicationCreateRequest request
+    ) {
+        CuratorApplicationResponse response = curatorApplicationService.updateCuratorApplication(
+                applicationId, userPrincipal.getUserId(), request);
+        return ResponseEntity.ok(ApiResponse.success("지원서가 수정되었습니다.", response));
+    }
+
 
     /**
      * 큐레이터의 본인 지원 내역 확인(최신 단건)

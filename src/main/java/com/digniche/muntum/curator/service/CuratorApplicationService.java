@@ -57,6 +57,26 @@ public class CuratorApplicationService {
         return CuratorApplicationResponse.from(application, null);
     }
 
+    /**
+     * 관람객의 큐레이터 지원서 수정 (대기 상태에서만 가능)
+     */
+    @Transactional
+    public CuratorApplicationResponse updateCuratorApplication(UUID applicationId, UUID applicantId, CuratorApplicationCreateRequest request) {
+        CuratorApplication application = getApplicationById(applicationId);
+
+        if (!isOwner(application, applicantId)) {
+            throw new BusinessException(ErrorCode.CURATOR_APPLICATION_ACCESS_DENIED);
+        }
+
+        if (application.getStatus() != CuratorApplicationStatus.PENDING) {
+            throw new BusinessException(ErrorCode.CURATOR_APPLICATION_NOT_EDITABLE);
+        }
+
+        application.updatePortfolio(request.programName(), request.tagline(), request.curation());
+
+        return CuratorApplicationResponse.from(application, null);
+    }
+
 
     /**
      * 특정 사용자의 가장 최근의 지원 내역 조회

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 /**
  * DispatcherServlet 진입 후 내에서의 전반적인 예외 처리
@@ -126,6 +127,17 @@ public class GlobalExceptionHandler {
                 .status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), errorCode.getMessage()));
     }
+
+    // 필수 멀티파트 파트 누락 시 (예: @RequestPart(value="ooo"))
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingServletRequestPartException(MissingServletRequestPartException e) {
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
+        String message = "필수 파트가 누락되었습니다: " + e.getRequestPartName();
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), message));
+    }
+
     // @RequestParam, @PathVariable 등 파라미터 검증(@Min 등) 실패 시
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(ConstraintViolationException e) {
