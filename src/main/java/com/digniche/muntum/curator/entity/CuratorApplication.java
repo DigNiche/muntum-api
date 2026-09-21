@@ -84,4 +84,10 @@ public class CuratorApplication extends BaseEntity {
         this.status = CuratorApplicationStatus.REJECTED;
         this.rejectReason = reason;
     }
+
+    public void updatePortfolio(String programName, String tagline, String curation) {
+        this.programName = programName;
+        this.tagline = tagline;
+        this.curation = curation;
+    }
 }

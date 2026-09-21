@@ -7,15 +7,19 @@ import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.user.dto.request.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.request.PasswordChangeRequest;
 import com.digniche.muntum.user.dto.request.TermsConsentListRequest;
+import com.digniche.muntum.user.dto.response.UserProfileResponse;
+import com.digniche.muntum.user.service.UserProfileImageService;
 import com.digniche.muntum.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.digniche.muntum.user.dto.response.UserProfileResponse;
+import com.digniche.muntum.user.dto.response.UserProfileDetailResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 사용자 컨트롤러
@@ -26,17 +30,22 @@ import com.digniche.muntum.user.dto.response.UserProfileResponse;
 public class UserController {
 
     private final UserService userService;
+    private final UserProfileImageService userProfileImageService;
 
-    // 내 프로필 조회 (마이페이지 프로필 + 계정관리)
+    /**
+     * 내 프로필 조회 (마이페이지 프로필 + 계정관리)
+     */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("")
-    public ResponseEntity<ApiResponse<UserProfileResponse>> getMyProfile(
+    public ResponseEntity<ApiResponse<UserProfileDetailResponse>> getMyProfile(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        UserProfileResponse response = userService.getMyProfile(userPrincipal.getUserId());
+        UserProfileDetailResponse response = userService.getMyProfile(userPrincipal.getUserId());
         return ResponseEntity.ok(ApiResponse.success("내 프로필 조회에 성공했습니다.", response));
     }
 
-    // 닉네임 설정(생성 및 수정)
+    /**
+     * 닉네임 설정(생성 및 수정)
+     */
     @PreAuthorize("isAuthenticated()")
     @PatchMapping("nickname")
     public ResponseEntity<ApiResponse<Void>> setNickname(
@@ -46,7 +55,32 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("닉네임이 설정되었습니다.", null));
     }
 
-    // 사용자 약관 동의
+    /**
+     * 프로필 이미지 설정
+     */
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<UserProfileResponse>> replaceProfileImage(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestPart(value="profileImage", required=true) MultipartFile image) {
+        UserProfileResponse response = userProfileImageService.uploadProfileImage(userPrincipal.getUserId(), image);
+        return ResponseEntity.ok(ApiResponse.success("프로필 이미지가 변경되었습니다.", response));
+    }
+
+    /**
+     * 프로필 이미지 삭제 (기본 이미지로 초기화)
+     */
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/profile-image")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> deleteProfileImage(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        UserProfileResponse response = userProfileImageService.deleteProfileImage(userPrincipal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("프로필 이미지가 기본 이미지로 변경되었습니다.", response));
+    }
+
+    /**
+     * 사용자 약관 동의
+     */
     @PreAuthorize("isAuthenticated()")
     @PatchMapping("/terms")
     public ResponseEntity<ApiResponse<Void>> updateTermsConsent(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestBody @Valid TermsConsentListRequest request) {
@@ -54,7 +88,9 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("약관 동의 상태가 변경되었습니다.", null));
     }
 
-    // 회원 탈퇴
+    /**
+     * 회원 탈퇴
+     */
     @PreAuthorize("isAuthenticated()")
     @PostMapping("")
     public ResponseEntity<ApiResponse<Void>> withdraw(
@@ -67,7 +103,9 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("회원탈퇴가 완료되었습니다.", null));
     }
 
-    // 비밀번호 변경
+    /**
+     * 비밀번호 변경
+     */
     @PreAuthorize("isAuthenticated()")
     @PatchMapping("/password")
     public ResponseEntity<ApiResponse<Void>> changePassword(

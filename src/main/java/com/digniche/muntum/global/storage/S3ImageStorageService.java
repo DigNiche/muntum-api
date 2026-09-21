@@ -1,13 +1,18 @@
 package com.digniche.muntum.global.storage;
 
+import com.digniche.muntum.global.exception.BusinessException;
+import com.digniche.muntum.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -44,7 +49,16 @@ public class S3ImageStorageService implements ImageStorageService {
                     RequestBody.fromInputStream(file.getInputStream(), file.getSize())
             );
         } catch (IOException e) {
-            throw new RuntimeException("S3 이미지 업로드 실패: " + key, e);
+            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED, e);
+        } catch (SdkClientException e) {
+            throw new BusinessException(ErrorCode.IMAGE_STORAGE_UNAVAILABLE, e);
+        } catch (S3Exception e) {
+            if (e.statusCode() >= 500 || e.isThrottlingException()) {
+                throw new BusinessException(ErrorCode.IMAGE_STORAGE_UNAVAILABLE, e);
+            }
+            throw new BusinessException(ErrorCode.IMAGE_STORAGE_FAILED, e);
+        } catch (SdkException e) {
+            throw new BusinessException(ErrorCode.IMAGE_STORAGE_FAILED, e);
         }
         return cloudfrontDomain + "/" + key;
     }
