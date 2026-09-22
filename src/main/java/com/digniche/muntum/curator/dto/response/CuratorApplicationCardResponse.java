@@ -1,6 +1,7 @@
 package com.digniche.muntum.curator.dto.response;
 
 import com.digniche.muntum.curator.entity.CuratorApplication;
+import com.digniche.muntum.user.dto.response.UserProfileResponse;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,7 +11,7 @@ import java.util.UUID;
  */
 public record CuratorApplicationCardResponse(
         UUID id,
-        ApplicantProfileResponse applicant,
+        UserProfileResponse applicant,
         ApplicantStatusInfoResponse statusInfo,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
@@ -18,7 +19,7 @@ public record CuratorApplicationCardResponse(
     public static CuratorApplicationCardResponse from(CuratorApplication application) {
         return new CuratorApplicationCardResponse(
                 application.getId(),
-                ApplicantProfileResponse.from(application.getApplicant()),
+                UserProfileResponse.from(application.getApplicant()),
                 ApplicantStatusInfoResponse.from(application),
                 application.getCreatedAt(),
                 application.getUpdatedAt()

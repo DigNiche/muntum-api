@@ -41,7 +41,7 @@ public enum ErrorCode {
     VERIFICATION_SEND_LIMIT_EXCEEDED("A024", "인증번호 발송 횟수를 초과했습니다. 24시간 후 다시 시도해주세요", HttpStatus.TOO_MANY_REQUESTS),
 
 
-    // 사용자 정보
+    // 사용자 닉네임
     NICKNAME_ALREADY_EXISTS("U001", "이미 사용 중인 닉네임입니다", HttpStatus.CONFLICT),
 
     // 사용자 약관 동의
@@ -59,6 +59,7 @@ public enum ErrorCode {
     CURATOR_APPLICATION_STATUS_CHANGE_DENIED("CA005", "심사 중인 상태의 지원서만 상태 변경이 가능합니다", HttpStatus.BAD_REQUEST),
     INVALID_CURATOR_APPLICATION_STATUS_TRANSITION("CA006", "허용되지 않는 상태 변경입니다", HttpStatus.BAD_REQUEST),
     CURATOR_APPLICATION_REASON_REQUIRED("CA007", "반려 사유는 필수입니다", HttpStatus.BAD_REQUEST),
+    CURATOR_APPLICATION_NOT_EDITABLE("CA008", "심사가 완료된 지원서는 수정할 수 없습니다", HttpStatus.CONFLICT),
 
 
     // 프로그램
@@ -67,12 +68,26 @@ public enum ErrorCode {
     INVALID_SEARCH_CONDITION("P003", "검색어 검색과 키워드 검색은 동시에 사용할 수 없습니다.", HttpStatus.BAD_REQUEST),
     INVALID_ACCESS_SECTION("P004", "Hot 필터 칩은 지도에서만 사용할 수 있습니다.", HttpStatus.BAD_REQUEST),
 
-    // 프로그램 이미지
-    PROGRAM_IMAGE_NOT_FOUND("I001", "존재하지 않는 이미지입니다", HttpStatus.NOT_FOUND),
-    IMAGE_UPLOAD_FAILED("I002", "이미지 업로드에 실패했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
-    INVALID_IMAGE_FILE("I003", "유효하지 않은 이미지 파일입니다", HttpStatus.BAD_REQUEST),
-    TOO_MANY_PROGRAM_IMAGES("I004", "이미지는 최대 5개까지 등록할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    // 이미지
+    IMAGE_NOT_FOUND("I001", "존재하지 않는 이미지입니다.", HttpStatus.NOT_FOUND),
+    IMAGE_UPLOAD_FAILED("I002", "이미지 파일 처리에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR), // Multipart Stream 읽기/전송 실패 시(업로드된 Byte 자체 못 읽음)
+    IMAGE_STORAGE_UNAVAILABLE("I003", "이미지 저장소에 일시적으로 접근할 수 없습니다. 잠시 후 다시 시도해주세요", HttpStatus.SERVICE_UNAVAILABLE), // SdkClientException + S3 5XX/throttling
+    IMAGE_STORAGE_FAILED("I004", "이미지 저장소 처리 중 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR), // S3 4XX (권한 및 버킷 설정), 그 외 SDK 예외
+    INVALID_IMAGE_FILE("I005", "이미지 파일이 비어있거나 이미지 손상 등으로 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
+    TOO_MANY_PROGRAM_IMAGES("I006", "이미지는 최대 5개까지 등록할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    UNSUPPORTED_IMAGE_TYPE("I007", "지원하지 않는 이미지 형식입니다.", HttpStatus.BAD_REQUEST),
 
+    // 큐레이션
+    CURATION_NOT_FOUND("CU001", "존재하지 않는 큐레이션입니다", HttpStatus.NOT_FOUND),
+    CURATION_ALREADY_EXISTS("CU002", "이미 해당 프로그램에 작성한 큐레이션이 있습니다", HttpStatus.CONFLICT),
+    CURATION_NOT_EDITABLE("CU003", "현재 상태에서는 큐레이션을 수정할 수 없습니다", HttpStatus.CONFLICT),
+    CURATION_ALREADY_REVIEWED("CU004", "이미 심사가 완료된 큐레이션입니다", HttpStatus.CONFLICT),
+    CHANGE_REQUEST_REASON_REQUIRED("CU005", "수정요청 사유는 필수입니다", HttpStatus.BAD_REQUEST),
+    CURATION_IMAGE_REQUIRED("CU006", "큐레이션 이미지는 최소 1개 등록해야 합니다", HttpStatus.BAD_REQUEST),
+    TOO_MANY_CURATION_IMAGES("CU007", "큐레이션 이미지는 최대 5개까지 등록할 수 있습니다", HttpStatus.BAD_REQUEST),
+    CURATION_IMAGE_NOT_FOUND("CU008", "존재하지 않는 큐레이션 이미지입니다", HttpStatus.NOT_FOUND),
+    CURATION_NOT_DELETABLE("CU009", "현재 상태에서는 큐레이션을 삭제할 수 없습니다.", HttpStatus.CONFLICT),
+    CURATION_NOT_RESUBMITTABLE("CU010", "수정요청 상태의 큐레이션만 다시 등록할 수 있습니다.", HttpStatus.CONFLICT),
     // 카카오 GeoCoordinate
     ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 
@@ -92,7 +107,7 @@ public enum ErrorCode {
 
     // 공지사항
     ANNOUNCEMENT_NOT_FOUND("AN001", "존재하지 않는 공지사항입니다", HttpStatus.NOT_FOUND),
-    ANNOUNCEMENT_ACCESS_DENIED("S002", "공지사항에 접근할 권한이 없습니다", HttpStatus.FORBIDDEN),
+    ANNOUNCEMENT_ACCESS_DENIED("AN002", "공지사항에 접근할 권한이 없습니다", HttpStatus.FORBIDDEN),
 
     // 유효하지 않은 요청
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),

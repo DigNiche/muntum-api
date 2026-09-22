@@ -107,15 +107,23 @@ public class User extends BaseEntity {
         this.tasteSelected = selected;
     }
     public void promoteToCurator() { this.role = UserRole.CURATOR; }
-    //비밀번호 변경
+    public void updateProfileImage(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
 
+    /**
+     * 삽입
+     */
     public void verifyEmail() {
         this.emailVerified = true;
         this.emailVerifiedAt = LocalDateTime.now();
     }
+
+    /**
+     * 삭제
+     */
+    public void clearProfileImage() { this.profileImageUrl = null; }
 
     /**
      * 사용자 소프트 삭제로 인한 타 Entity의 사용자 정보 마스킹

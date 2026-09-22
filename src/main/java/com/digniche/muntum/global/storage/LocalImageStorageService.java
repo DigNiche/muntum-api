@@ -1,5 +1,7 @@
 package com.digniche.muntum.global.storage;
 
+import com.digniche.muntum.global.exception.BusinessException;
+import com.digniche.muntum.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -36,7 +38,7 @@ public class LocalImageStorageService implements ImageStorageService{
             Files.createDirectories(dirPath);
             file.transferTo(filePath);
         } catch (IOException e) {
-            throw new RuntimeException("로컬 이미지 저장 실패: " + filePath, e);
+            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED, e);
         }
         return baseUrl + "/" + directory + "/" + filename;
     }

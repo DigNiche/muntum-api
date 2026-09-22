@@ -2,7 +2,7 @@ package com.digniche.muntum.user.controller;
 
 import com.digniche.muntum.global.ApiResponse;
 import com.digniche.muntum.global.PageResponse;
-import com.digniche.muntum.user.dto.response.UserProfileResponse;
+import com.digniche.muntum.user.dto.response.UserProfileDetailResponse;
 import com.digniche.muntum.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,12 +25,12 @@ public class AdminController {
      */
     @PreAuthorize("hasAnyRole('MANAGER')")
     @GetMapping("/users")
-    public ResponseEntity<ApiResponse<PageResponse<UserProfileResponse>>> getUsers(
+    public ResponseEntity<ApiResponse<PageResponse<UserProfileDetailResponse>>> getUsers(
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        PageResponse<UserProfileResponse> response = userService.getUsers(search, page, size);
+        PageResponse<UserProfileDetailResponse> response = userService.getUsers(search, page, size);
         return ResponseEntity.ok(ApiResponse.success("사용자 목록 조회에 성공했습니다.", response));
     }
 }
