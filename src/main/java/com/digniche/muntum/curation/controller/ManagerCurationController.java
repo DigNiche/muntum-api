@@ -115,7 +115,7 @@ public class ManagerCurationController {
     }
 
     /**
-     * 큐레이션 반려
+     * 큐레이션 수정요청
      */
     @PatchMapping("/{curation_id}/request-changes")
     public ResponseEntity<
@@ -134,7 +134,7 @@ public class ManagerCurationController {
         ManagerCurationDetailResponse response = curationService.requestChanges(curationId, userPrincipal.getUserId(), request);
 
         return ResponseEntity.ok(
-                ApiResponse.success("큐레이션이 반려되었습니다.", response)
+                ApiResponse.success("큐레이션 수정요청이 완료되었습니다.", response)
         );
     }
 

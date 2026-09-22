@@ -88,7 +88,6 @@ public enum ErrorCode {
     CURATION_IMAGE_NOT_FOUND("CU008", "존재하지 않는 큐레이션 이미지입니다", HttpStatus.NOT_FOUND),
     CURATION_NOT_DELETABLE("CU009", "현재 상태에서는 큐레이션을 삭제할 수 없습니다.", HttpStatus.CONFLICT),
     CURATION_NOT_RESUBMITTABLE("CU010", "수정요청 상태의 큐레이션만 다시 등록할 수 있습니다.", HttpStatus.CONFLICT),
-    CURATION_NOT_UNPUBLISHABLE("CU011", "승인된 큐레이션만 공개 중단할 수 있습니다.", HttpStatus.BAD_REQUEST),
     // 카카오 GeoCoordinate
     ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 

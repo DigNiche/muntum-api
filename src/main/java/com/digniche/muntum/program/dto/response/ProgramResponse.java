@@ -91,7 +91,10 @@ public record ProgramResponse(
                 program.getProgramType(),
                 program.getTagline(),
                 program.getCuration(),
-                program.getDescription(),
+                //과도기 코드
+                program.getDescription() != null
+                        ? program.getDescription()
+                        : program.getCuration(),
                 program.isReserved(),
                 program.isFree(),
                 program.getPrice(),

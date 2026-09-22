@@ -376,7 +376,7 @@ public class ProgramService {
         }
 
         program.update(
-                request.title(), request.programType(), request.description(), request.reserved(), request.free(),
+                request.title(), request.programType(), request.tagline(), request.description(), request.reserved(), request.free(),
                 request.price(), request.venueName(), request.venueMeta(),
                 request.address(),
                 request.officialUrl(),

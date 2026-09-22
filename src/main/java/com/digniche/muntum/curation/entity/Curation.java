@@ -208,16 +208,4 @@ public class Curation extends BaseEntity {
         this.reviewedBy = null;
         this.reviewedAt = null;
     }
-
-    public void unpublish() {
-        if (this.status != CurationStatus.APPROVED
-                || this.publicationStatus != CurationPublicationStatus.PUBLISHED) {
-            throw new BusinessException(
-                    ErrorCode.CURATION_NOT_UNPUBLISHABLE
-            );
-        }
-
-        this.publicationStatus =
-                CurationPublicationStatus.UNPUBLISHED;
-    }
 }

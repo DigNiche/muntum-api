@@ -2,6 +2,7 @@ package com.digniche.muntum.program.dto.request;
 
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramType;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -22,6 +23,10 @@ public record ProgramUpdateRequest(
         @NotNull(message = "프로그램 유형은 필수입니다.")
         ProgramType programType,
 
+        @Size(max = 255, message = "한줄소개는 255자를 넘을 수 없습니다.")
+        String tagline,
+
+        @JsonAlias("curation")
         @NotBlank(message = "프로그램 소개는 필수입니다.")
         @Size(max = 5000, message = "프로그램 소개는 5000자를 넘을 수 없습니다.")
         String description,
@@ -83,6 +88,7 @@ public record ProgramUpdateRequest(
                 return Program.builder()
                         .title(title)
                         .programType(programType)
+                        .tagline(tagline)
                         .description(description)
                         .reserved(reserved)
                         .free(free)

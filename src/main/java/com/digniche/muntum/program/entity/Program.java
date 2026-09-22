@@ -50,7 +50,7 @@ public class Program extends BaseEntity {
     /**
      * 신규 일반 프로그램 소개글
      */
-    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "is_reserved", nullable = false)
@@ -115,6 +115,7 @@ public class Program extends BaseEntity {
     public Program(
             String title,
             ProgramType  programType,
+            String tagline,
             String description,
             Boolean reserved,
             Boolean free,
@@ -135,12 +136,10 @@ public class Program extends BaseEntity {
         this.title = title;
         this.programType = programType;
         this.description = description;
-        /*
-         * 기존 DB NOT NULL 제약 대응용.
-         * 신규 코드에서는 값을 사용하지 않는다.
-         */
-        this.tagline = "";
-        this.curation = "";
+        // 신규 앱은 tagline을 보내지 않으므로 빈 문자열.
+        // 구버전 앱은 기존 tagline을 그대로 저장.
+        this.tagline = tagline != null ? tagline : "";
+        this.curation = description;
         this.reserved = reserved;  // @NotNull + @Valid로 보장됨
         this.free = free; // 나머지 String/날짜 필드는 this.x = x 그대로
         this.price = price;
@@ -165,6 +164,7 @@ public class Program extends BaseEntity {
     public void update(
             String title,
             ProgramType programType,
+            String tagline,
             String description,
             Boolean reserved,
             Boolean free,
@@ -180,7 +180,8 @@ public class Program extends BaseEntity {
     ) {
         if (title != null) this.title = title;
         if (programType != null) this.programType = programType;
-        if (description != null) this.description = description;
+        if (tagline != null) { this.tagline = tagline;}
+        if (description != null) { this.description = description; this.curation = description; }
         if (reserved != null) this.reserved = reserved;
         if (free != null) this.free = free;
         if (price != null) this.price = price;

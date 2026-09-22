@@ -167,7 +167,7 @@ public class CurationService {
 
         boolean alreadyExists =
                 curationRepository
-                        .existsByProgram_IdAndCuratorId(
+                        .existsByProgram_IdAndCuratorIdAndIdNot(
                                 program.getId(),
                                 curation.getCuratorId(),
                                 curation.getId()
@@ -405,25 +405,5 @@ public class CurationService {
                 curation,
                 images
         );
-    }
-
-    @Transactional
-    public void unpublishCuration(
-            UUID curationId,
-            UUID curatorId
-    ) {
-        Curation curation =
-                curationRepository
-                        .findByIdAndCuratorId(
-                                curationId,
-                                curatorId
-                        )
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        ErrorCode.CURATION_NOT_FOUND
-                                )
-                        );
-
-        curation.unpublish();
     }
 }

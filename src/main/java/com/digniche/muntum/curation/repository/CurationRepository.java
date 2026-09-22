@@ -58,7 +58,7 @@ public interface CurationRepository
     /**
      * 한 큐레이터가 같은 프로그램에 작성한 큐레이션이 있는지 확인
      */
-    boolean existsByProgram_IdAndCuratorId(
+    boolean existsByProgram_IdAndCuratorIdAndIdNot(
             UUID programId,
             UUID curatorId,
             UUID curationId

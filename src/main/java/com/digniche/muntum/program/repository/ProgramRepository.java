@@ -291,80 +291,96 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("weekEnd") LocalDate weekEnd,
             Pageable pageable
     );
-    // 텍스트 검색: title/tagline/curation/venuename LIKE 매칭
-    // 정렬: 필드 우선순위(title→tagline→curation) → (안 끝난 것 먼저, 마감임박 → 끝난 것 최근순 → null 맨 뒤)
-    @Query(value = """
-    SELECT p
-    FROM Program p
-    WHERE p.status IN :statuses
-    AND p.deletedAt IS NULL
-    AND (
-        p.title LIKE :keyword ESCAPE '\\'
-        OR p.description LIKE :keyword ESCAPE '\\'
-        OR p.venueName LIKE :keyword ESCAPE '\\'
-        OR EXISTS (
-                SELECT c.id
-                FROM Curation c
-                WHERE c.program = p
-                  AND c.publicationStatus = :curationPublicationStatus
-                  AND (
-                      c.tagline LIKE :keyword ESCAPE '\\'
-                      OR c.content LIKE :keyword ESCAPE '\\'
-                  )
-            )
-    )
-    AND (:freeOnly IS NULL OR p.free = true)
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
-    AND (:programType IS NULL OR p.programType = :programType)
-    AND (
-        :weekStart IS NULL
-        OR (
-            (p.startDate IS NULL OR p.startDate <= :weekEnd)
-            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
-        )
-    )
-    ORDER BY
-        CASE WHEN p.title LIKE :keyword ESCAPE '\\' THEN 0
-             WHEN p.description LIKE :keyword ESCAPE '\\' THEN 1
-             WHEN p.venueName LIKE :keyword ESCAPE '\\' THEN 2
-             ELSE 3 END ASC,
-        CASE WHEN p.endDate IS NULL THEN 2
-             WHEN p.endDate < :today THEN 1
-             ELSE 0 END ASC,
-        CASE WHEN p.endDate >= :today THEN p.endDate END ASC,
-        p.endDate DESC
-    """,
+// 텍스트 검색:
+// 기존 호환: title / tagline / curation / venueName
+// 신규 검색: description + 공개된 Curation(tagline/content)
+// 정렬: title → tagline → description/curation → venueName
+    @Query(
+            value = """
+        SELECT p
+        FROM Program p
+        WHERE p.status IN :statuses
+          AND p.deletedAt IS NULL
+          AND (
+              p.title LIKE :keyword ESCAPE '\\'
+              OR p.tagline LIKE :keyword ESCAPE '\\'
+              OR p.curation LIKE :keyword ESCAPE '\\'
+              OR p.description LIKE :keyword ESCAPE '\\'
+              OR p.venueName LIKE :keyword ESCAPE '\\'
+              OR EXISTS (
+                  SELECT c.id
+                  FROM Curation c
+                  WHERE c.program = p
+                    AND c.publicationStatus = :curationPublicationStatus
+                    AND (
+                        c.tagline LIKE :keyword ESCAPE '\\'
+                        OR c.content LIKE :keyword ESCAPE '\\'
+                    )
+              )
+          )
+          AND (:freeOnly IS NULL OR p.free = true)
+          AND (:noReservationOnly IS NULL OR p.reserved = false)
+          AND (:programType IS NULL OR p.programType = :programType)
+          AND (
+              :weekStart IS NULL
+              OR (
+                  (p.startDate IS NULL OR p.startDate <= :weekEnd)
+                  AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+              )
+          )
+        ORDER BY
+            CASE
+                WHEN p.title LIKE :keyword ESCAPE '\\' THEN 0
+                WHEN p.tagline LIKE :keyword ESCAPE '\\' THEN 1
+                WHEN p.description LIKE :keyword ESCAPE '\\'
+                     OR p.curation LIKE :keyword ESCAPE '\\' THEN 2
+                WHEN p.venueName LIKE :keyword ESCAPE '\\' THEN 3
+                ELSE 4
+            END ASC,
+            CASE
+                WHEN p.endDate IS NULL THEN 2
+                WHEN p.endDate < :today THEN 1
+                ELSE 0
+            END ASC,
+            CASE
+                WHEN p.endDate >= :today THEN p.endDate
+            END ASC,
+            p.endDate DESC
+        """,
+
             countQuery = """
-    SELECT COUNT(p)
-    FROM Program p
-    WHERE p.status IN :statuses
-    AND p.deletedAt IS NULL
-    AND (
-        p.title LIKE :keyword ESCAPE '\\'
-        OR p.description LIKE :keyword ESCAPE '\\'
-        OR p.venueName LIKE :keyword ESCAPE '\\'
-        OR EXISTS (
-            SELECT c.id
-            FROM Curation c
-            WHERE c.program = p
-                AND c.publicationStatus = :curationPublicationStatus
-                AND (
-                    c.tagline LIKE :keyword ESCAPE '\\'
-                    OR c.content LIKE :keyword ESCAPE '\\'
-                )
-        )
-    )
-    AND (:freeOnly IS NULL OR p.free = true)
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
-    AND (:programType IS NULL OR p.programType = :programType)
-    AND (
-        :weekStart IS NULL
-        OR (
-            (p.startDate IS NULL OR p.startDate <= :weekEnd)
-            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
-        )
-    )
-    """
+        SELECT COUNT(p)
+        FROM Program p
+        WHERE p.status IN :statuses
+          AND p.deletedAt IS NULL
+          AND (
+              p.title LIKE :keyword ESCAPE '\\'
+              OR p.tagline LIKE :keyword ESCAPE '\\'
+              OR p.curation LIKE :keyword ESCAPE '\\'
+              OR p.description LIKE :keyword ESCAPE '\\'
+              OR p.venueName LIKE :keyword ESCAPE '\\'
+              OR EXISTS (
+                  SELECT c.id
+                  FROM Curation c
+                  WHERE c.program = p
+                    AND c.publicationStatus = :curationPublicationStatus
+                    AND (
+                        c.tagline LIKE :keyword ESCAPE '\\'
+                        OR c.content LIKE :keyword ESCAPE '\\'
+                    )
+              )
+          )
+          AND (:freeOnly IS NULL OR p.free = true)
+          AND (:noReservationOnly IS NULL OR p.reserved = false)
+          AND (:programType IS NULL OR p.programType = :programType)
+          AND (
+              :weekStart IS NULL
+              OR (
+                  (p.startDate IS NULL OR p.startDate <= :weekEnd)
+                  AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+              )
+          )
+        """
     )
     Page<Program> searchProgramsByText(
             @Param("statuses") Collection<ProgramStatus> statuses,
