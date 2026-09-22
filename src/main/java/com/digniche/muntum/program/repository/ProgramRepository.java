@@ -220,7 +220,60 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("weekEnd") LocalDate weekEnd,
             Pageable pageable
     );
-
+    // 내 취향 프로그램 조회
+    // 정렬: 키워드 매칭 수 DESC → 최신 등록순
+    @Query(
+            value = """
+    SELECT p
+    FROM Program p
+    JOIN ProgramKeyword pk ON pk.program = p
+    WHERE p.status IN :statuses
+    AND p.deletedAt IS NULL
+    AND pk.keyword.id IN :keywordIds
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+    GROUP BY p
+    ORDER BY COUNT(pk) DESC,
+             p.createdAt DESC,
+             p.id DESC
+    """,
+                countQuery = """
+    SELECT COUNT(DISTINCT p)
+    FROM Program p
+    JOIN ProgramKeyword pk ON pk.program = p
+    WHERE p.status IN :statuses
+    AND p.deletedAt IS NULL
+    AND pk.keyword.id IN :keywordIds
+    AND (:freeOnly IS NULL OR p.free = true)
+    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:programType IS NULL OR p.programType = :programType)
+    AND (
+        :weekStart IS NULL
+        OR (
+            (p.startDate IS NULL OR p.startDate <= :weekEnd)
+            AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+        )
+    )
+    """
+    )
+    Page<Program> searchTasteProgramsByKeywordIds(
+            @Param("statuses") Collection<ProgramStatus> statuses,
+            @Param("keywordIds") List<UUID> keywordIds,
+            @Param("freeOnly") Boolean freeOnly,
+            @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("programType") ProgramType programType,
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
+            Pageable pageable
+    );
     @Query(
             value = """
     SELECT p

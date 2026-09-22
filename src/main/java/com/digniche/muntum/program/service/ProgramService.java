@@ -556,8 +556,8 @@ public class ProgramService {
 
     /**
      * 내 취향 프로그램 목록
-     * - 유저가 선택한 활성 키워드에 매칭되는 프로그램을, 매칭 개수 많은 순으로
-     * - 정렬/필터는 키워드 검색(searchProgramsByKeywordIds)과 동일 로직 재사용
+     * - 유저가 선택한 활성 키워드에 매칭되는 프로그램 조회
+     * - 정렬: 키워드 매칭 수 DESC → 최신 등록순
      */
     @Transactional(readOnly = true)
     public PageResponse<ProgramCardResponse> getTastePrograms(
@@ -576,8 +576,8 @@ public class ProgramService {
         // 3. 칩 → 필터 조건 (검색/일반목록과 동일 변환)
         ProgramFilterCondition filter = createFilterCondition(chip);
 
-        Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
-                ACTIVE_ONLY, keywordIds, LocalDate.now(),
+        Page<Program> programPage = programRepository.searchTasteProgramsByKeywordIds(
+                ACTIVE_ONLY, keywordIds,
                 filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
                 filter.weekStart(), filter.weekEnd(),
                 pageable
