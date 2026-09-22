@@ -37,12 +37,21 @@ public class Program extends BaseEntity {
     @Enumerated(EnumType.STRING) //Enum 이름을 DB 문자열로 저장
     @Column(name = "type", nullable = false, length = 20)
     private ProgramType programType;
-
+    /**
+     * 구버전 호환용
+     */
     @Column(name = "tagline", nullable = false, length = 255)
     private String tagline;
-
+    /**
+     * 구버전 호환용
+     */
     @Column(columnDefinition = "TEXT", nullable = false)
     private String curation;
+    /**
+     * 신규 일반 프로그램 소개글
+     */
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "is_reserved", nullable = false)
     private boolean reserved = false;
@@ -107,7 +116,7 @@ public class Program extends BaseEntity {
             String title,
             ProgramType  programType,
             String tagline,
-            String curation,
+            String description,
             Boolean reserved,
             Boolean free,
             String price,
@@ -126,8 +135,11 @@ public class Program extends BaseEntity {
     ) {
         this.title = title;
         this.programType = programType;
-        this.tagline = tagline;
-        this.curation = curation;
+        this.description = description;
+        // 신규 앱은 tagline을 보내지 않으므로 빈 문자열.
+        // 구버전 앱은 기존 tagline을 그대로 저장.
+        this.tagline = tagline != null ? tagline : "";
+        this.curation = description;
         this.reserved = reserved;  // @NotNull + @Valid로 보장됨
         this.free = free; // 나머지 String/날짜 필드는 this.x = x 그대로
         this.price = price;
@@ -153,7 +165,7 @@ public class Program extends BaseEntity {
             String title,
             ProgramType programType,
             String tagline,
-            String curation,
+            String description,
             Boolean reserved,
             Boolean free,
             String price,
@@ -168,8 +180,8 @@ public class Program extends BaseEntity {
     ) {
         if (title != null) this.title = title;
         if (programType != null) this.programType = programType;
-        if (tagline != null) this.tagline = tagline;
-        if (curation != null) this.curation = curation;
+        if (tagline != null) { this.tagline = tagline;}
+        if (description != null) { this.description = description; this.curation = description; }
         if (reserved != null) this.reserved = reserved;
         if (free != null) this.free = free;
         if (price != null) this.price = price;
@@ -199,6 +211,11 @@ public class Program extends BaseEntity {
 
     public void setLongitude(BigDecimal longitude) {
         this.longitude = longitude;
+    }
+
+    public void softDelete(UUID deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
     }
 }
 
