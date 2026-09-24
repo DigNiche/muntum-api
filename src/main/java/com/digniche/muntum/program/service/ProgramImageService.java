@@ -31,7 +31,7 @@ public class ProgramImageService {
     private final ImageStorageService imageStorageService;
 
     private static final int THUMBNAIL_ORDER = 1;
-    private static final int MAX_IMAGE_COUNT = 5;
+    private static final int MAX_IMAGE_COUNT = 1;
     private static final String DIRECTORY = "program";
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
             "image/jpeg", "image/png", "image/webp", "image/gif"
