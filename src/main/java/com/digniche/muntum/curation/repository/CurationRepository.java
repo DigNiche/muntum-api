@@ -11,7 +11,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.digniche.muntum.curation.entity.CurationPublicationStatus;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,7 +35,6 @@ public interface CurationRepository
 
     /**
      * 공개 큐레이션 단건 상세
-     *
      * 프로그램 ID와 승인 상태까지 함께 확인
      */
     Optional<Curation> findByIdAndProgram_IdAndPublicationStatus(UUID curationId, UUID programId, CurationPublicationStatus publicationStatus);
