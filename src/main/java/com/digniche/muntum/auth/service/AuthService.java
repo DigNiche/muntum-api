@@ -5,6 +5,7 @@ import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
 import com.digniche.muntum.auth.dto.response.SignupResponse;
+import com.digniche.muntum.auth.dto.response.TokenResponse;
 import com.digniche.muntum.global.redis.EmailVerificationRedisService;
 import com.digniche.muntum.global.redis.RefreshTokenService;
 import com.digniche.muntum.global.security.jwt.JwtProvider;
@@ -80,12 +81,21 @@ public class AuthService {
                 .build();
         userTermsAgreementRepository.save(temrs);
 
+        // 가입 직후 자동 로그인: 로그인 시각 기록
+        user.updateLastLogin();
+
+        // 토큰 발급 전 DB 제약 오류(이메일 중복 등)체크 위한 flush
+        userRepository.flush();
+
+        // Redis 저장이 포함되므로 모든 검증, 저장 이후에 발급
+        TokenResponse token = tokenIssuer.issue(user);
+
         eventPublisher.publishEvent(new SignupCompletedEvent(user.getId()));
 
-        // 1회용 토큰 소비
+        // 1회용 토큰 소비: 토큰 발급 이후에 삭제해 발급 실패 시 재시도 가능
         emailVerificationRedisService.deleteSignupToken(request.signupToken());
 
-        return new SignupResponse(user.getId(), user.getEmail(), user.getCreatedAt());
+        return new SignupResponse(user.getId(), user.getEmail(), user.getCreatedAt(), token);
     }
 
 
