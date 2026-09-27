@@ -74,7 +74,7 @@ public enum ErrorCode {
     IMAGE_STORAGE_UNAVAILABLE("I003", "이미지 저장소에 일시적으로 접근할 수 없습니다. 잠시 후 다시 시도해주세요", HttpStatus.SERVICE_UNAVAILABLE), // SdkClientException + S3 5XX/throttling
     IMAGE_STORAGE_FAILED("I004", "이미지 저장소 처리 중 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR), // S3 4XX (권한 및 버킷 설정), 그 외 SDK 예외
     INVALID_IMAGE_FILE("I005", "이미지 파일이 비어있거나 이미지 손상 등으로 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
-    TOO_MANY_PROGRAM_IMAGES("I006", "이미지는 최대 5개까지 등록할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    TOO_MANY_PROGRAM_IMAGES("I006", "프로그램 대표 이미지는 1개만 등록할 수 있습니다.", HttpStatus.BAD_REQUEST),
     UNSUPPORTED_IMAGE_TYPE("I007", "지원하지 않는 이미지 형식입니다.", HttpStatus.BAD_REQUEST),
 
     // 큐레이션

@@ -230,21 +230,11 @@ public class CurationService {
     /**
      * Pending 큐레이션 잠금 조회 공통 메서드
      */
-    private Curation getPendingCurationForUpdate(
-            UUID curationId
-    ) {
-        Curation curation =
-                curationRepository.findByIdForUpdate(curationId)
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        ErrorCode.CURATION_NOT_FOUND
-                                )
-                        );
+    private Curation getPendingCurationForUpdate(UUID curationId) {
+        Curation curation = curationRepository.findByIdForUpdate(curationId).orElseThrow(() -> new BusinessException(ErrorCode.CURATION_NOT_FOUND));
 
         if (curation.getStatus() != CurationStatus.PENDING) {
-            throw new BusinessException(
-                    ErrorCode.CURATION_ALREADY_REVIEWED
-            );
+            throw new BusinessException(ErrorCode.CURATION_ALREADY_REVIEWED);
         }
 
         return curation;
@@ -280,22 +270,11 @@ public class CurationService {
      * 신규 프로그램 승인 서비스
      */
     @Transactional
-    public ManagerCurationDetailResponse approveNew(
-            UUID curationId,
-            UUID managerId,
-            ProgramCreateRequest request,
-            List<MultipartFile> files
-    ) {
-        /*
-         * 반드시 프로그램 생성보다 PENDING 상태를 확인
-         *
-         * 이미 승인된 요청이 다시 들어왔을 때 불필요한 새 프로그램 생성되지 않음
-         */
-        Curation curation =
-                getPendingCurationForUpdate(curationId);
+    public ManagerCurationDetailResponse approveNew(UUID curationId, UUID managerId, ProgramCreateRequest request, List<MultipartFile> files) {
+        // PENDING 상태 확인 후, 프로그램 생성 : 이미 승인된 요청이 들어왔을 때 불필요한 새 프로그램 생성되지 않도록
+        Curation curation = getPendingCurationForUpdate(curationId);
 
-        Program program =
-                programService.createProgramWithAssets(request, files);
+        Program program = programService.createProgramWithAssets(request, files);
 
         curation.approve(program, managerId);
 
