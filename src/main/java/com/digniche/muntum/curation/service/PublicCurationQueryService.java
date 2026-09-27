@@ -35,38 +35,24 @@ public class PublicCurationQueryService {
     private final CuratorProfileService curatorProfileService;
     private final ProgramRepository programRepository;
 
-    public PageResponse<PublicCurationSummaryResponse> getCurations(
-            UUID programId,
-            int page,
-            int size
-    ) {
+    public PageResponse<PublicCurationSummaryResponse> getCurations(UUID programId, int page, int size) {
         validatePublicProgram(programId);
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.DESC, "reviewedAt")
-        );
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "reviewedAt"));
 
-        Page<Curation> curations =
-                curationRepository.findByProgram_IdAndPublicationStatus(
+        Page<Curation> curations = curationRepository.findByProgram_IdAndPublicationStatus(
                         programId,
                         CurationPublicationStatus.PUBLISHED,
                         pageable
                 );
 
-        List<PublicCurationSummaryResponse> content =
-                toSummaries(curations.getContent());
+        List<PublicCurationSummaryResponse> content = toSummaries(curations.getContent());
 
-        Page<PublicCurationSummaryResponse> responsePage =
-                new PageImpl<>(
-                        content,
-                        pageable,
-                        curations.getTotalElements()
-                );
+        Page<PublicCurationSummaryResponse> responsePage = new PageImpl<>(content, pageable, curations.getTotalElements());
 
         return PageResponse.from(responsePage);
     }
+
 
     public List<PublicCurationSummaryResponse> getAllSummaries(
             UUID programId
