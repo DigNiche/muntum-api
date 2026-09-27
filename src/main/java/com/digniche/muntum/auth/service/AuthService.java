@@ -40,6 +40,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
+    private final TokenIssuer tokenIssuer;
     private final ApplicationEventPublisher eventPublisher;
     private final EmailVerificationRedisService emailVerificationRedisService;
 
@@ -108,16 +109,7 @@ public class AuthService {
 
         user.updateLastLogin();
 
-        String accessToken = jwtProvider.generateAccessToken(user);
-        String refreshToken = jwtProvider.generateRefreshToken(user);
-
-        refreshTokenService.save(user.getId(), refreshToken, jwtProvider.getRefreshTokenExpirationTime());
-
-        return AuthenticationResponse.of(
-                accessToken, jwtProvider.getAccessTokenExpirationTime(),
-                refreshToken, jwtProvider.getRefreshTokenExpirationTime(),
-                user.getId(), user.getEmail(), user.getNickname()
-        );
+        return AuthenticationResponse.of(tokenIssuer.issue(user), user);
     }
 
 
@@ -156,15 +148,7 @@ public class AuthService {
         refreshTokenService.delete(userId);
 
         // 7. 새 토큰 발급 및 저장
-        String newAccessToken = jwtProvider.generateAccessToken(user);
-        String newRefreshToken = jwtProvider.generateRefreshToken(user);
-        refreshTokenService.save(userId, newRefreshToken, jwtProvider.getRefreshTokenExpirationTime());
-
-        return AuthenticationResponse.of(
-                newAccessToken, jwtProvider.getAccessTokenExpirationTime(),
-                newRefreshToken, jwtProvider.getRefreshTokenExpirationTime(),
-                user.getId(), user.getEmail(), user.getNickname()
-        );
+        return AuthenticationResponse.of(tokenIssuer.issue(user), user);
 
     }
 
