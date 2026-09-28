@@ -1,5 +1,7 @@
 package com.digniche.muntum.auth.dto.response;
 
+import com.digniche.muntum.user.entity.User;
+
 import java.util.UUID;
 
 /**
@@ -16,14 +18,11 @@ public record AuthenticationResponse(
         String nickname
 
 ) {
-    public static AuthenticationResponse of(
-            String accessToken, long accessExpiresIn,
-            String refreshToken, long refreshExpiresIn,
-            UUID userId, String email, String nickname) {
+    public static AuthenticationResponse of(TokenResponse token, User user) {
         return new AuthenticationResponse(
-                "Bearer", accessToken, accessExpiresIn,
-                refreshToken, refreshExpiresIn,
-                userId, email, nickname
+                token.tokenType(), token.accessToken(), token.accessExpiresIn(),
+                token.refreshToken(), token.refreshExpiresIn(),
+                user.getId(), user.getEmail(), user.getNickname()
         );
     }
 }

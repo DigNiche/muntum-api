@@ -6,8 +6,6 @@ import com.digniche.muntum.auth.social.SocialTokenVerifier;
 import com.digniche.muntum.auth.social.SocialUserInfo;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
-import com.digniche.muntum.global.redis.RefreshTokenService;
-import com.digniche.muntum.global.security.jwt.JwtProvider;
 import com.digniche.muntum.user.entity.SocialAccount;
 import com.digniche.muntum.user.entity.Terms;
 import com.digniche.muntum.user.entity.User;
@@ -41,8 +39,7 @@ public class SocialLoginService {
     private final UserTermsAgreementRepository userTermsAgreementRepository;
     private final TermsRepository termsRepository;
 
-    private final JwtProvider jwtProvider;
-    private final RefreshTokenService refreshTokenService;
+    private final TokenIssuer tokenIssuer;
 
     private final AppleTokenClient appleTokenClient;
     private final SocialTokenCipher socialTokenCipher;
@@ -203,26 +200,9 @@ public class SocialLoginService {
 
         user.updateLastLogin();
 
-        String accessToken =
-                jwtProvider.generateAccessToken(user);
-
-        String refreshToken =
-                jwtProvider.generateRefreshToken(user);
-
-        refreshTokenService.save(
-                user.getId(),
-                refreshToken,
-                jwtProvider.getRefreshTokenExpirationTime()
-        );
-
         return AuthenticationResponse.of(
-                accessToken,
-                jwtProvider.getAccessTokenExpirationTime(),
-                refreshToken,
-                jwtProvider.getRefreshTokenExpirationTime(),
-                user.getId(),
-                user.getEmail(),
-                user.getNickname()
+                tokenIssuer.issue(user),
+                user
         );
     }
 
