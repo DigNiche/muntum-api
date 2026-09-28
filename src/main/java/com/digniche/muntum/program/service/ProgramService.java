@@ -4,7 +4,6 @@ import com.digniche.muntum.curation.dto.response.PublicCurationSummaryResponse;
 import com.digniche.muntum.curation.entity.CurationPublicationStatus;
 import com.digniche.muntum.curation.service.PublicCurationQueryService;
 import com.digniche.muntum.global.PageResponse;
-import com.digniche.muntum.global.config.AuditorAwareImpl;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.keyword.entity.Keyword;
@@ -85,50 +84,30 @@ public class ProgramService {
         return ProgramResponse.from(savedProgram, images, keywords);
     }
 
-    //프로그램 생성 공통 로직 (신규 프로그램 생성, 승인에서 재사용)
+    /**
+     * 프로그램 생성 공통 로직 (신규 프로그램 생성, 승인에서 재사용)
+     */
     @Transactional
-    public Program createProgramWithAssets(
-            ProgramCreateRequest request,
-            List<MultipartFile> files
-    ) {
+    public Program createProgramWithAssets(ProgramCreateRequest request, List<MultipartFile> files) {
         Program program = request.toEntity();
 
         if (request.operatingPeriod() != null) {
-            List<LocalDate> operatingPeriod =
-                    validateProgramPeriod(request.operatingPeriod());
-
+            List<LocalDate> operatingPeriod = validateProgramPeriod(request.operatingPeriod());
             program.updateOperatingPeriod(operatingPeriod);
         }
 
-        GeoCoordinate coord =
-                geocodingService.getCoordinate(request.address())
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        ErrorCode.ADDRESS_NOT_FOUD
-                                )
-                        );
+        GeoCoordinate coord = geocodingService.getCoordinate(request.address()).orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUD));
 
-        program.setLatitude(
-                BigDecimal.valueOf(coord.latitude())
-        );
-        program.setLongitude(
-                BigDecimal.valueOf(coord.longitude())
-        );
+        program.setLatitude(BigDecimal.valueOf(coord.latitude()));
+        program.setLongitude(BigDecimal.valueOf(coord.longitude()));
 
-        Program savedProgram =
-                programRepository.save(program);
+        Program savedProgram = programRepository.save(program);
 
         if (files != null && !files.isEmpty()) {
-            programImageService.uploadImages(
-                    savedProgram,
-                    files
-            );
+            programImageService.uploadImages(savedProgram, files);
         }
 
-        programKeywordService.saveKeywords(
-                savedProgram,
-                request.keywordNames()
-        );
+        programKeywordService.saveKeywords(savedProgram, request.keywordNames());
 
         return savedProgram;
     }

@@ -5,6 +5,7 @@ import com.digniche.muntum.auth.dto.response.AuthenticationResponse;
 import com.digniche.muntum.auth.dto.request.LoginRequest;
 import com.digniche.muntum.auth.dto.request.SignUpRequest;
 import com.digniche.muntum.auth.dto.response.SignupResponse;
+import com.digniche.muntum.auth.dto.response.TokenResponse;
 import com.digniche.muntum.global.redis.EmailVerificationRedisService;
 import com.digniche.muntum.global.redis.RefreshTokenService;
 import com.digniche.muntum.global.security.jwt.JwtProvider;
@@ -40,6 +41,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
+    private final TokenIssuer tokenIssuer;
     private final ApplicationEventPublisher eventPublisher;
     private final EmailVerificationRedisService emailVerificationRedisService;
 
@@ -79,12 +81,21 @@ public class AuthService {
                 .build();
         userTermsAgreementRepository.save(temrs);
 
+        // 가입 직후 자동 로그인: 로그인 시각 기록
+        user.updateLastLogin();
+
+        // 토큰 발급 전 DB 제약 오류(이메일 중복 등)체크 위한 flush
+        userRepository.flush();
+
+        // Redis 저장이 포함되므로 모든 검증, 저장 이후에 발급
+        TokenResponse token = tokenIssuer.issue(user);
+
         eventPublisher.publishEvent(new SignupCompletedEvent(user.getId()));
 
-        // 1회용 토큰 소비
+        // 1회용 토큰 소비: 토큰 발급 이후에 삭제해 발급 실패 시 재시도 가능
         emailVerificationRedisService.deleteSignupToken(request.signupToken());
 
-        return new SignupResponse(user.getId(), user.getEmail(), user.getCreatedAt());
+        return new SignupResponse(user.getId(), user.getEmail(), user.getCreatedAt(), token);
     }
 
 
@@ -108,16 +119,7 @@ public class AuthService {
 
         user.updateLastLogin();
 
-        String accessToken = jwtProvider.generateAccessToken(user);
-        String refreshToken = jwtProvider.generateRefreshToken(user);
-
-        refreshTokenService.save(user.getId(), refreshToken, jwtProvider.getRefreshTokenExpirationTime());
-
-        return AuthenticationResponse.of(
-                accessToken, jwtProvider.getAccessTokenExpirationTime(),
-                refreshToken, jwtProvider.getRefreshTokenExpirationTime(),
-                user.getId(), user.getEmail(), user.getNickname()
-        );
+        return AuthenticationResponse.of(tokenIssuer.issue(user), user);
     }
 
 
@@ -156,15 +158,7 @@ public class AuthService {
         refreshTokenService.delete(userId);
 
         // 7. 새 토큰 발급 및 저장
-        String newAccessToken = jwtProvider.generateAccessToken(user);
-        String newRefreshToken = jwtProvider.generateRefreshToken(user);
-        refreshTokenService.save(userId, newRefreshToken, jwtProvider.getRefreshTokenExpirationTime());
-
-        return AuthenticationResponse.of(
-                newAccessToken, jwtProvider.getAccessTokenExpirationTime(),
-                newRefreshToken, jwtProvider.getRefreshTokenExpirationTime(),
-                user.getId(), user.getEmail(), user.getNickname()
-        );
+        return AuthenticationResponse.of(tokenIssuer.issue(user), user);
 
     }
 
