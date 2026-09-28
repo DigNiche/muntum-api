@@ -25,52 +25,28 @@ import java.security.MessageDigest;
 @Component
 public class AppleTokenVerifier implements SocialTokenVerifier {
 
-    private static final String APPLE_ISSUER =
-            "https://appleid.apple.com";
-
-    private static final String APPLE_JWK_SET_URI =
-            "https://appleid.apple.com/auth/keys";
+    private static final String APPLE_ISSUER = "https://appleid.apple.com";
+    private static final String APPLE_JWK_SET_URI = "https://appleid.apple.com/auth/keys";
 
     private final JwtDecoder jwtDecoder;
 
-    public AppleTokenVerifier(
-            @Value("${social.apple.client-id}") String clientId
-    ) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder
-                .withJwkSetUri(APPLE_JWK_SET_URI)
-                .build();
 
-        /*
-         * iss, exp, nbf 등 기본 검증
-         */
-        OAuth2TokenValidator<Jwt> defaultValidator =
-                JwtValidators.createDefaultWithIssuer(
-                        APPLE_ISSUER
-                );
+    public AppleTokenVerifier(@Value("${social.apple.client-id}") String clientId) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(APPLE_JWK_SET_URI).build();
 
-        /*
-         * aud가 문틈 Bundle ID인지 검증
-         */
+        // iss, exp, nbf 등 기본 검증
+        OAuth2TokenValidator<Jwt> defaultValidator = JwtValidators.createDefaultWithIssuer(APPLE_ISSUER);
+
+        // aud가 문틈 Bundle ID인지 검증
         OAuth2TokenValidator<Jwt> audienceValidator = jwt -> {
             if (jwt.getAudience().contains(clientId)) {
                 return OAuth2TokenValidatorResult.success();
             }
-
-            OAuth2Error error = new OAuth2Error(
-                    "invalid_token",
-                    "Apple token audience does not match",
-                    null
-            );
-
+            OAuth2Error error = new OAuth2Error("invalid_token", "Apple token audience does not match", null);
             return OAuth2TokenValidatorResult.failure(error);
         };
 
-        decoder.setJwtValidator(
-                new DelegatingOAuth2TokenValidator<>(
-                        defaultValidator,
-                        audienceValidator
-                )
-        );
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(defaultValidator, audienceValidator));
 
         this.jwtDecoder = decoder;
     }
@@ -81,71 +57,43 @@ public class AppleTokenVerifier implements SocialTokenVerifier {
     }
 
     @Override
-    public SocialUserInfo verify(
-            SocialLoginRequest request
-    ) {
+    public SocialUserInfo verify(SocialLoginRequest request) {
         Jwt jwt;
 
         try {
             jwt = jwtDecoder.decode(request.token());
         } catch (JwtException exception) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_SOCIAL_TOKEN
-            );
+            throw new BusinessException(ErrorCode.INVALID_SOCIAL_TOKEN);
         }
 
         String providerUserId = jwt.getSubject();
         String email = jwt.getClaimAsString("email");
 
-        if (providerUserId == null
-                || providerUserId.isBlank()) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_SOCIAL_TOKEN
-            );
+        if (providerUserId == null || providerUserId.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_SOCIAL_TOKEN);
         }
 
         validateNonce(jwt, request.nonce());
 
-        boolean emailVerified =
-                parseBooleanClaim(
-                        jwt.getClaim("email_verified")
-                );
+        boolean emailVerified = parseBooleanClaim(jwt.getClaim("email_verified"));
 
-        return new SocialUserInfo(
-                SocialProvider.APPLE,
-                providerUserId,
-                email,
-                emailVerified
-        );
+        return new SocialUserInfo(SocialProvider.APPLE, providerUserId, email, emailVerified);
     }
 
     /**
      * 요청에 nonce가 포함됐다면
      * Apple Identity Token의 nonce와 비교
      */
-    private void validateNonce(
-            Jwt jwt,
-            String requestedNonce
-    ) {
-        if (requestedNonce == null
-                || requestedNonce.isBlank()) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_SOCIAL_TOKEN
-            );
+    private void validateNonce(Jwt jwt, String requestedNonce) {
+        if (requestedNonce == null || requestedNonce.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_SOCIAL_TOKEN);
         }
 
-        String tokenNonce =
-                jwt.getClaimAsString("nonce");
+        String tokenNonce = jwt.getClaimAsString("nonce");
 
-        if (tokenNonce == null
-                || tokenNonce.isBlank()
-                || !secureEquals(
-                tokenNonce,
-                requestedNonce
-        )) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_SOCIAL_TOKEN
-            );
+        if (tokenNonce == null || tokenNonce.isBlank()
+                || !secureEquals(tokenNonce, requestedNonce)) {
+            throw new BusinessException(ErrorCode.INVALID_SOCIAL_TOKEN);
         }
     }
 
@@ -154,18 +102,10 @@ public class AppleTokenVerifier implements SocialTokenVerifier {
             return booleanValue;
         }
 
-        return Boolean.parseBoolean(
-                String.valueOf(claim)
-        );
+        return Boolean.parseBoolean(String.valueOf(claim));
     }
 
-    private boolean secureEquals(
-            String first,
-            String second
-    ) {
-        return MessageDigest.isEqual(
-                first.getBytes(StandardCharsets.UTF_8),
-                second.getBytes(StandardCharsets.UTF_8)
-        );
+    private boolean secureEquals(String first, String second) {
+        return MessageDigest.isEqual(first.getBytes(StandardCharsets.UTF_8), second.getBytes(StandardCharsets.UTF_8));
     }
 }
