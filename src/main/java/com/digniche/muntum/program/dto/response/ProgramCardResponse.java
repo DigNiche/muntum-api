@@ -3,6 +3,7 @@ package com.digniche.muntum.program.dto.response;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
+import com.digniche.muntum.program.entity.ReservationType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,6 +17,7 @@ public record ProgramCardResponse(
         ProgramType programType,
         String tagline,
         boolean reserved,
+        ReservationType reservationType,
         boolean free,
         String price,
         String venueName,
@@ -42,6 +44,7 @@ public record ProgramCardResponse(
                 program.getProgramType(),
                 program.getTagline(),
                 program.isReserved(),
+                program.getReservationType(),
                 program.isFree(),
                 program.getPrice(),
                 program.getVenueName(),

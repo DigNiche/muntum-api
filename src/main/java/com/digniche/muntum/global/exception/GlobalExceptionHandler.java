@@ -10,6 +10,7 @@ import com.digniche.muntum.user.entity.UserRole;
 import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.entity.UserTermsType;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.digniche.muntum.program.entity.ReservationType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -86,6 +87,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
         Throwable cause = e.getCause();
+        // 하드코딩된 400, invalid request를 errorcode 기반으로 고침 (error가 007로 통일)
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
         // 기본 메시지가 빈 문자열이라, enum 오류가 아닌 경우(JSON 문법 깨짐 등) message: ""로 내려가는 문제도 함께 고침
         String message = ErrorCode.INVALID_REQUEST.getMessage(); // "잘못된 요청입니다."
         if (cause instanceof InvalidFormatException ife && ife.getTargetType().isEnum()) {
@@ -107,13 +110,15 @@ public class GlobalExceptionHandler {
                 message = "존재하지 않는 프로그램 타입입니다";
             } else if (targetType == SuggestionStatus.class) {
                 message = "존재하지 않는 제안 상태입니다";
+            } else if (targetType == ReservationType.class) {
+                // 전용 에러코드(P005)로 응답
+                errorCode = ErrorCode.INVALID_RESERVATION_TYPE;
+                message = errorCode.getMessage();
             } else {
                 message = "존재하지 않는 항목입니다";
             }
             // TODO: Enum 추가 시 작성
         }
-        // 하드코딩된 400, invalid request를 errorcode 기반으로 고침 (error가 007로 통일)
-        ErrorCode errorCode = ErrorCode.INVALID_REQUEST;
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), message));

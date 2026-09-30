@@ -47,6 +47,14 @@ public class Program extends BaseEntity {
     @Column(name = "is_reserved", nullable = false)
     private boolean reserved = false;
 
+    // 예약 방식 (null: 선택 안 함)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reservation_type", length = 30)
+    private ReservationType reservationType;
+
+    @Column(name = "reservation_url", length = 500)
+    private String reservationUrl;
+
     @Column(name = "is_free", nullable = false)
     private boolean free = true;
 
@@ -109,6 +117,8 @@ public class Program extends BaseEntity {
             String tagline,
             String description,
             Boolean reserved,
+            ReservationType reservationType,
+            String reservationUrl,
             Boolean free,
             String price,
             String venueName,
@@ -132,6 +142,8 @@ public class Program extends BaseEntity {
         this.tagline = tagline != null ? tagline : "";
         this.curation = description;
         this.reserved = reserved;  // @NotNull + @Valid로 보장됨
+        this.reservationType = reservationType;
+        this.reservationUrl = reservationUrl;
         this.free = free; // 나머지 String/날짜 필드는 this.x = x 그대로
         this.price = price;
         this.venueName = venueName;
@@ -158,6 +170,8 @@ public class Program extends BaseEntity {
             String tagline,
             String description,
             Boolean reserved,
+            ReservationType reservationType,
+            String reservationUrl,
             Boolean free,
             String price,
             String venueName,
@@ -174,6 +188,8 @@ public class Program extends BaseEntity {
         if (tagline != null) { this.tagline = tagline;}
         if (description != null) { this.description = description; this.curation = description; }
         if (reserved != null) this.reserved = reserved;
+        if (reservationType != null) this.reservationType = reservationType;
+        if (reservationUrl != null) this.reservationUrl = reservationUrl;
         if (free != null) this.free = free;
         if (price != null) this.price = price;
         if (venueName != null) this.venueName = venueName;

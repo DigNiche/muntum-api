@@ -2,6 +2,7 @@ package com.digniche.muntum.program.dto.request;
 
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramType;
+import com.digniche.muntum.program.entity.ReservationType;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,6 +33,11 @@ public record ProgramCreateRequest(
 
         @NotNull(message = "예약 필요 여부는 필수입니다.")
         Boolean reserved,
+
+        ReservationType reservationType,
+
+        @Size(max = 500, message = "예약 링크는 500자를 넘을 수 없습니다.")
+        String reservationUrl,
 
         @NotNull(message = "무료 여부는 필수입니다.")
         Boolean free,
@@ -89,6 +95,8 @@ public record ProgramCreateRequest(
                 .tagline(tagline)
                 .description(description)
                 .reserved(reserved)
+                .reservationType(reservationType)
+                .reservationUrl(reservationUrl)
                 .free(free)
                 .price(price)
                 .venueName(venueName)
