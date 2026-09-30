@@ -50,6 +50,7 @@ public class ProgramController {
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProgramResponse>> registerProgram(
             @RequestPart("program") @Valid ProgramCreateRequest request,
+            // required=false 유지 : 최소 1개 이상 등록 필요
             @RequestPart(value="images", required=false) List<MultipartFile> files) {
         ProgramResponse response = programService.createProgram(request, files);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -68,11 +69,12 @@ public class ProgramController {
         return ResponseEntity.ok(ApiResponse.success("프로그램이 수정되었습니다.", response));
     }
 
-    // 프로그램 이미지 수정 (전체 교체. null이면 전체 삭제로 동작)
+    // 프로그램 이미지 수정 (전체 교체)
     @PreAuthorize("hasAnyRole('MANAGER')")
     @PatchMapping(value = "/{program_id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<List<ProgramImageResponse>>> updateProgramImages(
             @PathVariable("program_id") UUID programId,
+            // 필수(1~5개) : 파트 누락도 I008로 응답하도록 서비스에서 검증, required=false 유지
             @RequestPart(value = "images", required = false) List<MultipartFile> files
     ) {
         List<ProgramImageResponse> response = programService.updateProgramImages(programId, files);

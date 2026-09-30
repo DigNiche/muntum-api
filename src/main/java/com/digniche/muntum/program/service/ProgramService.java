@@ -89,6 +89,9 @@ public class ProgramService {
      */
     @Transactional
     public Program createProgramWithAssets(ProgramCreateRequest request, List<MultipartFile> files) {
+        // 이미지 검증 후 진행 : 지오코딩 호출 및 프로그램 저장 전에 실패하도록
+        programImageService.validateImageFiles(files);
+
         Program program = request.toEntity();
 
         if (request.operatingPeriod() != null) {
@@ -103,9 +106,7 @@ public class ProgramService {
 
         Program savedProgram = programRepository.save(program);
 
-        if (files != null && !files.isEmpty()) {
-            programImageService.uploadImages(savedProgram, files);
-        }
+        programImageService.uploadImages(savedProgram, files);
 
         programKeywordService.saveKeywords(savedProgram, request.keywordNames());
 
@@ -388,8 +389,7 @@ public class ProgramService {
     public List<ProgramImageResponse> updateProgramImages(UUID programId, List<MultipartFile> files) {
         Program program = getExistingProgram(programId);
 
-        List<MultipartFile> safeFiles = (files != null) ? files : List.of();
-        programImageService.replaceImages(program, safeFiles);
+        programImageService.replaceImages(program, files);
 
         return programImageService.getOrderedImages(programId);
     }
