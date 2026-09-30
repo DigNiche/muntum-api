@@ -23,12 +23,7 @@ import java.time.LocalDateTime;
 public class Program extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
     @Column(nullable = false, length = 100)
@@ -37,19 +32,15 @@ public class Program extends BaseEntity {
     @Enumerated(EnumType.STRING) //Enum 이름을 DB 문자열로 저장
     @Column(name = "type", nullable = false, length = 20)
     private ProgramType programType;
-    /**
-     * 구버전 호환용
-     */
+
+    // 구버전 호환용
     @Column(name = "tagline", nullable = false, length = 255)
     private String tagline;
-    /**
-     * 구버전 호환용
-     */
+    // 구버전 호환용
     @Column(columnDefinition = "TEXT", nullable = false)
     private String curation;
-    /**
-     * 신규 일반 프로그램 소개글
-     */
+
+    // 신규 일반 프로그램 소개글
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
