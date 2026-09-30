@@ -98,7 +98,7 @@ public class ManagerCurationController {
             @PathVariable("curation_id") UUID curationId,
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestPart("program") @Valid ProgramCreateRequest request,
-            @RequestPart(value = "images", required = false) List<MultipartFile> files
+            @RequestPart(value = "images", required = false) List<MultipartFile> files // required=false 유지 : 최소 1개 이상 등록 필요
     ) {
         ManagerCurationDetailResponse response = curationService.approveNew(curationId, userPrincipal.getUserId(), request, files);
 
