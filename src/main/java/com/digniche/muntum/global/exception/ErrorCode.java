@@ -114,6 +114,7 @@ public enum ErrorCode {
     // 유효하지 않은 요청
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
     FILE_SIZE_EXCEEDED("G002", "업로드 가능한 파일 크기를 초과했습니다", HttpStatus.PAYLOAD_TOO_LARGE),
+    UNSUPPORTED_MEDIA_TYPE("G003", "지원하지 않는 요청 형식입니다.", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
 
     // 500~
     SERVER_ERROR("E001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
