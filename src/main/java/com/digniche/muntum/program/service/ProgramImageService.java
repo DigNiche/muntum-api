@@ -31,7 +31,7 @@ public class ProgramImageService {
     private final ImageStorageService imageStorageService;
 
     private static final int THUMBNAIL_ORDER = 1;
-    private static final int MAX_IMAGE_COUNT = 1;
+    private static final int MAX_IMAGE_COUNT = 5;
     private static final String DIRECTORY = "program";
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
             "image/jpeg", "image/png", "image/webp", "image/gif"
@@ -43,10 +43,7 @@ public class ProgramImageService {
     @Transactional
     public void uploadImages(Program program, List<MultipartFile> files) {
         // 이미지 파일 검증
-        if (files.size() > MAX_IMAGE_COUNT) {
-            throw new BusinessException(ErrorCode.TOO_MANY_PROGRAM_IMAGES);
-        }
-        files.forEach(this::validateImageFile);
+        validateImageFiles(files);
 
         // 스토리지에 이미지 업로드
         List<ProgramImage> images = buildImages(program, files);
@@ -61,10 +58,7 @@ public class ProgramImageService {
     @Transactional
     public void replaceImages(Program program, List<MultipartFile> files) {
         // 이미지 검증
-        if (files.size() > MAX_IMAGE_COUNT) {
-            throw new BusinessException(ErrorCode.TOO_MANY_PROGRAM_IMAGES);
-        }
-        files.forEach(this::validateImageFile);
+        validateImageFiles(files);
 
         // 새로운 이미지 스토리지에 업로드
         List<ProgramImage> newImages = buildImages(program, files);
@@ -138,7 +132,23 @@ public class ProgramImageService {
                 );
     }
 
-    // 이미지 파일 검증
+    /**
+     * 프로그램 이미지 목록 검증
+     * - 이미지 개수 확인 : 최소 1개 ~ 최대 MAX_IMAGE_COUNT개
+     * - 파일별 유효성 검증
+     * - 업로드/삭제 전에 호출되어 실패 시 스토리지와 DB에 변화 없음
+     */
+    public void validateImageFiles(List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            throw new BusinessException(ErrorCode.PROGRAM_IMAGE_REQUIRED);
+        }
+        if (files.size() > MAX_IMAGE_COUNT) {
+            throw new BusinessException(ErrorCode.TOO_MANY_PROGRAM_IMAGES);
+        }
+        files.forEach(this::validateImageFile);
+    }
+
+    // 프로그램 이미지 파일 검증
     private void validateImageFile(MultipartFile file) {
         if (file.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE);
