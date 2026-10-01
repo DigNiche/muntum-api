@@ -171,12 +171,12 @@ public class Curation extends BaseEntity {
             String changeRequestReason,
             CurationPublicationStatus requestedPublicationStatus
     ) {
-        boolean wasPending =
-                this.status == CurationStatus.PENDING;
+        boolean wasUnpublished =
+                this.publicationStatus == CurationPublicationStatus.UNPUBLISHED;
 
         this.status = CurationStatus.CHANGES_REQUESTED;
 
-        this.publicationStatus = wasPending
+        this.publicationStatus = wasUnpublished
                 ? CurationPublicationStatus.UNPUBLISHED
                 : requestedPublicationStatus;
 
