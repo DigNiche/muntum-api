@@ -2,13 +2,13 @@ package com.digniche.muntum.program.dto.request;
 
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramType;
+import com.digniche.muntum.program.entity.ReservationType;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 프로그램 수정 요청 DTO
@@ -33,6 +33,12 @@ public record ProgramUpdateRequest(
 
         @NotNull(message = "예약 필요 여부는 필수입니다.")
         Boolean reserved,
+
+        // 예약 방식 : 다른 필드와 달리 항상 요청 값으로 덮어씀. null = 선택 안 함, 값 = 해당 값으로 변경
+        ReservationType reservationType,
+        // 예약 링크 : 다른 필드와 달리 항상 요청 값으로 덮어씀. null = 없음, 값 = 해당 값으로 변경
+        @Size(max = 500, message = "예약 링크는 500자를 넘을 수 없습니다.")
+        String reservationUrl,
 
         @NotNull(message = "무료 여부는 필수입니다.")
         Boolean free,
@@ -91,6 +97,8 @@ public record ProgramUpdateRequest(
                         .tagline(tagline)
                         .description(description)
                         .reserved(reserved)
+                        .reservationType(reservationType)
+                        .reservationUrl(reservationUrl)
                         .free(free)
                         .price(price)
                         .venueName(venueName)
