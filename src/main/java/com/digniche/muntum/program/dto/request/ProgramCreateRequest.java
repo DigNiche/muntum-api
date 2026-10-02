@@ -34,6 +34,7 @@ public record ProgramCreateRequest(
         @NotNull(message = "예약 필요 여부는 필수입니다.")
         Boolean reserved,
 
+        // 예약 방식 : null이면 선택 안 함
         ReservationType reservationType,
 
         @Size(max = 500, message = "예약 링크는 500자를 넘을 수 없습니다.")

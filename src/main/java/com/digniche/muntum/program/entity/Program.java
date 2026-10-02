@@ -143,7 +143,7 @@ public class Program extends BaseEntity {
         this.curation = description;
         this.reserved = reserved;  // @NotNull + @Valid로 보장됨
         this.reservationType = reservationType;
-        this.reservationUrl = reservationUrl;
+        this.reservationUrl = blankToNull(reservationUrl);
         this.free = free; // 나머지 String/날짜 필드는 this.x = x 그대로
         this.price = price;
         this.venueName = venueName;
@@ -188,8 +188,9 @@ public class Program extends BaseEntity {
         if (tagline != null) { this.tagline = tagline;}
         if (description != null) { this.description = description; this.curation = description; }
         if (reserved != null) this.reserved = reserved;
-        if (reservationType != null) this.reservationType = reservationType;
-        if (reservationUrl != null) this.reservationUrl = reservationUrl;
+        // 예약 방식·예약 링크 : 다른 필드와 달리 null이어도 덮어씀 (null이면 지움)
+        this.reservationType = reservationType;
+        this.reservationUrl = blankToNull(reservationUrl);
         if (free != null) this.free = free;
         if (price != null) this.price = price;
         if (venueName != null) this.venueName = venueName;
@@ -202,6 +203,10 @@ public class Program extends BaseEntity {
         if (inquiryContact != null) this.inquiryContact = inquiryContact;
     }
 
+
+    private static String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value;
+    }
 
     public void updateStatus(ProgramStatus status) {
         this.status = status;
