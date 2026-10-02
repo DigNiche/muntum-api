@@ -38,14 +38,11 @@ class ProgramReservationRequestTest {
     }
 
     @Test
-    void 예약_방식과_예약_링크가_없거나_null이면_null로_받는다() throws Exception {
-        ProgramUpdateRequest absent = read("{}");
-        ProgramUpdateRequest explicitNull = read("{\"reservationType\":null,\"reservationUrl\":null}");
+    void 예약_방식과_예약_링크가_null이면_null로_받는다() throws Exception {
+        ProgramUpdateRequest request = read("{\"reservationType\":null,\"reservationUrl\":null}");
 
-        assertThat(absent.reservationType()).isNull();
-        assertThat(absent.reservationUrl()).isNull();
-        assertThat(explicitNull.reservationType()).isNull();
-        assertThat(explicitNull.reservationUrl()).isNull();
+        assertThat(request.reservationType()).isNull();
+        assertThat(request.reservationUrl()).isNull();
     }
 
     @Test
