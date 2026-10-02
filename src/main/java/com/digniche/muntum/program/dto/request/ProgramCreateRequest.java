@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 프로그램 등록 요청 DTO
@@ -34,6 +33,7 @@ public record ProgramCreateRequest(
         @NotNull(message = "예약 필요 여부는 필수입니다.")
         Boolean reserved,
 
+        // 예약 방식 : null이면 선택 안 함
         ReservationType reservationType,
 
         @Size(max = 500, message = "예약 링크는 500자를 넘을 수 없습니다.")
