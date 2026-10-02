@@ -23,12 +23,7 @@ import java.time.LocalDateTime;
 public class Program extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
     @Column(nullable = false, length = 100)
@@ -37,24 +32,28 @@ public class Program extends BaseEntity {
     @Enumerated(EnumType.STRING) //Enum 이름을 DB 문자열로 저장
     @Column(name = "type", nullable = false, length = 20)
     private ProgramType programType;
-    /**
-     * 구버전 호환용
-     */
+
+    // 구버전 호환용
     @Column(name = "tagline", nullable = false, length = 255)
     private String tagline;
-    /**
-     * 구버전 호환용
-     */
+    // 구버전 호환용
     @Column(columnDefinition = "TEXT", nullable = false)
     private String curation;
-    /**
-     * 신규 일반 프로그램 소개글
-     */
+
+    // 신규 일반 프로그램 소개글
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "is_reserved", nullable = false)
     private boolean reserved = false;
+
+    // 예약 방식 (null: 선택 안 함)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reservation_type", length = 30)
+    private ReservationType reservationType;
+
+    @Column(name = "reservation_url", length = 500)
+    private String reservationUrl;
 
     @Column(name = "is_free", nullable = false)
     private boolean free = true;
@@ -118,6 +117,8 @@ public class Program extends BaseEntity {
             String tagline,
             String description,
             Boolean reserved,
+            ReservationType reservationType,
+            String reservationUrl,
             Boolean free,
             String price,
             String venueName,
@@ -141,6 +142,8 @@ public class Program extends BaseEntity {
         this.tagline = tagline != null ? tagline : "";
         this.curation = description;
         this.reserved = reserved;  // @NotNull + @Valid로 보장됨
+        this.reservationType = reservationType;
+        this.reservationUrl = reservationUrl;
         this.free = free; // 나머지 String/날짜 필드는 this.x = x 그대로
         this.price = price;
         this.venueName = venueName;
@@ -167,6 +170,8 @@ public class Program extends BaseEntity {
             String tagline,
             String description,
             Boolean reserved,
+            ReservationType reservationType,
+            String reservationUrl,
             Boolean free,
             String price,
             String venueName,
@@ -183,6 +188,8 @@ public class Program extends BaseEntity {
         if (tagline != null) { this.tagline = tagline;}
         if (description != null) { this.description = description; this.curation = description; }
         if (reserved != null) this.reserved = reserved;
+        if (reservationType != null) this.reservationType = reservationType;
+        if (reservationUrl != null) this.reservationUrl = reservationUrl;
         if (free != null) this.free = free;
         if (price != null) this.price = price;
         if (venueName != null) this.venueName = venueName;

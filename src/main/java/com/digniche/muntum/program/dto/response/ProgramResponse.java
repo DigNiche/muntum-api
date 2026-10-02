@@ -4,6 +4,7 @@ import com.digniche.muntum.curation.dto.response.PublicCurationSummaryResponse;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
+import com.digniche.muntum.program.entity.ReservationType;
 import com.digniche.muntum.programreaction.dto.response.ProgramReactionSummaryResponse;
 import com.digniche.muntum.user.dto.response.CuratorProfileResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,6 +28,8 @@ public record ProgramResponse(
         //신규 프로그램 포인트 요약
         String description,
         boolean reserved,
+        ReservationType reservationType,
+        String reservationUrl,
         boolean free,
         String price,
         String venueName,
@@ -96,6 +99,8 @@ public record ProgramResponse(
                         ? program.getDescription()
                         : program.getCuration(),
                 program.isReserved(),
+                program.getReservationType(),
+                program.getReservationUrl(),
                 program.isFree(),
                 program.getPrice(),
                 program.getVenueName(),

@@ -67,6 +67,7 @@ public enum ErrorCode {
     INVALID_PROGRAM_PERIOD("P002", "프로그램 종료일은 시작일보다 빠를 수 없습니다.", HttpStatus.BAD_REQUEST),
     INVALID_SEARCH_CONDITION("P003", "검색어 검색과 키워드 검색은 동시에 사용할 수 없습니다.", HttpStatus.BAD_REQUEST),
     INVALID_ACCESS_SECTION("P004", "Hot 필터 칩은 지도에서만 사용할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    INVALID_RESERVATION_TYPE("P005", "존재하지 않는 예약 방식입니다.", HttpStatus.BAD_REQUEST),
 
     // 이미지
     IMAGE_NOT_FOUND("I001", "존재하지 않는 이미지입니다.", HttpStatus.NOT_FOUND),
@@ -113,6 +114,7 @@ public enum ErrorCode {
     // 유효하지 않은 요청
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
     FILE_SIZE_EXCEEDED("G002", "업로드 가능한 파일 크기를 초과했습니다", HttpStatus.PAYLOAD_TOO_LARGE),
+    UNSUPPORTED_MEDIA_TYPE("G003", "지원하지 않는 요청 형식입니다.", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
 
     // 500~
     SERVER_ERROR("E001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
