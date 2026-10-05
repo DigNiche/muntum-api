@@ -8,6 +8,7 @@ import com.digniche.muntum.programreaction.entity.ReactionType;
 public record ProgramReactionSummaryResponse(
         ReactionType myReaction,
         long likeCount,
-        long dislikeCount
+        long dislikeCount,
+        String myComment
 ) {
 }
