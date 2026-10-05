@@ -70,6 +70,9 @@ public class ProgramReaction extends BaseEntity {
     )
     private ReactionType reactionType;
 
+    @Column(name = "comment", length = 500, nullable = true)
+    private String comment;
+
     @Builder
     public ProgramReaction(
             User user,
@@ -90,5 +93,19 @@ public class ProgramReaction extends BaseEntity {
         }
 
         this.reactionType = newType;
+    }
+
+    /**
+     * 코멘트 변경
+     * - null: 기존 코멘트 유지
+     * - 빈 문자열 또는 공백: 코멘트 삭제
+     * - 그 외: 앞뒤 공백을 제거하여 저장
+     */
+    public void changeComment(String comment) {
+        if (comment == null) {
+            return;
+        }
+
+        this.comment = comment.isBlank() ? null : comment.strip();
     }
 }
