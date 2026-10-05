@@ -6,11 +6,13 @@ import com.digniche.muntum.programreaction.entity.ReactionType;
  * 프로그램 반응 변경 결과 DTO
  */
 public record ProgramReactionUpdateResponse(
-        ReactionType myReaction
+        ReactionType myReaction,
+        String myComment
 ) {
     public static ProgramReactionUpdateResponse from(
-            ReactionType myReaction
+            ReactionType myReaction,
+            String myComment
     ) {
-        return new ProgramReactionUpdateResponse(myReaction);
+        return new ProgramReactionUpdateResponse(myReaction, myComment);
     }
 }

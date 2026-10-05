@@ -47,7 +47,8 @@ public class ProgramReactionController {
                 programReactionService.updateReaction(
                         userPrincipal.getUserId(),
                         programId,
-                        request.reactionState()
+                        request.reactionState(),
+                        request.comment()
                 );
 
         return ApiResponse.success(

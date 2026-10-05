@@ -55,17 +55,17 @@ public class ProgramReactionService {
      * LIKE / DISLIKE:
      * - 기존 반응이 없으면 새로 저장
      * - 기존 반응과 다르면 타입 변경
-     * - 기존 반응과 같으면 아무것도 변경하지 않음
+     * - 기존 반응과 같아도 코멘트는 수정 가능
      *
      * NONE:
-     * - 기존 반응 행 삭제
-     * - 삭제할 행이 없어도 성공
+     * - 반응과 코멘트를 포함한 기록 삭제
      */
     @Transactional
     public ProgramReactionUpdateResponse updateReaction(
             UUID userId,
             UUID programId,
-            ReactionState reactionState
+            ReactionState reactionState,
+            String comment
     ) {
         Program program = getReactableProgram(programId);
 
@@ -73,13 +73,15 @@ public class ProgramReactionService {
             case LIKE -> setReaction(
                     userId,
                     program,
-                    ReactionType.LIKE
+                    ReactionType.LIKE,
+                    comment
             );
 
             case DISLIKE -> setReaction(
                     userId,
                     program,
-                    ReactionType.DISLIKE
+                    ReactionType.DISLIKE,
+                    comment
             );
 
             case NONE -> removeReaction(
@@ -95,25 +97,31 @@ public class ProgramReactionService {
     private ProgramReactionUpdateResponse setReaction(
             UUID userId,
             Program program,
-            ReactionType newType
+            ReactionType newType,
+            String comment
     ) {
-        programReactionRepository
+        ProgramReaction reaction = programReactionRepository
                 .findByUserIdAndProgramId(userId, program.getId())
-                .ifPresentOrElse(
-                        existingReaction -> existingReaction.changeType(newType),
-                        () -> createReaction(userId, program, newType)
+                .map(existingReaction -> {
+                    existingReaction.changeType(newType);
+                    existingReaction.changeComment(comment);
+                    return existingReaction;
+                })
+                .orElseGet(() ->
+                        createReaction(userId, program, newType, comment)
                 );
 
-        return ProgramReactionUpdateResponse.from(newType);
+        return ProgramReactionUpdateResponse.from(reaction.getReactionType(), reaction.getComment());
     }
 
     /**
-     * 반응 최초 등록
+     * 반응과 코멘트 최초 등록
      */
-    private void createReaction(
+    private ProgramReaction createReaction(
             UUID userId,
             Program program,
-            ReactionType reactionType
+            ReactionType reactionType,
+            String comment
     ) {
         User user = getUser(userId);
 
@@ -123,11 +131,13 @@ public class ProgramReactionService {
                 .reactionType(reactionType)
                 .build();
 
-        programReactionRepository.save(reaction);
+        reaction.changeComment(comment);
+
+        return programReactionRepository.save(reaction);
     }
 
     /**
-     * 반응 해제
+     * 반응과 코멘트를 포함한 기록을 삭제
      */
     private ProgramReactionUpdateResponse removeReaction(
             UUID userId,
@@ -138,7 +148,7 @@ public class ProgramReactionService {
                 programId
         );
 
-        return ProgramReactionUpdateResponse.from(null);
+        return ProgramReactionUpdateResponse.from(null, null);
     }
 
     /**
@@ -228,7 +238,7 @@ public class ProgramReactionService {
      * 프로그램 상세 화면에 사용할 반응 정보 조회
      *
      * 비로그인 사용자는 userId가 null이며,
-     * 이 경우 myReaction만 null로 반환한다.
+     * 이 경우 myReaction과 myComment가 null로 반환한다.
      */
     public ProgramReactionSummaryResponse getReactionSummary(
             UUID programId,
@@ -252,18 +262,23 @@ public class ProgramReactionService {
         }
 
         ReactionType myReaction = null;
+        String myComment = null;
 
         if (userId != null) {
-            myReaction = programReactionRepository
+            ProgramReaction myRecord = programReactionRepository
                     .findByUserIdAndProgramId(userId, programId)
-                    .map(ProgramReaction::getReactionType)
                     .orElse(null);
-        }
 
+            if (myRecord != null) {
+                myReaction = myRecord.getReactionType();
+                myComment = myRecord.getComment();
+            }
+        }
         return new ProgramReactionSummaryResponse(
                 myReaction,
                 likeCount,
-                dislikeCount
+                dislikeCount,
+                myComment
         );
     }
 }
