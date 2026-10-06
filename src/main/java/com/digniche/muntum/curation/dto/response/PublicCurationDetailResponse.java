@@ -13,7 +13,8 @@ public record PublicCurationDetailResponse(
         CuratorProfileResponse curator,
         String tagline,
         String content,
-        List<CurationImageResponse> images
+        List<CurationImageResponse> images,
+        LocalDateTime createdAt
 ) {
     public static PublicCurationDetailResponse from(
             Curation curation,
@@ -26,7 +27,8 @@ public record PublicCurationDetailResponse(
                 curator,
                 curation.getTagline(),
                 curation.getContent(),
-                images
+                images,
+                curation.getCreatedAt()
         );
     }
 }
