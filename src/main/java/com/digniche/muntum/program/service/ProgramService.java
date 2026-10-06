@@ -159,6 +159,7 @@ public class ProgramService {
                 filter.programType(),
                 filter.weekStart(),
                 filter.weekEnd(),
+                sort == ProgramSortType.END_DATE,
                 pageable
         );
 
@@ -700,7 +701,7 @@ public class ProgramService {
                     );
 
             programPage =
-                    programRepository.findProgramsWithFilter(MANAGER_VIEWABLE, null, null, null, null, null, pageable);
+                    programRepository.findProgramsWithFilter(MANAGER_VIEWABLE, null, null, null, null, null, false, pageable);
         }
 
         return PageResponse.from(
@@ -767,14 +768,17 @@ public class ProgramService {
                 Sort.unsorted()
         );
 
+        LocalDate today = LocalDate.now();
+
         Page<Program> programPage;
 
         if (keywordIds.isEmpty()) {
             // 현재 프로그램에 키워드가 없으면 최신 프로그램으로 fallback
             programPage =
                     programRepository.findRecentProgramsExcludingCurrent(
-                            PUBLIC_VIEWABLE,
+                            ACTIVE_ONLY,
                             currentProgram.getId(),
+                            today,
                             pageable
                     );
         } else {
@@ -782,10 +786,10 @@ public class ProgramService {
             // 부족하면 최신 프로그램으로 자동 fallback
             programPage =
                     programRepository.findRelatedProgramsByKeywordIds(
-                            PUBLIC_VIEWABLE,
+                            ACTIVE_ONLY,
                             keywordIds,
                             currentProgram.getId(),
-                            LocalDate.now(),
+                            today,
                             pageable
                     );
         }
