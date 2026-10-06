@@ -159,7 +159,6 @@ public class ProgramService {
                 filter.programType(),
                 filter.weekStart(),
                 filter.weekEnd(),
-                sort == ProgramSortType.END_DATE,
                 pageable
         );
 
@@ -701,7 +700,7 @@ public class ProgramService {
                     );
 
             programPage =
-                    programRepository.findProgramsWithFilter(MANAGER_VIEWABLE, null, null, null, null, null, false, pageable);
+                    programRepository.findProgramsWithFilter(MANAGER_VIEWABLE, null, null, null, null, null, pageable);
         }
 
         return PageResponse.from(

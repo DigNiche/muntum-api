@@ -523,10 +523,6 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
                                         AND (p.endDate IS NULL OR p.endDate >= :weekStart)
                                     )
             )
-            ORDER BY CASE
-                    WHEN :endDateSort = true AND p.endDate IS NULL THEN 1
-                    ELSE 0
-            END ASC
     """,
             countQuery = """
     SELECT COUNT(p)
@@ -552,7 +548,6 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("programType") ProgramType programType,
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
-            @Param("endDateSort") boolean endDateSort,
             Pageable pageable
     );
 
