@@ -284,6 +284,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND p.id <> :excludeProgramId
+    AND (p.endDate IS NULL OR p.endDate >= :today)
     GROUP BY p
     ORDER BY COUNT(pk) DESC,
              CASE
@@ -306,6 +307,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND p.id <> :excludeProgramId
+    AND (p.endDate IS NULL OR p.endDate >= :today)
     """
         )
     Page<Program> findRelatedProgramsByKeywordIds(
@@ -508,20 +510,20 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
 
     // 일반 목록 필터용 메서드 추가
     @Query(
-            value = """
-    SELECT p
-    FROM Program p
-    WHERE p.status IN :statuses
-    AND p.deletedAt IS NULL
-    AND (:freeOnly IS NULL OR p.free = true) 
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
-    AND (:programType IS NULL OR p.programType = :programType)
-    AND (:weekStart IS NULL OR (
-                                (p.startDate IS NULL OR p.startDate <= :weekEnd)
-                                AND (p.endDate IS NULL OR p.endDate >= :weekStart)
-                            )
-    )
-""",
+        value = """
+            SELECT p
+            FROM Program p
+            WHERE p.status IN :statuses
+            AND p.deletedAt IS NULL
+            AND (:freeOnly IS NULL OR p.free = true) 
+            AND (:noReservationOnly IS NULL OR p.reserved = false)
+            AND (:programType IS NULL OR p.programType = :programType)
+            AND (:weekStart IS NULL OR (
+                                        (p.startDate IS NULL OR p.startDate <= :weekEnd)
+                                        AND (p.endDate IS NULL OR p.endDate >= :weekStart)
+                                    )
+            )
+    """,
             countQuery = """
     SELECT COUNT(p)
     FROM Program p
@@ -595,11 +597,13 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND p.id <> :excludeProgramId
+    AND (p.endDate IS NULL OR p.endDate >= :today)
     ORDER BY p.createdAt DESC, p.id DESC
     """)
     Page<Program> findRecentProgramsExcludingCurrent(
             @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("excludeProgramId") UUID excludeProgramId,
+            @Param("today") LocalDate today,
             Pageable pageable
     );
 }
