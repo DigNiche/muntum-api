@@ -68,8 +68,8 @@ public class CurationService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Curation> curations = status == null
-        ? curationRepository.findAllByCuratorId(curatorId, pageable)
-                : curationRepository.findByCuratorIdAndStatus(
+        ? curationRepository.findAllByCuratorIdAndDeletedAtIsNull(curatorId, pageable)
+                : curationRepository.findByCuratorIdAndStatusAndDeletedAtIsNull(
                 curatorId,
                 status,
                 pageable
@@ -86,7 +86,7 @@ public class CurationService {
     public CurationDetailResponse getMyCuration(UUID curationId, UUID curatorId
     ) {
         Curation curation = curationRepository
-                        .findByIdAndCuratorId(curationId, curatorId)
+                        .findByIdAndCuratorIdAndDeletedAtIsNull(curationId, curatorId)
                         .orElseThrow(() ->
                                 new BusinessException(ErrorCode.CURATION_NOT_FOUND));
 
@@ -108,7 +108,7 @@ public class CurationService {
                 );
 
         Page<Curation> curations =
-                curationRepository.findAllByStatus(targetStatus, pageable);
+                curationRepository.findAllByStatusAndDeletedAtIsNull(targetStatus, pageable);
 
         List<UUID> curatorIds =
                 curations.getContent()
@@ -167,7 +167,7 @@ public class CurationService {
 
         boolean alreadyExists =
                 curationRepository
-                        .existsByProgram_IdAndCuratorIdAndIdNot(
+                        .existsByProgram_IdAndCuratorIdAndIdNotAndDeletedAtIsNull(
                                 program.getId(),
                                 curation.getCuratorId(),
                                 curation.getId()
@@ -218,7 +218,7 @@ public class CurationService {
             UUID curationId
     ) {
         Curation curation =
-                curationRepository.findById(curationId)
+                curationRepository.findByIdAndDeletedAtIsNull(curationId)
                         .orElseThrow(() ->
                                 new BusinessException(
                                         ErrorCode.CURATION_NOT_FOUND
@@ -288,10 +288,10 @@ public class CurationService {
             CurationUpdateRequest request,
             List<MultipartFile> files
     ) {
-        Curation curation = curationRepository
-                .findByIdAndCuratorId(curationId, curatorId)
-                .orElseThrow(() ->
-                        new BusinessException(ErrorCode.CURATION_NOT_FOUND));
+        Curation curation = getMyCurationForUpdate(
+                curationId,
+                curatorId
+        );
 
         if (curation.getStatus() != CurationStatus.PENDING
                 && curation.getStatus() != CurationStatus.CHANGES_REQUESTED
@@ -332,29 +332,12 @@ public class CurationService {
             UUID curationId,
             UUID curatorId
     ) {
-        Curation curation = curationRepository
-                .findByIdAndCuratorId(
-                        curationId,
-                        curatorId
-                )
-                .orElseThrow(() ->
-                        new BusinessException(
-                                ErrorCode.CURATION_NOT_FOUND
-                        )
-                );
+        Curation curation = getMyCurationForUpdate(
+                curationId,
+                curatorId
+        );
 
-        if (curation.getStatus() != CurationStatus.PENDING
-                && curation.getStatus()
-                != CurationStatus.CHANGES_REQUESTED) {
-
-            throw new BusinessException(
-                    ErrorCode.CURATION_NOT_DELETABLE
-            );
-        }
-
-        curationImageService.deleteImages(curationId);
-
-        curationRepository.delete(curation);
+        curation.softDelete(curatorId);
     }
 
     @Transactional
@@ -362,16 +345,10 @@ public class CurationService {
             UUID curationId,
             UUID curatorId
     ) {
-        Curation curation = curationRepository
-                .findByIdAndCuratorId(
-                        curationId,
-                        curatorId
-                )
-                .orElseThrow(() ->
-                        new BusinessException(
-                                ErrorCode.CURATION_NOT_FOUND
-                        )
-                );
+        Curation curation = getMyCurationForUpdate(
+                curationId,
+                curatorId
+        );
 
         curation.resubmit();
 
@@ -384,5 +361,22 @@ public class CurationService {
                 curation,
                 images
         );
+    }
+
+    private Curation getMyCurationForUpdate(
+            UUID curationId,
+            UUID curatorId
+    ) {
+        Curation curation = curationRepository
+                .findByIdForUpdate(curationId)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.CURATION_NOT_FOUND)
+                );
+
+        if (!curation.getCuratorId().equals(curatorId)) {
+            throw new BusinessException(ErrorCode.CURATION_NOT_FOUND);
+        }
+
+        return curation;
     }
 }
