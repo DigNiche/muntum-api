@@ -16,12 +16,6 @@ import java.util.UUID;
 @Entity
 @Table(
         name = "curations",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_program_curations_program_curator",
-                        columnNames = {"program_id", "curator_id"}
-                )
-        },
         indexes = {
                 @Index(
                         name = "idx_program_curations_curator_created",
@@ -135,6 +129,15 @@ public class Curation extends BaseEntity {
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(
+            name = "deleted_by",
+            columnDefinition = "BINARY(16)"
+    )
+    private UUID deletedBy;
+
     @Builder
     public Curation(
             UUID curatorId,
@@ -207,5 +210,11 @@ public class Curation extends BaseEntity {
         this.status = CurationStatus.PENDING;
         this.reviewedBy = null;
         this.reviewedAt = null;
+    }
+
+    public void softDelete(UUID deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+        this.publicationStatus = CurationPublicationStatus.UNPUBLISHED;
     }
 }

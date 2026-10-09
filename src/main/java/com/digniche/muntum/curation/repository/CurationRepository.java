@@ -21,28 +21,28 @@ public interface CurationRepository
     /**
      * 내 큐레이션 상태별 조회
      */
-    Page<Curation> findByCuratorIdAndStatus(UUID curatorId, CurationStatus status, Pageable pageable);
+    Page<Curation> findByCuratorIdAndStatusAndDeletedAtIsNull(UUID curatorId, CurationStatus status, Pageable pageable);
 
     /**
      * 큐레이션 목록 상태별 조회
      */
-    Page<Curation> findByProgram_IdAndPublicationStatus(UUID programId, CurationPublicationStatus publicationStatus, Pageable pageable);
+    Page<Curation> findByProgram_IdAndPublicationStatusAndDeletedAtIsNull(UUID programId, CurationPublicationStatus publicationStatus, Pageable pageable);
 
     /**
      * 내 큐레이션 단건 조회
      */
-    Optional<Curation> findByIdAndCuratorId(UUID curationId, UUID curatorId);
+    Optional<Curation> findByIdAndCuratorIdAndDeletedAtIsNull(UUID curationId, UUID curatorId);
 
     /**
      * 공개 큐레이션 단건 상세
      * 프로그램 ID와 승인 상태까지 함께 확인
      */
-    Optional<Curation> findByIdAndProgram_IdAndPublicationStatus(UUID curationId, UUID programId, CurationPublicationStatus publicationStatus);
+    Optional<Curation> findByIdAndProgram_IdAndPublicationStatusAndDeletedAtIsNull(UUID curationId, UUID programId, CurationPublicationStatus publicationStatus);
 
     /**
      * 한 큐레이터가 같은 프로그램에 작성한 큐레이션이 있는지 확인
      */
-    boolean existsByProgram_IdAndCuratorIdAndIdNot(UUID programId, UUID curatorId, UUID curationId);
+    boolean existsByProgram_IdAndCuratorIdAndIdNotAndDeletedAtIsNull(UUID programId, UUID curatorId, UUID curationId);
 
     /**
      * 승인·반려 동시 요청 방지용 비관적 락
@@ -52,6 +52,7 @@ public interface CurationRepository
         SELECT c
         FROM Curation c
         WHERE c.id = :curationId
+          AND c.deletedAt IS NULL
     """)
     Optional<Curation> findByIdForUpdate(
             @Param("curationId") UUID curationId
@@ -60,17 +61,19 @@ public interface CurationRepository
     /**
      * 상태별 목록 조회 추가
      */
-    Page<Curation> findAllByStatus(CurationStatus status, Pageable pageable);
+    Page<Curation> findAllByStatusAndDeletedAtIsNull(CurationStatus status, Pageable pageable);
 
     /**
      * 내 큐레이션 전체 조회
      */
-    Page<Curation> findAllByCuratorId(UUID curatorId, Pageable pageable);
+    Page<Curation> findAllByCuratorIdAndDeletedAtIsNull(UUID curatorId, Pageable pageable);
 
     /**
      * 전체목록
      */
-    List<Curation> findAllByProgram_IdAndPublicationStatusOrderByReviewedAtDesc(UUID programId, CurationPublicationStatus publicationStatus);
+    List<Curation> findAllByProgram_IdAndPublicationStatusAndDeletedAtIsNullOrderByReviewedAtDesc(UUID programId, CurationPublicationStatus publicationStatus);
 
-    long countByCuratorIdAndStatus(UUID curatorId, CurationStatus status);
+    long countByCuratorIdAndStatusAndDeletedAtIsNull(UUID curatorId, CurationStatus status);
+
+    Optional<Curation> findByIdAndDeletedAtIsNull(UUID curationId);
 }

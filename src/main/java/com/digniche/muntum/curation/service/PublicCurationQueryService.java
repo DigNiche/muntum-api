@@ -40,7 +40,7 @@ public class PublicCurationQueryService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "reviewedAt"));
 
-        Page<Curation> curations = curationRepository.findByProgram_IdAndPublicationStatus(
+        Page<Curation> curations = curationRepository.findByProgram_IdAndPublicationStatusAndDeletedAtIsNull(
                         programId,
                         CurationPublicationStatus.PUBLISHED,
                         pageable
@@ -59,7 +59,7 @@ public class PublicCurationQueryService {
     ) {
         List<Curation> curations =
                 curationRepository
-                        .findAllByProgram_IdAndPublicationStatusOrderByReviewedAtDesc(
+                        .findAllByProgram_IdAndPublicationStatusAndDeletedAtIsNullOrderByReviewedAtDesc(
                                 programId,
                                 CurationPublicationStatus.PUBLISHED
                         );
@@ -75,7 +75,7 @@ public class PublicCurationQueryService {
 
         Curation curation =
                 curationRepository
-                        .findByIdAndProgram_IdAndPublicationStatus(
+                        .findByIdAndProgram_IdAndPublicationStatusAndDeletedAtIsNull(
                                 curationId,
                                 programId,
                                 CurationPublicationStatus.PUBLISHED

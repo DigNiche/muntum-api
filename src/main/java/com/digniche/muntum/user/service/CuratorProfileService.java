@@ -96,19 +96,19 @@ public class CuratorProfileService {
                 getCuratorProfile(curatorId);
 
         long approvedCount =
-                curationRepository.countByCuratorIdAndStatus(
+                curationRepository.countByCuratorIdAndStatusAndDeletedAtIsNull(
                         curatorId,
                         CurationStatus.APPROVED
                 );
 
         long pendingCount =
-                curationRepository.countByCuratorIdAndStatus(
+                curationRepository.countByCuratorIdAndStatusAndDeletedAtIsNull(
                         curatorId,
                         CurationStatus.PENDING
                 );
 
         long changesRequestedCount =
-                curationRepository.countByCuratorIdAndStatus(
+                curationRepository.countByCuratorIdAndStatusAndDeletedAtIsNull(
                         curatorId,
                         CurationStatus.CHANGES_REQUESTED
                 );

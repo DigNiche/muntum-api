@@ -1,0 +1,8 @@
+name: New Environment
+values:
+  - key: searchMarker
+    value: ''
+  - key: curatorToken
+    value: ''
+  - key: managerToken
+    value: ''
