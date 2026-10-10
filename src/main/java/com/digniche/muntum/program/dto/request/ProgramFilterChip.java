@@ -11,7 +11,7 @@ public enum ProgramFilterChip {
     // 속성 기반 칩
     FREE, // 무료 (program.free = true)
     THIS_WEEK, // 이번주 (기간 overlap — 정의 확정 후 조회단에서 처리)
-    NO_RESERVATION, // 예약없이 (program.reserved = false)
+    NO_RESERVATION, // 예약없이 (program.reservationType이 ReservationType.NO_RESERVATION_TYPES에 포함, 사전예약 전용·null 제외)
 
     //유형 기반 칩 - 상수명을 ProgramTye과 1:1로 맞춤
     EXHIBITION,
