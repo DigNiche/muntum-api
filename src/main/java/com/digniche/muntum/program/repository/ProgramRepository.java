@@ -3,6 +3,7 @@ package com.digniche.muntum.program.repository;
 import com.digniche.muntum.curation.entity.CurationPublicationStatus;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
+import com.digniche.muntum.program.entity.ReservationType;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
@@ -92,7 +93,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
         WHERE p.status IN :statuses
         AND p.deletedAt IS NULL
         AND (:freeOnly IS NULL OR p.free = true)
-        AND (:noReservationOnly IS NULL OR p.reserved = false)
+        AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
         AND (:programType IS NULL OR p.programType = :programType)
         AND (
             :weekStart IS NULL
@@ -112,7 +113,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
                         WHERE p.status IN :statuses
                         AND p.deletedAt IS NULL
                         AND (:freeOnly IS NULL OR p.free = true)
-                        AND (:noReservationOnly IS NULL OR p.reserved = false)
+                        AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
                         AND (:programType IS NULL OR p.programType = :programType)
                         AND (
                             :weekStart IS NULL
@@ -129,6 +130,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("today") LocalDate today,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("noReservationTypes") Collection<ReservationType> noReservationTypes,
             @Param("programType") ProgramType programType,
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
@@ -169,7 +171,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     AND p.deletedAt IS NULL
     AND pk.keyword.id IN :keywordIds
     AND (:freeOnly IS NULL OR p.free = true)
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
     AND (:programType IS NULL OR p.programType = :programType)
     AND (
         :weekStart IS NULL
@@ -198,7 +200,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     AND p.deletedAt IS NULL
     AND pk.keyword.id IN :keywordIds
     AND (:freeOnly IS NULL OR p.free = true)
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
     AND (:programType IS NULL OR p.programType = :programType)
     AND (
         :weekStart IS NULL
@@ -215,6 +217,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("today") LocalDate today,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("noReservationTypes") Collection<ReservationType> noReservationTypes,
             @Param("programType") ProgramType programType,
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
@@ -231,7 +234,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     AND p.deletedAt IS NULL
     AND pk.keyword.id IN :keywordIds
     AND (:freeOnly IS NULL OR p.free = true)
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
     AND (:programType IS NULL OR p.programType = :programType)
     AND (
         :weekStart IS NULL
@@ -253,7 +256,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     AND p.deletedAt IS NULL
     AND pk.keyword.id IN :keywordIds
     AND (:freeOnly IS NULL OR p.free = true)
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
     AND (:programType IS NULL OR p.programType = :programType)
     AND (
         :weekStart IS NULL
@@ -269,6 +272,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("keywordIds") List<UUID> keywordIds,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("noReservationTypes") Collection<ReservationType> noReservationTypes,
             @Param("programType") ProgramType programType,
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
@@ -323,7 +327,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND (:freeOnly IS NULL OR p.free = true)
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
     AND (:programType IS NULL OR p.programType = :programType)
     AND (
         :weekStart IS NULL
@@ -341,6 +345,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("today") LocalDate today,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("noReservationTypes") Collection<ReservationType> noReservationTypes,
             @Param("programType") ProgramType programType,
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
@@ -375,7 +380,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
               )
           )
           AND (:freeOnly IS NULL OR p.free = true)
-          AND (:noReservationOnly IS NULL OR p.reserved = false)
+          AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
           AND (:programType IS NULL OR p.programType = :programType)
           AND (
               :weekStart IS NULL
@@ -428,7 +433,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
               )
           )
           AND (:freeOnly IS NULL OR p.free = true)
-          AND (:noReservationOnly IS NULL OR p.reserved = false)
+          AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
           AND (:programType IS NULL OR p.programType = :programType)
           AND (
               :weekStart IS NULL
@@ -445,6 +450,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("today") LocalDate today,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("noReservationTypes") Collection<ReservationType> noReservationTypes,
             @Param("programType") ProgramType programType,
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
@@ -481,7 +487,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     AND p.latitude BETWEEN :swLat AND :neLat
     AND p.longitude BETWEEN :swLng AND :neLng
     AND (:freeOnly IS NULL OR p.free = true)
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
     AND (:programType IS NULL OR p.programType = :programType)
     AND (
         :weekStart IS NULL
@@ -498,6 +504,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("neLat") double neLat, @Param("neLng") double neLng,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("noReservationTypes") Collection<ReservationType> noReservationTypes,
             @Param("programType") ProgramType programType,
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
@@ -517,8 +524,8 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             FROM Program p
             WHERE p.status IN :statuses
             AND p.deletedAt IS NULL
-            AND (:freeOnly IS NULL OR p.free = true) 
-            AND (:noReservationOnly IS NULL OR p.reserved = false)
+            AND (:freeOnly IS NULL OR p.free = true)
+            AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
             AND (:programType IS NULL OR p.programType = :programType)
             AND (:weekStart IS NULL OR (
                                         (p.startDate IS NULL OR p.startDate <= :weekEnd)
@@ -532,7 +539,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     WHERE p.status IN :statuses
     AND p.deletedAt IS NULL
     AND (:freeOnly IS NULL OR p.free = true)
-    AND (:noReservationOnly IS NULL OR p.reserved = false)
+    AND (:noReservationOnly IS NULL OR p.reservationType IN :noReservationTypes)
     AND (:programType IS NULL OR p.programType = :programType)
     AND (
         :weekStart IS NULL
@@ -547,6 +554,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
             @Param("statuses") Collection<ProgramStatus> statuses,
             @Param("freeOnly") Boolean freeOnly,
             @Param("noReservationOnly") Boolean noReservationOnly,
+            @Param("noReservationTypes") Collection<ReservationType> noReservationTypes,
             @Param("programType") ProgramType programType,
             @Param("weekStart") LocalDate weekStart,
             @Param("weekEnd") LocalDate weekEnd,
