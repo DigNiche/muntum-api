@@ -15,6 +15,7 @@ import com.digniche.muntum.program.dto.response.*;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.program.entity.ProgramType;
+import com.digniche.muntum.program.entity.ReservationType;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import com.digniche.muntum.search.service.RecentSearchService;
 import com.digniche.muntum.user.dto.response.CuratorProfileResponse;
@@ -155,7 +156,7 @@ public class ProgramService {
         Page<Program> programPage = programRepository.findProgramsWithFilter(
                 PUBLIC_VIEWABLE,
                 filter.freeOnly(),
-                filter.noReservationOnly(),
+                filter.noReservationOnly(), ReservationType.NO_RESERVATION_TYPES,
                 filter.programType(),
                 filter.weekStart(),
                 filter.weekEnd(),
@@ -213,7 +214,9 @@ public class ProgramService {
             programPage = programRepository.findFilteredProgramsOrderByLatest(
                     allowedStatuses,
                     today,
-                    filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
+                    filter.freeOnly(),
+                    filter.noReservationOnly(), ReservationType.NO_RESERVATION_TYPES,
+                    filter.programType(),
                     filter.weekStart(), filter.weekEnd(),
                     pageable
             );
@@ -223,10 +226,9 @@ public class ProgramService {
                     topKeywordIds,
                     today,
                     filter.freeOnly(),
-                    filter.noReservationOnly(),
+                    filter.noReservationOnly(), ReservationType.NO_RESERVATION_TYPES,
                     filter.programType(),
-                    filter.weekStart(),
-                    filter.weekEnd(),
+                    filter.weekStart(), filter.weekEnd(),
                     pageable
             );
         }
@@ -284,7 +286,8 @@ public class ProgramService {
             programs = programRepository.findProgramsInBounds(
                     ACTIVE_ONLY,
                     bounds.swLat(), bounds.swLng(), bounds.neLat(), bounds.neLng(),
-                    filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
+                    filter.freeOnly(), filter.noReservationOnly(), ReservationType.NO_RESERVATION_TYPES,
+                    filter.programType(),
                     filter.weekStart(), filter.weekEnd(),
                     Limit.of(MAP_MAX_RESULTS));
         }
@@ -501,7 +504,15 @@ public class ProgramService {
 
         //4. 조회 + 공통 후처리
         Page<Program> programPage = programRepository.searchProgramsByKeywordIds(
-                PUBLIC_VIEWABLE, keywordIds, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), pageable);
+                PUBLIC_VIEWABLE,
+                keywordIds,
+                LocalDate.now(),
+                filter.freeOnly(),
+                filter.noReservationOnly(), ReservationType.NO_RESERVATION_TYPES,
+                filter.programType(),
+                filter.weekStart(), filter.weekEnd(),
+                pageable
+        );
 
         return PageResponse.from(toCardResponsePage(programPage));
     }
@@ -525,7 +536,16 @@ public class ProgramService {
 
         // 4. 조회 + 공통 후처리
         Page<Program> programPage = programRepository.searchProgramsByText(
-                PUBLIC_VIEWABLE, pattern, LocalDate.now(), filter.freeOnly(), filter.noReservationOnly(), filter.programType(), filter.weekStart(), filter.weekEnd(), CurationPublicationStatus.PUBLISHED, pageable);
+                PUBLIC_VIEWABLE,
+                pattern,
+                LocalDate.now(),
+                filter.freeOnly(),
+                filter.noReservationOnly(), ReservationType.NO_RESERVATION_TYPES,
+                filter.programType(),
+                filter.weekStart(), filter.weekEnd(),
+                CurationPublicationStatus.PUBLISHED,
+                pageable
+        );
         // 로그인 유저면 최근 검색어 저장 (trimmed 재사용, 게스트=null 제외)
         if (userId != null) {
             recentSearchService.save(userId, trimmed);
@@ -558,7 +578,9 @@ public class ProgramService {
 
         Page<Program> programPage = programRepository.searchTasteProgramsByKeywordIds(
                 ACTIVE_ONLY, keywordIds,
-                filter.freeOnly(), filter.noReservationOnly(), filter.programType(),
+                filter.freeOnly(),
+                filter.noReservationOnly(), ReservationType.NO_RESERVATION_TYPES,
+                filter.programType(),
                 filter.weekStart(), filter.weekEnd(),
                 pageable
         );
@@ -692,7 +714,7 @@ public class ProgramService {
             Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
 
             programPage =
-                    programRepository.searchProgramsByText(MANAGER_VIEWABLE, pattern, LocalDate.now(), null, null, null, null, null, CurationPublicationStatus.PUBLISHED,pageable);
+                    programRepository.searchProgramsByText(MANAGER_VIEWABLE, pattern, LocalDate.now(), null, null, ReservationType.NO_RESERVATION_TYPES, null, null, null, CurationPublicationStatus.PUBLISHED,pageable);
         } else {
             Pageable pageable =
                     PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt").and(
@@ -700,7 +722,7 @@ public class ProgramService {
                     );
 
             programPage =
-                    programRepository.findProgramsWithFilter(MANAGER_VIEWABLE, null, null, null, null, null, pageable);
+                    programRepository.findProgramsWithFilter(MANAGER_VIEWABLE, null, null, ReservationType.NO_RESERVATION_TYPES, null, null, null, pageable);
         }
 
         return PageResponse.from(
