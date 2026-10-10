@@ -371,7 +371,8 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
                   SELECT c.id
                   FROM Curation c
                   WHERE c.program = p
-                    AND c.publicationStatus = :curationPublicationStatus
+                  AND c.deletedAt IS NULL
+                  AND c.publicationStatus = :curationPublicationStatus
                     AND (
                         c.tagline LIKE :keyword ESCAPE '\\'
                         OR c.content LIKE :keyword ESCAPE '\\'
@@ -423,6 +424,7 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
                   SELECT c.id
                   FROM Curation c
                   WHERE c.program = p
+                    AND c.deletedAt IS NULL
                     AND c.publicationStatus = :curationPublicationStatus
                     AND (
                         c.tagline LIKE :keyword ESCAPE '\\'
