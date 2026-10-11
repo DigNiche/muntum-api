@@ -44,9 +44,6 @@ public class Program extends BaseEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "is_reserved", nullable = false)
-    private boolean reserved = false;
-
     // 예약 방식 (null: 선택 안 함)
     @Enumerated(EnumType.STRING)
     @Column(name = "reservation_type", length = 30)
@@ -100,10 +97,7 @@ public class Program extends BaseEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(
-            name = "deleted_by",
-            columnDefinition = "BINARY(16)"
-    )
+    @Column(name = "deleted_by", columnDefinition = "BINARY(16)")
     private UUID deletedBy;
 
     @Enumerated(EnumType.STRING)
@@ -116,7 +110,6 @@ public class Program extends BaseEntity {
             ProgramType  programType,
             String tagline,
             String description,
-            Boolean reserved,
             ReservationType reservationType,
             String reservationUrl,
             Boolean free,
@@ -141,7 +134,6 @@ public class Program extends BaseEntity {
         // 구버전 앱은 기존 tagline을 그대로 저장.
         this.tagline = tagline != null ? tagline : "";
         this.curation = description;
-        this.reserved = reserved;  // @NotNull + @Valid로 보장됨
         this.reservationType = reservationType;
         this.reservationUrl = blankToNull(reservationUrl);
         this.free = free; // 나머지 String/날짜 필드는 this.x = x 그대로
@@ -169,7 +161,6 @@ public class Program extends BaseEntity {
             ProgramType programType,
             String tagline,
             String description,
-            Boolean reserved,
             ReservationType reservationType,
             String reservationUrl,
             Boolean free,
@@ -187,7 +178,6 @@ public class Program extends BaseEntity {
         if (programType != null) this.programType = programType;
         if (tagline != null) { this.tagline = tagline;}
         if (description != null) { this.description = description; this.curation = description; }
-        if (reserved != null) this.reserved = reserved;
         // 예약 방식·예약 링크 : 다른 필드와 달리 null이어도 덮어씀 (null이면 지움)
         this.reservationType = reservationType;
         this.reservationUrl = blankToNull(reservationUrl);
