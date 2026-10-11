@@ -27,7 +27,6 @@ public record ProgramResponse(
         String curation,
         //신규 프로그램 포인트 요약
         String description,
-        boolean reserved,
         ReservationType reservationType,
         String reservationUrl,
         boolean free,
@@ -98,7 +97,6 @@ public record ProgramResponse(
                 program.getDescription() != null
                         ? program.getDescription()
                         : program.getCuration(),
-                program.isReserved(),
                 program.getReservationType(),
                 program.getReservationUrl(),
                 program.isFree(),
