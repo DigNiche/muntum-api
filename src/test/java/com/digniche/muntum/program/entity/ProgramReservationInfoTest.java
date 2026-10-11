@@ -60,7 +60,7 @@ class ProgramReservationInfoTest {
 
     // 제목과 예약 정보만 넘기고 나머지는 null(유지)
     private void update(Program program, ReservationType reservationType, String reservationUrl) {
-        program.update("새 제목", null, null, null, null, reservationType, reservationUrl,
+        program.update("새 제목", null, null, null, reservationType, reservationUrl,
                 null, null, null, null, null, null, null, null, null, null);
     }
 
@@ -69,7 +69,6 @@ class ProgramReservationInfoTest {
                 .title("전시")
                 .programType(ProgramType.EXHIBITION)
                 .description("소개")
-                .reserved(false)
                 .reservationType(reservationType)
                 .reservationUrl(reservationUrl)
                 .free(true)

@@ -78,7 +78,7 @@ class ProgramReservationRequestTest {
     @Test
     void 등록_요청의_예약_정보가_엔티티에_반영된다() throws Exception {
         ProgramCreateRequest request = objectMapper.readValue(
-                "{\"title\":\"전시\",\"programType\":\"EXHIBITION\",\"description\":\"소개\",\"reserved\":false,"
+                "{\"title\":\"전시\",\"programType\":\"EXHIBITION\",\"description\":\"소개\","
                         + "\"free\":true,\"venueName\":\"장소\",\"address\":\"서울\","
                         + "\"reservationType\":\"ON_SITE\",\"reservationUrl\":\"https://booking.example.com\"}",
                 ProgramCreateRequest.class);
@@ -87,6 +87,21 @@ class ProgramReservationRequestTest {
 
         assertThat(program.getReservationType()).isEqualTo(ReservationType.ON_SITE);
         assertThat(program.getReservationUrl()).isEqualTo("https://booking.example.com");
+    }
+
+    // 삭제된 reserved 필드를 이전 버전 앱이 계속 보내도 모르는 필드로 무시하고 정상 처리
+    @Test
+    void 이전_버전_앱이_reserved를_보내도_무시하고_등록_수정_요청을_받는다() throws Exception {
+        String json = "{\"title\":\"전시\",\"programType\":\"EXHIBITION\",\"description\":\"소개\",\"reserved\":true,"
+                + "\"free\":true,\"venueName\":\"장소\",\"address\":\"서울\",\"reservationType\":\"PRE_REGISTRATION\"}";
+
+        ProgramCreateRequest create = objectMapper.readValue(json, ProgramCreateRequest.class);
+        ProgramUpdateRequest update = objectMapper.readValue(json, ProgramUpdateRequest.class);
+
+        assertThat(validator.validate(create)).isEmpty();
+        assertThat(validator.validate(update)).isEmpty();
+        assertThat(create.toEntity().getReservationType()).isEqualTo(ReservationType.PRE_REGISTRATION);
+        assertThat(update.reservationType()).isEqualTo(ReservationType.PRE_REGISTRATION);
     }
 
     private ProgramUpdateRequest read(String json) throws Exception {
