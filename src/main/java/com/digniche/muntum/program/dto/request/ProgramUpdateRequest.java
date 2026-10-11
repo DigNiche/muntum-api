@@ -31,9 +31,6 @@ public record ProgramUpdateRequest(
         @Size(max = 5000, message = "프로그램 소개는 5000자를 넘을 수 없습니다.")
         String description,
 
-        @NotNull(message = "예약 필요 여부는 필수입니다.")
-        Boolean reserved,
-
         // 예약 방식 : 다른 필드와 달리 항상 요청 값으로 덮어씀. null = 선택 안 함, 값 = 해당 값으로 변경
         ReservationType reservationType,
         // 예약 링크 : 다른 필드와 달리 항상 요청 값으로 덮어씀. null = 없음, 값 = 해당 값으로 변경
@@ -96,7 +93,6 @@ public record ProgramUpdateRequest(
                         .programType(programType)
                         .tagline(tagline)
                         .description(description)
-                        .reserved(reserved)
                         .reservationType(reservationType)
                         .reservationUrl(reservationUrl)
                         .free(free)

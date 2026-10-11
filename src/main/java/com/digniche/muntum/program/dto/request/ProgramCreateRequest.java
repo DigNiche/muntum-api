@@ -30,9 +30,6 @@ public record ProgramCreateRequest(
         @Size(max = 5000, message = "프로그램 소개는 5000자를 넘을 수 없습니다.")
         String description,
 
-        @NotNull(message = "예약 필요 여부는 필수입니다.")
-        Boolean reserved,
-
         // 예약 방식 : null이면 선택 안 함
         ReservationType reservationType,
 
@@ -94,7 +91,6 @@ public record ProgramCreateRequest(
                 .programType(programType)
                 .tagline(tagline)
                 .description(description)
-                .reserved(reserved)
                 .reservationType(reservationType)
                 .reservationUrl(reservationUrl)
                 .free(free)

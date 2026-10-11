@@ -38,9 +38,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * '예약없이' 필터는 reserved가 아니라 예약 방식(reservationType)만 보고 거른다
+ * '예약없이' 필터는 예약 방식(reservationType)으로 거른다
  * - 포함: 현장예매, 사전예약·현장예매, 자유관람 / 제외: 사전예약 전용, 예약 방식 없음(null)
- * - reserved를 예약 방식과 반대로 넣어, reserved 기준이면 결과가 정반대로 나오게 함
  * - 실제 MySQL 컨테이너에 Flyway 마이그레이션을 적용한 뒤 저장소 쿼리를 실행
  */
 @DataJpaTest(properties = "spring.jpa.hibernate.ddl-auto=validate")
@@ -73,7 +72,7 @@ class ProgramRepositoryNoReservationFilterTest {
     private static final String SEARCH_WORD = "예약필터";
     private static final Pageable PAGE = PageRequest.of(0, 20);
 
-    // 칩을 켰을 때 나와야 하는 프로그램 (reserved = true)
+    // 칩을 켰을 때 나와야 하는 프로그램
     private static final List<String> NO_RESERVATION_TITLES = List.of(
             "예약필터 현장예매", "예약필터 사전예약·현장예매", "예약필터 자유관람");
     // 칩을 껐을 때 나와야 하는 프로그램 전체
@@ -97,11 +96,11 @@ class ProgramRepositoryNoReservationFilterTest {
                 .build());
         keywordIds = List.of(keyword.getId());
 
-        save("예약필터 현장예매", ReservationType.ON_SITE, true, keyword);
-        save("예약필터 사전예약·현장예매", ReservationType.PRE_REGISTRATION_AND_ON_SITE, true, keyword);
-        save("예약필터 자유관람", ReservationType.FREE_ENTRY, true, keyword);
-        save("예약필터 사전예약", ReservationType.PRE_REGISTRATION, false, keyword);
-        save("예약필터 예약 방식 없음", null, false, keyword);
+        save("예약필터 현장예매", ReservationType.ON_SITE, keyword);
+        save("예약필터 사전예약·현장예매", ReservationType.PRE_REGISTRATION_AND_ON_SITE, keyword);
+        save("예약필터 자유관람", ReservationType.FREE_ENTRY, keyword);
+        save("예약필터 사전예약", ReservationType.PRE_REGISTRATION, keyword);
+        save("예약필터 예약 방식 없음", null, keyword);
 
         em.flush();
         em.clear();
@@ -197,12 +196,11 @@ class ProgramRepositoryNoReservationFilterTest {
         return programs.stream().map(Program::getTitle).toList();
     }
 
-    private void save(String title, ReservationType reservationType, boolean reserved, Keyword keyword) {
+    private void save(String title, ReservationType reservationType, Keyword keyword) {
         Program program = em.persist(Program.builder()
                 .title(title)
                 .programType(ProgramType.EXHIBITION)
                 .description(title + " 소개")
-                .reserved(reserved)
                 .reservationType(reservationType)
                 .free(true)
                 .venueName("테스트 장소")
