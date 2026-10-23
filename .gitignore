@@ -50,3 +50,9 @@ logs/
 
 # Local file storage (LocalImageStorageService upload target)
 uploads/
+
+# AI
+.claude
+
+# Postman Workspace
+.postman
