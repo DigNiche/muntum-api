@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 큐레이션 상세 페이지
+ */
 public record CurationDetailResponse(
         UUID id,
         UUID programId,
@@ -23,15 +26,10 @@ public record CurationDetailResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static CurationDetailResponse from(
-            Curation curation,
-            List<CurationImageResponse> images
-    ) {
+    public static CurationDetailResponse from(Curation curation, List<CurationImageResponse> images) {
         return new CurationDetailResponse(
                 curation.getId(),
-                curation.getProgram() != null
-                        ? curation.getProgram().getId()
-                        : null,
+                curation.getProgram() != null ? curation.getProgram().getId(): null,
                 curation.getSubmittedProgramTitle(),
                 curation.getSubmittedPlace(),
                 curation.getTagline(),
