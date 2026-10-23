@@ -85,7 +85,6 @@ public enum ErrorCode {
     CURATION_NOT_EDITABLE("CU003", "현재 상태에서는 큐레이션을 수정할 수 없습니다", HttpStatus.CONFLICT),
     CURATION_ALREADY_REVIEWED("CU004", "이미 심사가 완료된 큐레이션입니다", HttpStatus.CONFLICT),
     CHANGE_REQUEST_REASON_REQUIRED("CU005", "수정요청 사유는 필수입니다", HttpStatus.BAD_REQUEST),
-    CURATION_IMAGE_REQUIRED("CU006", "큐레이션 이미지는 최소 1개 등록해야 합니다", HttpStatus.BAD_REQUEST),
     TOO_MANY_CURATION_IMAGES("CU007", "큐레이션 이미지는 최대 5개까지 등록할 수 있습니다", HttpStatus.BAD_REQUEST),
     CURATION_IMAGE_NOT_FOUND("CU008", "존재하지 않는 큐레이션 이미지입니다", HttpStatus.NOT_FOUND),
     CURATION_NOT_DELETABLE("CU009", "현재 상태에서는 큐레이션을 삭제할 수 없습니다.", HttpStatus.CONFLICT),

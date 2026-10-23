@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * 관리자 프로그램 이미지 개수(최소 1개, 최대 5개) 검증
- * - 등록(POST)·승인(approve-new)은 uploadImages, 수정(PUT)·이미지 교체(PATCH)는 replaceImages 경로
+ * - 등록(POST)·승인(approve-new)은 uploadImages, 수정(PUT)·이미지 교체(PUT)는 replaceImages 경로
  * - 저장소·DB는 mock
  */
 @ExtendWith(MockitoExtension.class)

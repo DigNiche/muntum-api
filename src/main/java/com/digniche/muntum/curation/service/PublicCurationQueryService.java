@@ -54,12 +54,9 @@ public class PublicCurationQueryService {
     }
 
 
-    public List<PublicCurationSummaryResponse> getAllSummaries(
-            UUID programId
-    ) {
+    public List<PublicCurationSummaryResponse> getAllSummaries(UUID programId) {
         List<Curation> curations =
-                curationRepository
-                        .findAllByProgram_IdAndPublicationStatusAndDeletedAtIsNullOrderByReviewedAtDesc(
+                curationRepository.findAllByProgram_IdAndPublicationStatusAndDeletedAtIsNullOrderByReviewedAtDesc(
                                 programId,
                                 CurationPublicationStatus.PUBLISHED
                         );
@@ -67,10 +64,7 @@ public class PublicCurationQueryService {
         return toSummaries(curations);
     }
 
-    public PublicCurationDetailResponse getCuration(
-            UUID programId,
-            UUID curationId
-    ) {
+    public PublicCurationDetailResponse getCuration(UUID programId, UUID curationId) {
         validatePublicProgram(programId);
 
         Curation curation =
@@ -80,47 +74,23 @@ public class PublicCurationQueryService {
                                 programId,
                                 CurationPublicationStatus.PUBLISHED
                         )
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        ErrorCode.CURATION_NOT_FOUND
-                                )
-                        );
+                        .orElseThrow(() -> new BusinessException(ErrorCode.CURATION_NOT_FOUND));
 
-        CuratorProfileResponse curator =
-                curatorProfileService.getCuratorProfile(
-                        curation.getCuratorId()
-                );
+        CuratorProfileResponse curator = curatorProfileService.getCuratorProfile(curation.getCuratorId());
 
-        List<CurationImageResponse> images =
-                curationImageService.getOrderedImages(curationId);
+        List<CurationImageResponse> images = curationImageService.getOrderedImages(curationId);
 
-        return PublicCurationDetailResponse.from(
-                curation,
-                curator,
-                images
-        );
+        return PublicCurationDetailResponse.from(curation, curator, images);
     }
 
-    private List<PublicCurationSummaryResponse> toSummaries(
-            List<Curation> curations
-    ) {
-        List<UUID> curationIds = curations.stream()
-                .map(Curation::getId)
-                .toList();
+    private List<PublicCurationSummaryResponse> toSummaries(List<Curation> curations) {
+        List<UUID> curationIds = curations.stream().map(Curation::getId).toList();
+        List<UUID> curatorIds = curations.stream().map(Curation::getCuratorId).distinct().toList();
 
-        List<UUID> curatorIds = curations.stream()
-                .map(Curation::getCuratorId)
-                .distinct()
-                .toList();
+        Map<UUID, CuratorProfileResponse> curatorMap =curatorProfileService.getCuratorProfiles(curatorIds);
+        Map<UUID, String> thumbnailMap = curationImageService.getThumbnailMap(curationIds);
 
-        Map<UUID, CuratorProfileResponse> curatorMap =
-                curatorProfileService.getCuratorProfiles(curatorIds);
-
-        Map<UUID, String> thumbnailMap =
-                curationImageService.getThumbnailMap(curationIds);
-
-        return curations.stream()
-                .map(curation ->
+        return curations.stream().map(curation ->
                         PublicCurationSummaryResponse.from(
                                 curation,
                                 curatorMap.get(curation.getCuratorId()),
@@ -131,15 +101,7 @@ public class PublicCurationQueryService {
     }
 
     private void validatePublicProgram(UUID programId) {
-        programRepository
-                .findByIdAndDeletedAtIsNullAndStatusIn(
-                        programId,
-                        PUBLIC_VIEWABLE_STATUSES
-                )
-                .orElseThrow(() ->
-                        new BusinessException(
-                                ErrorCode.PROGRAM_NOT_FOUND
-                        )
-                );
+        programRepository.findByIdAndDeletedAtIsNullAndStatusIn(programId, PUBLIC_VIEWABLE_STATUSES)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 }

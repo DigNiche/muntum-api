@@ -71,7 +71,7 @@ public class ProgramController {
 
     // 프로그램 이미지 수정 (전체 교체)
     @PreAuthorize("hasAnyRole('MANAGER')")
-    @PatchMapping(value = "/{program_id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{program_id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<List<ProgramImageResponse>>> updateProgramImages(
             @PathVariable("program_id") UUID programId,
             // 필수(1~5개) : 파트 누락도 I008로 응답하도록 서비스에서 검증, required=false 유지

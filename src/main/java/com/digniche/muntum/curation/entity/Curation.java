@@ -35,7 +35,6 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Curation extends BaseEntity {
 
-    public static final int MIN_IMAGE_COUNT = 1;
     public static final int MAX_IMAGE_COUNT = 5;
 
     @Id
