@@ -385,7 +385,7 @@ public class UserService {
         long remainingMillis = authService.calculateTokenTtl(accessToken);
 
         if (remainingMillis > 0) {
-            accessTokenService.addToWithdrawlList(accessToken, remainingMillis);
+            accessTokenService.addToWithdrawalList(accessToken, remainingMillis);
         }
         refreshTokenService.delete(userId);
 
