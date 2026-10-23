@@ -44,81 +44,58 @@ public class CurationService {
      * 큐레이션 등록
      */
     @Transactional
-    public CurationDetailResponse createCuration(
-            UUID curatorId,
-            CurationCreateRequest request,
-            List<MultipartFile> files
-    ) {
+    public CurationDetailResponse createCuration(UUID curatorId, CurationCreateRequest request, List<MultipartFile> files) {
         Curation curation = request.toEntity(curatorId);
 
         Curation savedCuration = curationRepository.save(curation);
 
-        curationImageService.uploadImages(savedCuration, files);
-
-        List<CurationImageResponse> images = curationImageService.getOrderedImages(savedCuration.getId());
-
+        List<CurationImageResponse> images = curationImageService.uploadImages(savedCuration, files);
+        // 제거 : List<CurationImageResponse> images = curationImageService.getOrderedImages(savedCuration.getId());
         return CurationDetailResponse.from(savedCuration, images);
+
     }
 
     /**
      * 내 큐레이션 목록 조회
      */
-    public PageResponse<CurationListResponse> getMyCurations(UUID curatorId, CurationStatus status, int page, int size
-    ) {
+    public PageResponse<CurationListResponse> getMyCurations(UUID curatorId, CurationStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Curation> curations = status == null
-        ? curationRepository.findAllByCuratorIdAndDeletedAtIsNull(curatorId, pageable)
-                : curationRepository.findByCuratorIdAndStatusAndDeletedAtIsNull(
-                curatorId,
-                status,
-                pageable
-        );
+        Page<Curation> curations =
+                status == null
+                    ? curationRepository.findAllByCuratorIdAndDeletedAtIsNull(curatorId, pageable)
+                    : curationRepository.findByCuratorIdAndStatusAndDeletedAtIsNull(curatorId, status, pageable);
 
         Page<CurationListResponse> responses = curations.map(CurationListResponse::from);
-
         return PageResponse.from(responses);
     }
 
     /**
      * 내 큐레이션 상세 조회
      */
-    public CurationDetailResponse getMyCuration(UUID curationId, UUID curatorId
-    ) {
-        Curation curation = curationRepository
-                        .findByIdAndCuratorIdAndDeletedAtIsNull(curationId, curatorId)
-                        .orElseThrow(() ->
-                                new BusinessException(ErrorCode.CURATION_NOT_FOUND));
+    public CurationDetailResponse getMyCuration(UUID curationId, UUID curatorId) {
+        Curation curation = curationRepository.findByIdAndCuratorIdAndDeletedAtIsNull(curationId, curatorId)
+                                              .orElseThrow(() -> new BusinessException(ErrorCode.CURATION_NOT_FOUND));
 
         List<CurationImageResponse> images = curationImageService.getOrderedImages(curationId);
 
         return CurationDetailResponse.from(curation, images);
     }
+
+
     /**
      * 관리자 목록
      */
-    public PageResponse<ManagerCurationListResponse>
-    getCurationsForManager(
-            CurationStatus status, int page, int size
-    ) {
+    public PageResponse<ManagerCurationListResponse> getCurationsForManager(CurationStatus status, int page, int size) {
         CurationStatus targetStatus = status != null ? status : CurationStatus.PENDING;
 
-        Pageable pageable =
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")
-                );
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Curation> curations =
-                curationRepository.findAllByStatusAndDeletedAtIsNull(targetStatus, pageable);
+        Page<Curation> curations = curationRepository.findAllByStatusAndDeletedAtIsNull(targetStatus, pageable);
 
-        List<UUID> curatorIds =
-                curations.getContent()
-                        .stream()
-                        .map(Curation::getCuratorId)
-                        .distinct()
-                        .toList();
+        List<UUID> curatorIds = curations.getContent().stream().map(Curation::getCuratorId).distinct().toList();
 
-        Map<UUID, CuratorProfileResponse> curatorMap =
-                curatorProfileService.getCuratorProfiles(curatorIds);
+        Map<UUID, CuratorProfileResponse> curatorMap = curatorProfileService.getCuratorProfiles(curatorIds);
 
         Page<ManagerCurationListResponse> responses =
                 curations.map(curation ->
@@ -131,52 +108,32 @@ public class CurationService {
     /**
      * 관리자 승인.반려 후 응답 변환 메서드
      */
-    private ManagerCurationDetailResponse toManagerDetailResponse(
-            Curation curation
-    ) {
+    private ManagerCurationDetailResponse toManagerDetailResponse(Curation curation) {
         CuratorProfileResponse curator = curatorProfileService.getCuratorProfile(curation.getCuratorId());
 
         List<CurationImageResponse> images = curationImageService.getOrderedImages(curation.getId());
 
-        return ManagerCurationDetailResponse.from(curation, curator, images
-        );
+        return ManagerCurationDetailResponse.from(curation, curator, images);
     }
 
     /**
      * 기존 프로그램 연결 승인
      */
     @Transactional
-    public ManagerCurationDetailResponse approveExisting(
-            UUID curationId,
-            UUID managerId,
-            CurationApproveExistingRequest request
-    ) {
-        Curation curation =
-                getPendingCurationForUpdate(curationId);
+    public ManagerCurationDetailResponse approveExisting(UUID curationId, UUID managerId, CurationApproveExistingRequest request) {
+        Curation curation = getPendingCurationForUpdate(curationId);
 
-        Program program =
-                programRepository
-                        .findByIdAndDeletedAtIsNull(
-                                request.programId()
-                        )
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        ErrorCode.PROGRAM_NOT_FOUND
-                                )
-                        );
+        Program program = programRepository.findByIdAndDeletedAtIsNull(request.programId())
+                                           .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
 
-        boolean alreadyExists =
-                curationRepository
-                        .existsByProgram_IdAndCuratorIdAndIdNotAndDeletedAtIsNull(
-                                program.getId(),
-                                curation.getCuratorId(),
-                                curation.getId()
-                        );
+        boolean alreadyExists = curationRepository.existsByProgram_IdAndCuratorIdAndIdNotAndDeletedAtIsNull(
+                                            program.getId(),
+                                            curation.getCuratorId(),
+                                            curation.getId()
+                                );
 
         if (alreadyExists) {
-            throw new BusinessException(
-                    ErrorCode.CURATION_ALREADY_EXISTS
-            );
+            throw new BusinessException(ErrorCode.CURATION_ALREADY_EXISTS);
         }
 
         curation.approve(program, managerId);
@@ -188,42 +145,23 @@ public class CurationService {
      * 수정요청
      */
     @Transactional
-    public ManagerCurationDetailResponse requestChanges(
-            UUID curationId,
-            UUID managerId,
-            CurationChangeRequest request
-    ) {
-        Curation curation =
-                getChangeRequestableCurationForUpdate(curationId);
+    public ManagerCurationDetailResponse requestChanges(UUID curationId, UUID managerId, CurationChangeRequest request) {
+        Curation curation = getChangeRequestableCurationForUpdate(curationId);
 
-        if (request.changeRequestReason() == null
-                || request.changeRequestReason().isBlank()) {
-            throw new BusinessException(
-                    ErrorCode.CHANGE_REQUEST_REASON_REQUIRED
-            );
+        if (request.changeRequestReason() == null || request.changeRequestReason().isBlank()) {
+            throw new BusinessException(ErrorCode.CHANGE_REQUEST_REASON_REQUIRED);
         }
 
-        curation.requestChanges(
-                managerId,
-                request.changeRequestReason(),
-                request.publicationStatus()
-        );
+        curation.requestChanges(managerId, request.changeRequestReason(), request.publicationStatus());
 
         return toManagerDetailResponse(curation);
     }
     /**
      * 관리자 상세
      */
-    public ManagerCurationDetailResponse getCurationForManager(
-            UUID curationId
-    ) {
-        Curation curation =
-                curationRepository.findByIdAndDeletedAtIsNull(curationId)
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        ErrorCode.CURATION_NOT_FOUND
-                                )
-                        );
+    public ManagerCurationDetailResponse getCurationForManager(UUID curationId) {
+        Curation curation = curationRepository.findByIdAndDeletedAtIsNull(curationId)
+                                              .orElseThrow(() -> new BusinessException(ErrorCode.CURATION_NOT_FOUND));
         return toManagerDetailResponse(curation);
     }
 
@@ -244,23 +182,13 @@ public class CurationService {
      * 수정요청용
      */
 
-    private Curation getChangeRequestableCurationForUpdate(
-            UUID curationId
-    ) {
-        Curation curation =
-                curationRepository.findByIdForUpdate(curationId)
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        ErrorCode.CURATION_NOT_FOUND
-                                )
-                        );
+    private Curation getChangeRequestableCurationForUpdate(UUID curationId) {
+        Curation curation = curationRepository.findByIdForUpdate(curationId)
+                                              .orElseThrow(() -> new BusinessException(ErrorCode.CURATION_NOT_FOUND));
 
-        if (curation.getStatus() != CurationStatus.PENDING
-                && curation.getStatus() != CurationStatus.APPROVED) {
-
-            throw new BusinessException(
-                    ErrorCode.CURATION_ALREADY_REVIEWED
-            );
+        if (curation.getStatus() != CurationStatus.PENDING &&
+                curation.getStatus() != CurationStatus.APPROVED) {
+            throw new BusinessException(ErrorCode.CURATION_ALREADY_REVIEWED);
         }
 
         return curation;
@@ -282,24 +210,14 @@ public class CurationService {
     }
 
     @Transactional
-    public CurationDetailResponse updateCuration(
-            UUID curationId,
-            UUID curatorId,
-            CurationUpdateRequest request,
-            List<MultipartFile> files
-    ) {
-        Curation curation = getMyCurationForUpdate(
-                curationId,
-                curatorId
-        );
+    public CurationDetailResponse updateCuration(UUID curationId, UUID curatorId, CurationUpdateRequest request, List<MultipartFile> files) {
+        Curation curation = getMyCurationForUpdate(curationId, curatorId);
 
         if (curation.getStatus() != CurationStatus.PENDING
                 && curation.getStatus() != CurationStatus.CHANGES_REQUESTED
                 && curation.getStatus() != CurationStatus.APPROVED) {
 
-            throw new BusinessException(
-                    ErrorCode.CURATION_NOT_EDITABLE
-            );
+            throw new BusinessException(ErrorCode.CURATION_NOT_EDITABLE);
         }
 
         curation.updateContent(
@@ -310,68 +228,35 @@ public class CurationService {
         );
 
         if (files != null && !files.isEmpty()) {
-            curationImageService.replaceImages(
-                    curation,
-                    files
-            );
+            curationImageService.replaceImages(curation, files);
         }
 
-        List<CurationImageResponse> images =
-                curationImageService.getOrderedImages(
-                        curationId
-                );
+        List<CurationImageResponse> images = curationImageService.getOrderedImages(curationId);
 
-        return CurationDetailResponse.from(
-                curation,
-                images
-        );
+        return CurationDetailResponse.from(curation, images);
     }
 
     @Transactional
-    public void deleteCuration(
-            UUID curationId,
-            UUID curatorId
-    ) {
-        Curation curation = getMyCurationForUpdate(
-                curationId,
-                curatorId
-        );
+    public void deleteCuration(UUID curationId, UUID curatorId) {
+        Curation curation = getMyCurationForUpdate(curationId, curatorId);
 
         curation.softDelete(curatorId);
     }
 
     @Transactional
-    public CurationDetailResponse resubmitCuration(
-            UUID curationId,
-            UUID curatorId
-    ) {
-        Curation curation = getMyCurationForUpdate(
-                curationId,
-                curatorId
-        );
+    public CurationDetailResponse resubmitCuration(UUID curationId, UUID curatorId) {
+        Curation curation = getMyCurationForUpdate(curationId, curatorId);
 
         curation.resubmit();
 
-        List<CurationImageResponse> images =
-                curationImageService.getOrderedImages(
-                        curationId
-                );
+        List<CurationImageResponse> images = curationImageService.getOrderedImages(curationId);
 
-        return CurationDetailResponse.from(
-                curation,
-                images
-        );
+        return CurationDetailResponse.from(curation, images);
     }
 
-    private Curation getMyCurationForUpdate(
-            UUID curationId,
-            UUID curatorId
-    ) {
-        Curation curation = curationRepository
-                .findByIdForUpdate(curationId)
-                .orElseThrow(() ->
-                        new BusinessException(ErrorCode.CURATION_NOT_FOUND)
-                );
+    private Curation getMyCurationForUpdate(UUID curationId, UUID curatorId) {
+        Curation curation = curationRepository.findByIdForUpdate(curationId)
+                                              .orElseThrow(() -> new BusinessException(ErrorCode.CURATION_NOT_FOUND));
 
         if (!curation.getCuratorId().equals(curatorId)) {
             throw new BusinessException(ErrorCode.CURATION_NOT_FOUND);

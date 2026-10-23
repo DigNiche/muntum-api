@@ -15,7 +15,7 @@ public class AccessTokenService {
     private static final String PREFIX = "withdrawallist:";
     private final RedisTemplate<String, String> redisTemplate;
 
-    public void addToWithdrawlList(String token, long remainingMillis) {
+    public void addToWithdrawalList(String token, long remainingMillis) {
         redisTemplate.opsForValue().set(PREFIX + token, "1", remainingMillis, TimeUnit.MILLISECONDS);
     }
     public boolean isWithdrawn(String token) {
