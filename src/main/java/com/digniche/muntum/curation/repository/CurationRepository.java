@@ -7,16 +7,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.digniche.muntum.curation.entity.CurationPublicationStatus;
+import com.digniche.muntum.program.entity.ProgramStatus;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface CurationRepository
-        extends JpaRepository<Curation, UUID> {
+/**
+ * 큐레이션 레포지토리
+ */
+public interface CurationRepository extends JpaRepository<Curation, UUID> {
 
     /**
      * 내 큐레이션 상태별 조회
@@ -54,9 +58,7 @@ public interface CurationRepository
         WHERE c.id = :curationId
           AND c.deletedAt IS NULL
     """)
-    Optional<Curation> findByIdForUpdate(
-            @Param("curationId") UUID curationId
-    );
+    Optional<Curation> findByIdForUpdate(@Param("curationId") UUID curationId);
 
     /**
      * 상태별 목록 조회 추가
@@ -76,4 +78,69 @@ public interface CurationRepository
     long countByCuratorIdAndStatusAndDeletedAtIsNull(UUID curatorId, CurationStatus status);
 
     Optional<Curation> findByIdAndDeletedAtIsNull(UUID curationId);
+
+    // for Curation Like -----------------------------------------------------------------------------
+
+    /**
+     * 좋아요 누를 수 있는 큐레이션 기준
+     * - 공개 프로그램 + 게시된 큐레이션
+     * - 프로그램 조건은 서브쿼리로 둬서, 잠금 조회 때 큐레이션 행만 잠근다
+     */
+    String PUBLIC_CURATION_CONDITION = """
+          c.id = :curationId
+          AND c.publicationStatus = :publicationStatus
+          AND c.deletedAt IS NULL
+          AND EXISTS (
+              SELECT 1
+              FROM Program p
+              WHERE p.id = c.program.id
+                AND p.deletedAt IS NULL
+                AND p.status IN :programStatuses
+          )
+    """;
+
+    /**
+     * 공개 큐레이션 단건 조회 (좋아요 조회용)
+     */
+    @Query("SELECT c FROM Curation c WHERE " + PUBLIC_CURATION_CONDITION)
+    Optional<Curation> findPublicById(
+            @Param("curationId") UUID curationId,
+            @Param("publicationStatus") CurationPublicationStatus publicationStatus,
+            @Param("programStatuses") List<ProgramStatus> programStatuses
+    );
+
+    /**
+     * 공개 큐레이션 단건 잠금 조회 (좋아요 및 좋아요 취소용)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Curation c WHERE " + PUBLIC_CURATION_CONDITION)
+    Optional<Curation> findPublicByIdForUpdate(
+            @Param("curationId") UUID curationId,
+            @Param("publicationStatus") CurationPublicationStatus publicationStatus,
+            @Param("programStatuses") List<ProgramStatus> programStatuses
+    );
+
+
+    /**
+     * 큐레이션 좋아요 수 증가 (DB에서 원자적으로)
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+        UPDATE Curation c
+        SET c.likeCount = c.likeCount + 1
+        WHERE c.id = :curationId
+    """)
+    int increaseLikeCount(@Param("curationId") UUID curationId);
+
+    /**
+     * 큐레이션 좋아요 수 감소 (DB에서 원자적으로)
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+        UPDATE Curation c
+        SET c.likeCount = c.likeCount - 1
+        WHERE c.id = :curationId
+    """)
+    int decreaseLikeCount(@Param("curationId") UUID curationId);
+
 }

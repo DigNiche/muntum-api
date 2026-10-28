@@ -27,9 +27,6 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class PublicCurationQueryService {
 
-    private static final List<ProgramStatus> PUBLIC_VIEWABLE_STATUSES =
-            List.of(ProgramStatus.ACTIVE, ProgramStatus.ENDED);
-
     private final CurationRepository curationRepository;
     private final CurationImageService curationImageService;
     private final CuratorProfileService curatorProfileService;
@@ -101,7 +98,7 @@ public class PublicCurationQueryService {
     }
 
     private void validatePublicProgram(UUID programId) {
-        programRepository.findByIdAndDeletedAtIsNullAndStatusIn(programId, PUBLIC_VIEWABLE_STATUSES)
+        programRepository.findByIdAndDeletedAtIsNullAndStatusIn(programId, ProgramStatus.PUBLIC_VIEWABLE_STATUSES)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 }

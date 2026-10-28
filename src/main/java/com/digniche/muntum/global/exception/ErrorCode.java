@@ -114,6 +114,7 @@ public enum ErrorCode {
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
     FILE_SIZE_EXCEEDED("G002", "업로드 가능한 파일 크기를 초과했습니다", HttpStatus.PAYLOAD_TOO_LARGE),
     UNSUPPORTED_MEDIA_TYPE("G003", "지원하지 않는 요청 형식입니다.", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+    RETRY_LATER("G004", "요청이 겹쳐 처리하지 못했습니다. 잠시 후 다시 시도해주세요", HttpStatus.SERVICE_UNAVAILABLE), // 데드락·락 대기 시간 초과 (같은 요청을 다시 보내면 됨)
 
     // 500~
     SERVER_ERROR("E001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);
