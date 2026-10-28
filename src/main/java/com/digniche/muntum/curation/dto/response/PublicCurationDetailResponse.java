@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 공개 큐레이션 상세 응답
+ */
 public record PublicCurationDetailResponse(
         UUID id,
         UUID programId,

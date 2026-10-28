@@ -62,7 +62,6 @@ public class CurationController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<PageResponse<CurationListResponse>>> getMyCurations(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-
             @RequestParam(required = false) CurationStatus status,
 
             @RequestParam(defaultValue = "0")
