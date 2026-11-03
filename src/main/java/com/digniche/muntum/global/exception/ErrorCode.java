@@ -96,7 +96,6 @@ public enum ErrorCode {
     HIDDEN_PROGRAM_NOT_LIKEABLE("CUL003", "숨김 처리된 프로그램의 큐레이션에는 좋아요를 사용할 수 없습니다", HttpStatus.CONFLICT),
     CURATION_STATE_CHANGED("CUL004", "방금 전 큐레이션의 상태가 변경되었습니다. 다시 시도해주세요", HttpStatus.CONFLICT),
 
-
     // 카카오 GeoCoordinate
     ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 

@@ -21,6 +21,7 @@ public interface CurationLikeRepository extends JpaRepository<CurationLike, Cura
     /**
      * 좋아요가 없을 때만 추가
      * - 실제로 추가했으면 1, 이미 있으면 0 반환
+     * - JPQL은 INSERT ... SELECT ... WHERE NOT EXISTS를 지원하지 않아 네이티브 쿼리 사용
      */
     @Modifying
     @Query(

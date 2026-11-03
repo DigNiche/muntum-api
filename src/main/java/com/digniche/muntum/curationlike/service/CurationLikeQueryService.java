@@ -40,7 +40,7 @@ public class CurationLikeQueryService {
 
 
     /**
-     * 큐레이션별 좋아요 집계 정보/내 상태 정보
+     * 큐레이션 한 건의 좋아요 집계 정보/내 상태 정보
      */
     public CurationLikeResponse getLike(Curation curation, UUID userId) {
         return getLikes(List.of(curation), userId).get(curation.getId());

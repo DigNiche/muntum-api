@@ -121,7 +121,7 @@ public class Curation extends BaseEntity {
         this.reviewedAt = LocalDateTime.now();
     }
 
-    public void updateContent(String submittedProgramTitle, String submittedPlace, String tagline,String content) {
+    public void updateContent(String submittedProgramTitle, String submittedPlace, String tagline, String content) {
         this.submittedProgramTitle = submittedProgramTitle;
         this.submittedPlace = submittedPlace;
         this.tagline = tagline;
