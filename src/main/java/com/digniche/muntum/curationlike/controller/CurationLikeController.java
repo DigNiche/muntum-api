@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * 큐레이션 좋아요
+ * 큐레이션 좋아요 컨트롤러
  */
 @RestController
 @RequiredArgsConstructor
@@ -27,7 +27,7 @@ public class CurationLikeController {
      */
     @PreAuthorize("hasRole('AUDIENCE')")
     @PutMapping
-    public ResponseEntity<ApiResponse<CurationLikeResponse>> clickHeart(@PathVariable("curation_id") UUID curationId, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<ApiResponse<CurationLikeResponse>> like(@PathVariable("curation_id") UUID curationId, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         CurationLikeResponse response = curationLikeService.like(curationId, userPrincipal.getUserId(), userPrincipal.getUserRole());
 
         return ResponseEntity.ok(ApiResponse.success("큐레이션 좋아요에 성공했습니다.", response));
@@ -39,21 +39,9 @@ public class CurationLikeController {
      */
     @PreAuthorize("hasRole('AUDIENCE')")
     @DeleteMapping
-    public ResponseEntity<ApiResponse<CurationLikeResponse>> unclickHeart(@PathVariable("curation_id") UUID curationId, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<ApiResponse<CurationLikeResponse>> cancelLike(@PathVariable("curation_id") UUID curationId, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         CurationLikeResponse response = curationLikeService.cancelLike(curationId, userPrincipal.getUserId(), userPrincipal.getUserRole());
 
         return ResponseEntity.ok(ApiResponse.success("큐레이션 좋아요 취소에 성공했습니다.", response));
-    }
-
-
-    /**
-     * 큐레이션 좋아요 수와 내 상태 조회
-     */
-    @GetMapping
-    public ResponseEntity<ApiResponse<CurationLikeResponse>> getHeart(@PathVariable("curation_id") UUID curationId, @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
-        CurationLikeResponse response = curationLikeService.getLike(curationId, userId);
-
-        return ResponseEntity.ok(ApiResponse.success("큐레이션 좋아요 조회에 성공했습니다.", response));
     }
 }

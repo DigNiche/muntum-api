@@ -89,6 +89,14 @@ public enum ErrorCode {
     CURATION_IMAGE_NOT_FOUND("CU008", "존재하지 않는 큐레이션 이미지입니다", HttpStatus.NOT_FOUND),
     CURATION_NOT_DELETABLE("CU009", "현재 상태에서는 큐레이션을 삭제할 수 없습니다.", HttpStatus.CONFLICT),
     CURATION_NOT_RESUBMITTABLE("CU010", "수정요청 상태의 큐레이션만 다시 등록할 수 있습니다.", HttpStatus.CONFLICT),
+
+    // 큐레이션 좋아요
+    UNPUBLISHED_CURATION_NOT_LIKEABLE("CUL001", "비공개 큐레이션에는 좋아요를 사용할 수 없습니다", HttpStatus.CONFLICT),
+    DELETED_PROGRAM_NOT_LIKEABLE("CUL002", "삭제된 프로그램의 큐레이션에는 좋아요를 사용할 수 없습니다", HttpStatus.CONFLICT),
+    HIDDEN_PROGRAM_NOT_LIKEABLE("CUL003", "숨김 처리된 프로그램의 큐레이션에는 좋아요를 사용할 수 없습니다", HttpStatus.CONFLICT),
+    CURATION_STATE_CHANGED("CUL004", "방금 전 큐레이션의 상태가 변경되었습니다. 다시 시도해주세요", HttpStatus.CONFLICT),
+
+
     // 카카오 GeoCoordinate
     ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 

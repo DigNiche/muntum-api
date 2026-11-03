@@ -1,6 +1,7 @@
 package com.digniche.muntum.curation.dto.response;
 
 import com.digniche.muntum.curation.entity.Curation;
+import com.digniche.muntum.curationlike.dto.response.CurationLikeResponse;
 import com.digniche.muntum.curation.entity.CurationPublicationStatus;
 import com.digniche.muntum.curation.entity.CurationStatus;
 
@@ -21,12 +22,13 @@ public record CurationDetailResponse(
         List<CurationImageResponse> images,
         CurationStatus status,
         CurationPublicationStatus publicationStatus,
+        CurationLikeResponse like,
         String changeRequestReason,
         LocalDateTime reviewedAt,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static CurationDetailResponse from(Curation curation, List<CurationImageResponse> images) {
+    public static CurationDetailResponse from(Curation curation, List<CurationImageResponse> images, CurationLikeResponse like) {
         return new CurationDetailResponse(
                 curation.getId(),
                 curation.getProgram() != null ? curation.getProgram().getId(): null,
@@ -37,6 +39,7 @@ public record CurationDetailResponse(
                 images,
                 curation.getStatus(),
                 curation.getPublicationStatus(),
+                like,
                 curation.getChangeRequestReason(),
                 curation.getReviewedAt(),
                 curation.getCreatedAt(),

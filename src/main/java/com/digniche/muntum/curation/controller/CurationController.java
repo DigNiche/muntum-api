@@ -73,8 +73,7 @@ public class CurationController {
             @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
             int size
     ) {
-        PageResponse<CurationListResponse> response =
-                curationService.getMyCurations(userPrincipal.getUserId(), status, page, size);
+        PageResponse<CurationListResponse> response = curationService.getMyCurations(userPrincipal.getUserId(), status, page, size);
 
         return ResponseEntity.ok(ApiResponse.success("내 큐레이션 목록 조회에 성공했습니다.", response));
     }

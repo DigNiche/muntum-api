@@ -79,14 +79,12 @@ public interface CurationRepository extends JpaRepository<Curation, UUID> {
 
     Optional<Curation> findByIdAndDeletedAtIsNull(UUID curationId);
 
-    // for Curation Like -----------------------------------------------------------------------------
 
     /**
      * 좋아요 누를 수 있는 큐레이션 기준
      * - 공개 프로그램 + 게시된 큐레이션
-     * - 프로그램 조건은 서브쿼리로 둬서, 잠금 조회 때 큐레이션 행만 잠근다
      */
-    String PUBLIC_CURATION_CONDITION = """
+    String CURATION_LIKEABLE_CONDITION = """
           c.id = :curationId
           AND c.publicationStatus = :publicationStatus
           AND c.deletedAt IS NULL
@@ -99,22 +97,13 @@ public interface CurationRepository extends JpaRepository<Curation, UUID> {
           )
     """;
 
-    /**
-     * 공개 큐레이션 단건 조회 (좋아요 조회용)
-     */
-    @Query("SELECT c FROM Curation c WHERE " + PUBLIC_CURATION_CONDITION)
-    Optional<Curation> findPublicById(
-            @Param("curationId") UUID curationId,
-            @Param("publicationStatus") CurationPublicationStatus publicationStatus,
-            @Param("programStatuses") List<ProgramStatus> programStatuses
-    );
 
     /**
-     * 공개 큐레이션 단건 잠금 조회 (좋아요 및 좋아요 취소용)
+     * 큐레이션 단건 잠금 조회 (좋아요 및 좋아요 취소용)
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT c FROM Curation c WHERE " + PUBLIC_CURATION_CONDITION)
-    Optional<Curation> findPublicByIdForUpdate(
+    @Query("SELECT c FROM Curation c WHERE " + CURATION_LIKEABLE_CONDITION)
+    Optional<Curation> findLikeableByIdForUpdate(
             @Param("curationId") UUID curationId,
             @Param("publicationStatus") CurationPublicationStatus publicationStatus,
             @Param("programStatuses") List<ProgramStatus> programStatuses
@@ -132,6 +121,7 @@ public interface CurationRepository extends JpaRepository<Curation, UUID> {
     """)
     int increaseLikeCount(@Param("curationId") UUID curationId);
 
+
     /**
      * 큐레이션 좋아요 수 감소 (DB에서 원자적으로)
      */
@@ -142,5 +132,17 @@ public interface CurationRepository extends JpaRepository<Curation, UUID> {
         WHERE c.id = :curationId
     """)
     int decreaseLikeCount(@Param("curationId") UUID curationId);
+
+
+    /**
+     * 큐레이션과 프로그램을 상태 조건 없이 함께 조회 (좋아요 불가 이유 분류용)
+     */
+    @Query("""
+    SELECT c
+    FROM Curation c
+    LEFT JOIN FETCH c.program
+    WHERE c.id = :curationId
+""")
+    Optional<Curation> findWithProgramById(@Param("curationId") UUID curationId);
 
 }

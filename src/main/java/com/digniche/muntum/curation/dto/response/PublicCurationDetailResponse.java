@@ -1,6 +1,7 @@
 package com.digniche.muntum.curation.dto.response;
 
 import com.digniche.muntum.curation.entity.Curation;
+import com.digniche.muntum.curationlike.dto.response.CurationLikeResponse;
 import com.digniche.muntum.user.dto.response.CuratorProfileResponse;
 
 import java.time.LocalDateTime;
@@ -17,13 +18,10 @@ public record PublicCurationDetailResponse(
         String tagline,
         String content,
         List<CurationImageResponse> images,
+        CurationLikeResponse like,
         LocalDateTime createdAt
 ) {
-    public static PublicCurationDetailResponse from(
-            Curation curation,
-            CuratorProfileResponse curator,
-            List<CurationImageResponse> images
-    ) {
+    public static PublicCurationDetailResponse from(Curation curation, CuratorProfileResponse curator, List<CurationImageResponse> images, CurationLikeResponse like) {
         return new PublicCurationDetailResponse(
                 curation.getId(),
                 curation.getProgram().getId(),
@@ -31,6 +29,7 @@ public record PublicCurationDetailResponse(
                 curation.getTagline(),
                 curation.getContent(),
                 images,
+                like,
                 curation.getCreatedAt()
         );
     }

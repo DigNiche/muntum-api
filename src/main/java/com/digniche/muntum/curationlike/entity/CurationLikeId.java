@@ -13,7 +13,7 @@ import java.util.UUID;
 
 /**
  * CurationLike 복합 키 (user_id, curation_id)
- * - equals, hasCode의 비교 대상은 두 필드 값
+ * - equals, hashCode의 비교 대상은 두 필드 값
  */
 @Embeddable
 @Getter

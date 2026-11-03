@@ -6,6 +6,8 @@ import com.digniche.muntum.curation.dto.response.*;
 import com.digniche.muntum.curation.entity.Curation;
 import com.digniche.muntum.curation.entity.CurationStatus;
 import com.digniche.muntum.curation.repository.CurationRepository;
+import com.digniche.muntum.curationlike.dto.response.CurationLikeResponse;
+import com.digniche.muntum.curationlike.service.CurationLikeQueryService;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
@@ -37,6 +39,7 @@ public class CurationService {
     private final CurationRepository curationRepository;
     private final CurationImageService curationImageService;
     private final CuratorProfileService curatorProfileService;
+    private final CurationLikeQueryService curationLikeQueryService;
     private final ProgramRepository programRepository;
     private final ProgramService programService;
 
@@ -51,7 +54,7 @@ public class CurationService {
 
         List<CurationImageResponse> images = curationImageService.uploadImages(savedCuration, files);
         // 제거 : List<CurationImageResponse> images = curationImageService.getOrderedImages(savedCuration.getId());
-        return CurationDetailResponse.from(savedCuration, images);
+        return CurationDetailResponse.from(savedCuration, images, CurationLikeResponse.of(savedCuration, false));
 
     }
 
@@ -61,12 +64,12 @@ public class CurationService {
     public PageResponse<CurationListResponse> getMyCurations(UUID curatorId, CurationStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Curation> curations =
-                status == null
-                    ? curationRepository.findAllByCuratorIdAndDeletedAtIsNull(curatorId, pageable)
-                    : curationRepository.findByCuratorIdAndStatusAndDeletedAtIsNull(curatorId, status, pageable);
+        Page<Curation> curations = status == null ? curationRepository.findAllByCuratorIdAndDeletedAtIsNull(curatorId, pageable)
+                                                  : curationRepository.findByCuratorIdAndStatusAndDeletedAtIsNull(curatorId, status, pageable);
 
-        Page<CurationListResponse> responses = curations.map(CurationListResponse::from);
+        Map<UUID, CurationLikeResponse> likeMap = curationLikeQueryService.getLikes(curations.getContent(), curatorId);
+
+        Page<CurationListResponse> responses = curations.map(curation -> CurationListResponse.from(curation, likeMap.get(curation.getId())));
         return PageResponse.from(responses);
     }
 
@@ -79,7 +82,7 @@ public class CurationService {
 
         List<CurationImageResponse> images = curationImageService.getOrderedImages(curationId);
 
-        return CurationDetailResponse.from(curation, images);
+        return CurationDetailResponse.from(curation, images, curationLikeQueryService.getLike(curation, curatorId));
     }
 
 
@@ -99,7 +102,7 @@ public class CurationService {
 
         Page<ManagerCurationListResponse> responses =
                 curations.map(curation ->
-                        ManagerCurationListResponse.from(curation, curatorMap.get(curation.getCuratorId()))
+                        ManagerCurationListResponse.from(curation, curatorMap.get(curation.getCuratorId()), CurationLikeResponse.of(curation, false)) // 관리자는 좋아요 사용 x
                 );
 
         return PageResponse.from(responses);
@@ -113,7 +116,7 @@ public class CurationService {
 
         List<CurationImageResponse> images = curationImageService.getOrderedImages(curation.getId());
 
-        return ManagerCurationDetailResponse.from(curation, curator, images);
+        return ManagerCurationDetailResponse.from(curation, curator, images, CurationLikeResponse.of(curation, false)); // 관리자는 좋아요 사용 x
     }
 
     /**
@@ -233,7 +236,7 @@ public class CurationService {
 
         List<CurationImageResponse> images = curationImageService.getOrderedImages(curationId);
 
-        return CurationDetailResponse.from(curation, images);
+        return CurationDetailResponse.from(curation, images, curationLikeQueryService.getLike(curation, curatorId));
     }
 
     @Transactional
@@ -251,7 +254,7 @@ public class CurationService {
 
         List<CurationImageResponse> images = curationImageService.getOrderedImages(curationId);
 
-        return CurationDetailResponse.from(curation, images);
+        return CurationDetailResponse.from(curation, images, curationLikeQueryService.getLike(curation, curatorId));
     }
 
     private Curation getMyCurationForUpdate(UUID curationId, UUID curatorId) {

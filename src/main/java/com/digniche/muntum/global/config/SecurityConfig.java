@@ -71,8 +71,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/announcements", "/api/v1/announcements/**",
                                                         "/api/v1/keywords/tagged", "/api/v1/keywords/top",
-                                                        "/api/v1/programs", "/api/v1/programs/**",
-                                                        "/api/v1/curations/*/like"   // 좋아요 수는 비로그인에게도 보임 (PUT/DELETE는 인증 필요)
+                                                        "/api/v1/programs", "/api/v1/programs/**"
 
                         ).permitAll()
                         .anyRequest().authenticated()

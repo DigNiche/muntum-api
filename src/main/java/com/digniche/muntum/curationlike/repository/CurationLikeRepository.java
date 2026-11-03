@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -49,4 +51,17 @@ public interface CurationLikeRepository extends JpaRepository<CurationLike, Cura
           AND l.id.curationId = :curationId
     """)
     int deleteByUserIdAndCurationId(@Param("userId") UUID userId, @Param("curationId") UUID curationId);
+
+
+    /**
+     * 주어진 큐레이션 중 사용자가 좋아요를 누른 큐레이션 id
+     * - 목록의 큐레이션마다 따로 조회하지 않도록(N+1 방지) IN 조회 1번
+     */
+    @Query("""
+        SELECT l.id.curationId
+        FROM CurationLike l
+        WHERE l.id.userId = :userId
+          AND l.id.curationId IN :curationIds
+    """)
+    List<UUID> findLikedCurationIds(@Param("userId") UUID userId, @Param("curationIds") Collection<UUID> curationIds);
 }

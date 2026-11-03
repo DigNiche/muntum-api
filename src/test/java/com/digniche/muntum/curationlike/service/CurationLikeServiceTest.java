@@ -108,48 +108,63 @@ class CurationLikeServiceTest {
     }
 
     @Test
-    void 비공개_큐레이션에는_좋아요를_누를_수_없다() {
+    void 비공개_큐레이션에는_큐레이터_본인도_좋아요를_누르거나_취소할_수_없다() {
         User audience = saveUser(UserRole.AUDIENCE);
         Curation curation = savePublishedCuration(ProgramStatus.ACTIVE);
-        curation.requestChanges(UUID.randomUUID(), "수정 요청 사유", CurationPublicationStatus.UNPUBLISHED);
+        curationLikeService.like(curation.getId(), audience.getId(), UserRole.AUDIENCE);
+        // 좋아요 수 갱신 쿼리가 영속성 컨텍스트를 비우므로 다시 읽어 상태를 바꾼다
+        em.find(Curation.class, curation.getId())
+                .requestChanges(UUID.randomUUID(), "수정 요청 사유", CurationPublicationStatus.UNPUBLISHED);
         em.flush();
 
-        assertThatThrownBy(() -> curationLikeService.like(curation.getId(), audience.getId(), UserRole.AUDIENCE))
-                .isInstanceOf(BusinessException.class)
-                .extracting(e -> ((BusinessException) e).getErrorCode())
-                .isEqualTo(ErrorCode.CURATION_NOT_FOUND);
-        assertThat(likeRowCount(curation.getId())).isZero();
-        assertThat(storedLikeCount(curation.getId())).isZero();
+        assertErrorCode(() -> curationLikeService.like(curation.getId(), curation.getCuratorId(), UserRole.CURATOR),
+                ErrorCode.UNPUBLISHED_CURATION_NOT_LIKEABLE);
+        assertErrorCode(() -> curationLikeService.cancelLike(curation.getId(), audience.getId(), UserRole.AUDIENCE),
+                ErrorCode.UNPUBLISHED_CURATION_NOT_LIKEABLE);
+        // 비공개가 되어도 받은 좋아요는 그대로 남는다
+        assertThat(likeRowCount(curation.getId())).isEqualTo(1);
+        assertThat(storedLikeCount(curation.getId())).isEqualTo(1);
     }
 
     @Test
-    void 삭제된_큐레이션에는_좋아요를_누를_수_없다() {
+    void 없거나_삭제된_큐레이션에는_좋아요를_누르거나_취소할_수_없다() {
         User audience = saveUser(UserRole.AUDIENCE);
         Curation curation = savePublishedCuration(ProgramStatus.ACTIVE);
         curation.softDelete(curation.getCuratorId());
         em.flush();
 
-        assertCurationNotFound(() -> curationLikeService.like(curation.getId(), audience.getId(), UserRole.AUDIENCE));
+        assertErrorCode(() -> curationLikeService.like(UUID.randomUUID(), audience.getId(), UserRole.AUDIENCE),
+                ErrorCode.CURATION_NOT_FOUND);
+        assertErrorCode(() -> curationLikeService.like(curation.getId(), audience.getId(), UserRole.AUDIENCE),
+                ErrorCode.CURATION_NOT_FOUND);
+        assertErrorCode(() -> curationLikeService.cancelLike(curation.getId(), audience.getId(), UserRole.AUDIENCE),
+                ErrorCode.CURATION_NOT_FOUND);
         assertThat(likeRowCount(curation.getId())).isZero();
     }
 
     @Test
-    void 숨김_프로그램의_큐레이션에는_좋아요를_누를_수_없다() {
+    void 숨김_프로그램의_큐레이션에는_좋아요를_누르거나_취소할_수_없다() {
         User audience = saveUser(UserRole.AUDIENCE);
         Curation curation = savePublishedCuration(ProgramStatus.HIDDEN);
 
-        assertCurationNotFound(() -> curationLikeService.like(curation.getId(), audience.getId(), UserRole.AUDIENCE));
+        assertErrorCode(() -> curationLikeService.like(curation.getId(), audience.getId(), UserRole.AUDIENCE),
+                ErrorCode.HIDDEN_PROGRAM_NOT_LIKEABLE);
+        assertErrorCode(() -> curationLikeService.cancelLike(curation.getId(), audience.getId(), UserRole.AUDIENCE),
+                ErrorCode.HIDDEN_PROGRAM_NOT_LIKEABLE);
         assertThat(likeRowCount(curation.getId())).isZero();
     }
 
     @Test
-    void 삭제된_프로그램의_큐레이션에는_좋아요를_누를_수_없다() {
+    void 삭제된_프로그램의_큐레이션에는_좋아요를_누르거나_취소할_수_없다() {
         User audience = saveUser(UserRole.AUDIENCE);
         Curation curation = savePublishedCuration(ProgramStatus.ACTIVE);
         curation.getProgram().softDelete(UUID.randomUUID());
         em.flush();
 
-        assertCurationNotFound(() -> curationLikeService.like(curation.getId(), audience.getId(), UserRole.AUDIENCE));
+        assertErrorCode(() -> curationLikeService.like(curation.getId(), audience.getId(), UserRole.AUDIENCE),
+                ErrorCode.DELETED_PROGRAM_NOT_LIKEABLE);
+        assertErrorCode(() -> curationLikeService.cancelLike(curation.getId(), audience.getId(), UserRole.AUDIENCE),
+                ErrorCode.DELETED_PROGRAM_NOT_LIKEABLE);
         assertThat(likeRowCount(curation.getId())).isZero();
     }
 
@@ -193,35 +208,11 @@ class CurationLikeServiceTest {
         assertThat(likeRowCount(curation.getId())).isEqualTo(1);
     }
 
-    @Test
-    void 조회하면_좋아요_수와_내가_눌렀는지가_나오고_비로그인은_수만_보인다() {
-        User liker = saveUser(UserRole.AUDIENCE);
-        User other = saveUser(UserRole.CURATOR);
-        Curation curation = savePublishedCuration(ProgramStatus.ACTIVE);
-        curationLikeService.like(curation.getId(), liker.getId(), UserRole.AUDIENCE);
-
-        assertThat(curationLikeService.getLike(curation.getId(), liker.getId()))
-                .isEqualTo(new CurationLikeResponse(1, true));
-        assertThat(curationLikeService.getLike(curation.getId(), other.getId()))
-                .isEqualTo(new CurationLikeResponse(1, false));
-        assertThat(curationLikeService.getLike(curation.getId(), null))
-                .isEqualTo(new CurationLikeResponse(1, false));
-    }
-
-    @Test
-    void 비공개_큐레이션은_좋아요를_조회할_수_없다() {
-        Curation curation = savePublishedCuration(ProgramStatus.ACTIVE);
-        curation.requestChanges(UUID.randomUUID(), "수정 요청 사유", CurationPublicationStatus.UNPUBLISHED);
-        em.flush();
-
-        assertCurationNotFound(() -> curationLikeService.getLike(curation.getId(), null));
-    }
-
-    private void assertCurationNotFound(org.assertj.core.api.ThrowableAssert.ThrowingCallable call) {
+    private void assertErrorCode(org.assertj.core.api.ThrowableAssert.ThrowingCallable call, ErrorCode errorCode) {
         assertThatThrownBy(call)
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).getErrorCode())
-                .isEqualTo(ErrorCode.CURATION_NOT_FOUND);
+                .isEqualTo(errorCode);
     }
 
     private User saveUser(UserRole role) {
