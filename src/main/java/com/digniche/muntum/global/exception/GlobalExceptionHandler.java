@@ -11,7 +11,9 @@ import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.entity.UserTermsType;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.digniche.muntum.program.entity.ReservationType;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -25,6 +27,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+
+import java.util.Optional;
 
 /**
  * DispatcherServlet 진입 후 내에서의 전반적인 예외 처리
@@ -158,6 +162,24 @@ public class GlobalExceptionHandler {
                 .status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), message));
     }
+    // DB 접근 예외: 데드락·락 대기 시간 초과면 "잠시 후 다시 시도"(G004), 그 밖은 서버 오류
+    // G004는 5xx라 장애 집계에 섞이므로, 고정 태그를 붙인 WARN 로그로 실제 장애와 구분해 셀 수 있게 한다
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataAccessException(DataAccessException e, HttpServletRequest request) {
+        Optional<Integer> retryableErrorCode = RetryableLockFailure.findErrorCode(e);
+        if (retryableErrorCode.isEmpty()) {
+            return handleException(e);
+        }
+
+        log.warn("[RETRYABLE_LOCK_CONFLICT] mysqlErrorCode={} {} {}",
+                retryableErrorCode.get(), request.getMethod(), request.getRequestURI());
+
+        ErrorCode errorCode = ErrorCode.RETRY_LATER;
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), errorCode.getMessage()));
+    }
+
     // 이 외 모든 Catch 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
