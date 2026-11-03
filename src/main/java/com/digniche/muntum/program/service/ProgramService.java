@@ -333,9 +333,7 @@ public class ProgramService {
                 .toList();
         ProgramReactionSummaryResponse reaction = programReactionService.getReactionSummary(programId, userId);
         CuratorProfileResponse curator = curatorProfileService.getCuratorProfile(program.getCreatedBy());
-        List<PublicCurationSummaryResponse> curations =
-                publicCurationQueryService
-                        .getAllSummaries(programId);
+        List<PublicCurationSummaryResponse> curations = publicCurationQueryService.getAllSummaries(programId, userId);
         return ProgramResponse.from(program, images, keywords, reaction, curator, curations);
     }
 
@@ -409,9 +407,7 @@ public class ProgramService {
      *  공개 조회용 (ACTIVE, ENDED)
      */
     private Program getPublicViewableProgram(UUID programId) {
-        return programRepository.findByIdAndDeletedAtIsNullAndStatusIn(
-                        programId, PUBLIC_VIEWABLE)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
+        return programRepository.findByIdAndDeletedAtIsNullAndStatusIn(programId, PUBLIC_VIEWABLE).orElseThrow(() -> new BusinessException(ErrorCode.PROGRAM_NOT_FOUND));
     }
 
     /**

@@ -190,10 +190,7 @@ public class ProgramController {
      * 프로그램 단건 조회
      */
     @GetMapping("/{program_id}")
-    public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(
-            @PathVariable("program_id") UUID programId,
-            @AuthenticationPrincipal UserPrincipal userPrincipal
-    ) {
+    public ResponseEntity<ApiResponse<ProgramResponse>> getProgram(@PathVariable("program_id") UUID programId, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         UUID userId = (userPrincipal != null) ? userPrincipal.getUserId() : null;
         ProgramResponse response = programService.getProgram(programId, userId);
 

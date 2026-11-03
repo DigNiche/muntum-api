@@ -89,6 +89,13 @@ public enum ErrorCode {
     CURATION_IMAGE_NOT_FOUND("CU008", "존재하지 않는 큐레이션 이미지입니다", HttpStatus.NOT_FOUND),
     CURATION_NOT_DELETABLE("CU009", "현재 상태에서는 큐레이션을 삭제할 수 없습니다.", HttpStatus.CONFLICT),
     CURATION_NOT_RESUBMITTABLE("CU010", "수정요청 상태의 큐레이션만 다시 등록할 수 있습니다.", HttpStatus.CONFLICT),
+
+    // 큐레이션 좋아요
+    UNPUBLISHED_CURATION_NOT_LIKEABLE("CUL001", "비공개 큐레이션에는 좋아요를 사용할 수 없습니다", HttpStatus.CONFLICT),
+    DELETED_PROGRAM_NOT_LIKEABLE("CUL002", "삭제된 프로그램의 큐레이션에는 좋아요를 사용할 수 없습니다", HttpStatus.CONFLICT),
+    HIDDEN_PROGRAM_NOT_LIKEABLE("CUL003", "숨김 처리된 프로그램의 큐레이션에는 좋아요를 사용할 수 없습니다", HttpStatus.CONFLICT),
+    CURATION_STATE_CHANGED("CUL004", "방금 전 큐레이션의 상태가 변경되었습니다. 다시 시도해주세요", HttpStatus.CONFLICT),
+
     // 카카오 GeoCoordinate
     ADDRESS_NOT_FOUD("G001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 
@@ -114,6 +121,7 @@ public enum ErrorCode {
     INVALID_REQUEST("007", "잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
     FILE_SIZE_EXCEEDED("G002", "업로드 가능한 파일 크기를 초과했습니다", HttpStatus.PAYLOAD_TOO_LARGE),
     UNSUPPORTED_MEDIA_TYPE("G003", "지원하지 않는 요청 형식입니다.", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+    RETRY_LATER("G004", "요청이 겹쳐 처리하지 못했습니다. 잠시 후 다시 시도해주세요", HttpStatus.SERVICE_UNAVAILABLE), // 데드락·락 대기 시간 초과 (같은 요청을 다시 보내면 됨)
 
     // 500~
     SERVER_ERROR("E001", "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR);

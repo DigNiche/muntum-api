@@ -14,9 +14,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "curations",
-        indexes = {
+@Table(name = "curations", indexes = {
                 @Index(
                         name = "idx_program_curations_curator_created",
                         columnList = "curator_id, created_at"
@@ -39,12 +37,7 @@ public class Curation extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
     /*
@@ -52,77 +45,36 @@ public class Curation extends BaseEntity {
      * 승인 시 기존 또는 신규 프로그램과 연결.
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(
-            name = "program_id",
-            foreignKey = @ForeignKey(
-                    name = "fk_program_curations_program"
-            )
-    )
+    @JoinColumn(name = "program_id", foreignKey = @ForeignKey(name = "fk_program_curations_program"))
     private Program program;
 
-    @Column(
-            name = "curator_id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "curator_id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID curatorId;
 
-    @Column(
-            name = "submitted_program_title",
-            nullable = false,
-            length = 100
-    )
+    @Column(name = "submitted_program_title", nullable = false, length = 100)
     private String submittedProgramTitle;
 
-    @Column(
-            name = "submitted_place",
-            nullable = false,
-            length = 255
-    )
+    @Column(name = "submitted_place", nullable = false, length = 255)
     private String submittedPlace;
 
-    @Column(
-            name = "tagline",
-            nullable = false,
-            length = 255
-    )
+    @Column(name = "tagline", nullable = false, length = 255)
     private String tagline;
 
-    @Column(
-            name = "content",
-            nullable = false,
-            columnDefinition = "TEXT"
-    )
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "status",
-            nullable = false,
-            length = 20
-    )
+    @Column(name = "status", nullable = false, length = 20)
     private CurationStatus status = CurationStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "publication_status",
-            nullable = false,
-            length = 20
-    )
-    private CurationPublicationStatus publicationStatus
-            = CurationPublicationStatus.UNPUBLISHED;
+    @Column(name = "publication_status", nullable = false, length = 20)
+    private CurationPublicationStatus publicationStatus = CurationPublicationStatus.UNPUBLISHED;
 
-    @Column(
-            name = "change_request_reason",
-            length = 1000
-    )
+    @Column(name = "change_request_reason", length = 1000)
     private String changeRequestReason;
 
-    @Column(
-            name = "reviewed_by",
-            columnDefinition = "BINARY(16)"
-    )
+    @Column(name = "reviewed_by", columnDefinition = "BINARY(16)")
     private UUID reviewedBy;
 
     @Column(name = "reviewed_at")
@@ -131,68 +83,45 @@ public class Curation extends BaseEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(
-            name = "deleted_by",
-            columnDefinition = "BINARY(16)"
-    )
+    @Column(name = "deleted_by", columnDefinition = "BINARY(16)")
     private UUID deletedBy;
 
+    // Curation Like 집계
+    @Column(name = "like_count", nullable = false, insertable = false, updatable = false) // 증감은 저장소의 UPDATE 쿼리로만
+    private int likeCount;
+
     @Builder
-    public Curation(
-            UUID curatorId,
-            String submittedProgramTitle,
-            String submittedPlace,
-            String tagline,
-            String content
-    ) {
+    public Curation(UUID curatorId, String submittedProgramTitle, String submittedPlace, String tagline, String content) {
         this.curatorId = curatorId;
         this.submittedProgramTitle = submittedProgramTitle;
         this.submittedPlace = submittedPlace;
         this.tagline = tagline;
         this.content = content;
         this.status = CurationStatus.PENDING;
-        this.publicationStatus =
-                CurationPublicationStatus.UNPUBLISHED;
+        this.publicationStatus = CurationPublicationStatus.UNPUBLISHED;
     }
 
-    public void approve(
-            Program program,
-            UUID reviewerId
-    ) {
+    public void approve(Program program, UUID reviewerId) {
         this.program = program;
         this.status = CurationStatus.APPROVED;
-        this.publicationStatus =
-                CurationPublicationStatus.PUBLISHED;
+        this.publicationStatus = CurationPublicationStatus.PUBLISHED;
         this.changeRequestReason = null;
         this.reviewedBy = reviewerId;
         this.reviewedAt = LocalDateTime.now();
     }
 
-    public void requestChanges(
-            UUID reviewerId,
-            String changeRequestReason,
-            CurationPublicationStatus requestedPublicationStatus
-    ) {
-        boolean wasUnpublished =
-                this.publicationStatus == CurationPublicationStatus.UNPUBLISHED;
-
+    public void requestChanges(UUID reviewerId, String changeRequestReason, CurationPublicationStatus requestedPublicationStatus) {
+        boolean wasUnpublished = this.publicationStatus == CurationPublicationStatus.UNPUBLISHED;
         this.status = CurationStatus.CHANGES_REQUESTED;
-
         this.publicationStatus = wasUnpublished
                 ? CurationPublicationStatus.UNPUBLISHED
                 : requestedPublicationStatus;
-
         this.changeRequestReason = changeRequestReason;
         this.reviewedBy = reviewerId;
         this.reviewedAt = LocalDateTime.now();
     }
 
-    public void updateContent(
-            String submittedProgramTitle,
-            String submittedPlace,
-            String tagline,
-            String content
-    ) {
+    public void updateContent(String submittedProgramTitle, String submittedPlace, String tagline, String content) {
         this.submittedProgramTitle = submittedProgramTitle;
         this.submittedPlace = submittedPlace;
         this.tagline = tagline;
@@ -201,11 +130,8 @@ public class Curation extends BaseEntity {
 
     public void resubmit() {
         if (this.status != CurationStatus.CHANGES_REQUESTED) {
-            throw new BusinessException(
-                    ErrorCode.CURATION_NOT_RESUBMITTABLE
-            );
+            throw new BusinessException(ErrorCode.CURATION_NOT_RESUBMITTABLE);
         }
-
         this.status = CurationStatus.PENDING;
         this.reviewedBy = null;
         this.reviewedAt = null;
