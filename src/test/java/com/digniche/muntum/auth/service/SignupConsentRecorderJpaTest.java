@@ -9,7 +9,11 @@ import com.digniche.muntum.user.entity.*;
 import com.digniche.muntum.user.repository.TermsRepository;
 import com.digniche.muntum.user.repository.UserRepository;
 import com.digniche.muntum.user.repository.UserTermsAgreementRepository;
-
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import jakarta.persistence.EntityManager;
 
 import org.junit.jupiter.api.Test;
@@ -36,21 +40,36 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@Testcontainers(disabledWithoutDocker = true)
 @AutoConfigureTestDatabase(
         replace = AutoConfigureTestDatabase.Replace.NONE
 )
-@ActiveProfiles("local")
+@ActiveProfiles("test")
 @Import({
         SignupConsentRecorder.class,
         AuditConfig.class,
         SignupConsentRecorderJpaTest.TestAuditorConfig.class
 })
 @TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=validate",
+        "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.flyway.enabled=false"
 })
 
 class SignupConsentRecorderJpaTest {
+
+    @Container
+    static final MySQLContainer<?> mysql =
+            new MySQLContainer<>("mysql:8.0.43")
+                    .withDatabaseName("muntum_test")
+                    .withUsername("test")
+                    .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureDatabase(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", mysql::getJdbcUrl);
+        registry.add("spring.datasource.username", mysql::getUsername);
+        registry.add("spring.datasource.password", mysql::getPassword);
+    }
 
     @Autowired
     private UserRepository userRepository;
