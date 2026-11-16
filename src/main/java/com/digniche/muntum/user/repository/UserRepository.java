@@ -47,4 +47,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             @Param("excludedStatus") UserStatus excludedStatus,
             Pageable pageable
     );
+
+    boolean existsByIdAndStatus(UUID id, UserStatus status);
 }

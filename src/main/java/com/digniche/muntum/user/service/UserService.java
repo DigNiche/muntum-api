@@ -18,6 +18,7 @@ import com.digniche.muntum.user.dto.request.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.request.PasswordChangeRequest;
 import com.digniche.muntum.user.dto.request.TermsConsentListRequest;
 import com.digniche.muntum.user.dto.request.TermsConsentRequest;
+import com.digniche.muntum.user.dto.response.UserConsentStatusResponse;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.entity.UserTermsAgreement;
@@ -55,6 +56,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.digniche.muntum.programreaction.repository.ProgramReactionRepository;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.digniche.muntum.user.entity.Terms;
+import com.digniche.muntum.user.entity.UserTermsType;
+import java.util.EnumSet;
+import com.digniche.muntum.auth.social.KakaoTokenVerifier;
+import com.digniche.muntum.auth.social.KakaoTokenClient;
 
 /**
  * 사용자 서비스
@@ -83,6 +89,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AppleTokenVerifier appleTokenVerifier;
     private final AppleTokenClient appleTokenClient;
+    private final KakaoTokenVerifier kakaoTokenVerifier;
+    private final KakaoTokenClient kakaoTokenClient;
     private final SocialTokenCipher socialTokenCipher;
     private final PlatformTransactionManager transactionManager;
 
@@ -129,25 +137,89 @@ public class UserService {
     }
 
     /**
-     * 사용자 약관 정보 변경
+     * 마이페이지에서 선택 약관 동의 상태 변경
+     *
+     * 동의:
+     *   현재 공개된 문서의 버전 필요
+     *
+     * 철회:
+     *   원래 약관 문서가 더 이상 활성화되지 않은 과거 동의 기록도 언제든 철회 가능
      */
     @Transactional
-    public void updateTermsConsent(UUID userId, TermsConsentListRequest request) {
-        UserTermsAgreement terms = userTermsAgreementRepository
-                .findTopByUserIdOrderByCreatedAtDesc(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.TERMS_NOT_FOUND));
+    public void updateTermsConsent(
+            UUID userId,
+            TermsConsentListRequest request
+    ) {
+        // 동시에 발생한 요청들이 서로의 약관 버전 정보를 덮어쓰지 않도록 현재 기록을 락
+        UserTermsAgreement agreement =
+                userTermsAgreementRepository
+                        .findTopByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.TERMS_NOT_FOUND));
 
-        for (TermsConsentRequest consent : request.terms()) {
-            if (consent.termType().isRequired()) {
-                throw new BusinessException(ErrorCode.REQUIRED_TERMS_CANNOT_DISAGREE);
+        EnumSet<UserTermsType> submittedTypes =
+                EnumSet.noneOf(UserTermsType.class);
+
+        LocalDateTime recordedAt = LocalDateTime.now();
+
+        for (TermsConsentRequest choice : request.terms()) {
+
+            if (choice == null || choice.termType() == null) {
+                throw new BusinessException(ErrorCode.INVALID_TERMS_CONSENT_UPDATE);
             }
-            if (consent.agreed()) {
-                terms.agreeTerm(consent.termType());
+
+            UserTermsType type = choice.termType();
+
+            // 동일한 약관 유형을 중복 제출할 수 없다.
+            if (!submittedTypes.add(type)) {
+                throw new BusinessException(ErrorCode.INVALID_TERMS_CONSENT_UPDATE);
             }
-            else {
-                Boolean isOptOutAllowed = terms.disagreeTerm(consent.termType());
+
+            // 서비스 이용약관과 개인정보처리방침은
+            // 선택 약관 설정에서 변경할 수 없다.
+            if (type.requiresSignupConsent()
+                    || type.isPrivacyNotice()) {
+                throw new BusinessException(ErrorCode.INVALID_TERMS_CONSENT_UPDATE);
             }
+
+            if (!choice.agreed()) {
+
+                // 동의 철회에는 활성 문서나 버전이 필요하지 않음
+                // 이를 통해 과거 위치정보 동의 철회 권한 유지
+                agreement.updateOptionalConsent(type, false, null, recordedAt);
+
+                continue;
+            }
+            // 구버전 앱 위치 접근 권한 호환 처리
+            // TODO: 구버전 앱 지원 종료 후 제거
+            if (type == UserTermsType.LOCATION_TERMS && (choice.version() == null || choice.version().isBlank())) {
+                agreement.recordLegacyLocationPermission(recordedAt);
+
+                continue;
+            }
+            // 새로운 동의에는 실제로 존재하는 문서 필요
+            Terms published = termsRepository
+                    .findByTypeAndActiveTrueAndDeletedAtIsNull(type)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.OPTIONAL_TERMS_NOT_AVAILABLE));
+
+            if (!TermsAvailability.canCollectConsent(published, recordedAt)) {
+                throw new BusinessException(ErrorCode.OPTIONAL_TERMS_NOT_AVAILABLE);
+            }
+
+            if (choice.version() == null
+                    || choice.version().isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_TERMS_CONSENT_UPDATE);
+            }
+
+            if (!published.getVersion().equals(choice.version())) {
+                throw new BusinessException(ErrorCode.TERMS_VERSION_MISMATCH);
+            }
+
+            // 문서 버전 검증 완료
+            agreement.updateOptionalConsent(type, true, published.getVersion(), recordedAt
+            );
         }
+
+        // 명시적으로 save()를 호출할 필요X, 이 엔티티는 현재 트랜잭션에서 관리, 실제 변경 사항은 JPA 변경 감지로 저장
     }
 
     /**
@@ -191,14 +263,60 @@ public class UserService {
         if (socialAccount == null) { verifyPasswordWithdrawal(user, request); }
         else {
             verifySocialWithdrawal(socialAccount, request);
-            log.info("[APPLE_WITHDRAW_REAUTH_AND_REVOKE_COMPLETED] userId={}", userId);
+            log.info(
+                    "[SOCIAL_WITHDRAW_REAUTH_AND_REVOKE_COMPLETED] provider={}, userId={}",
+                    socialAccount.getProvider(),
+                    userId
+            );
         }
 
-        // Transaction : 비밀번호 확인과 Apple 통신 종료 후, DB 접근 작업들만 실행
+        // 외부 인증 및 연결 해제 완료 후 DB 탈퇴 처리
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
 
-        transactionTemplate.executeWithoutResult(status -> completeWithdrawal(user, accessToken));
+        try {
+            transactionTemplate.executeWithoutResult(
+                    status -> completeWithdrawal(user)
+            );
+        } catch (RuntimeException exception) {
+            log.error(
+                    "[WITHDRAW_TRANSACTION_ERROR] userId={}, provider={}, exceptionType={}",
+                    userId,
+                    socialAccount == null
+                            ? "EMAIL"
+                            : socialAccount.getProvider(),
+                    exception.getClass().getSimpleName()
+            );
+
+            throw exception;
+        }
         log.info("[WITHDRAW_DB_DELETE_COMPLETED] userId={}",userId);
+
+        // MySQL 회원 삭제가 커밋된 이후 Redis 세션 삭제
+        try {
+            refreshTokenService.delete(userId);
+        } catch (RuntimeException exception) {
+            log.error(
+                    "[WITHDRAW_REFRESH_TOKEN_DELETE_FAILED] userId={}",
+                    userId
+            );
+        }
+
+        try {
+            long remainingMillis =
+                    authService.calculateTokenTtl(accessToken);
+
+            if (remainingMillis > 0) {
+                accessTokenService.addToWithdrawalList(
+                        accessToken,
+                        remainingMillis
+                );
+            }
+        } catch (RuntimeException exception) {
+            log.error(
+                    "[WITHDRAW_ACCESS_TOKEN_INVALIDATION_FAILED] userId={}",
+                    userId
+            );
+        }
     }
 
 
@@ -241,6 +359,14 @@ public class UserService {
      * 소셜 가입 회원 apple 재인증 및 철회
      */
     private void verifySocialWithdrawal(SocialAccount socialAccount, WithdrawRequest request) {
+
+        // Kakao 회원 탈퇴
+        if (socialAccount.getProvider() == SocialProvider.KAKAO) {
+            verifyKakaoWithdrawal(socialAccount, request);
+            return;
+        }
+
+        // 기존 Apple 회원 탈퇴
         if (socialAccount.getProvider() != SocialProvider.APPLE) {
             throw new BusinessException(ErrorCode.UNSUPPORTED_SOCIAL_PROVIDER);
         }
@@ -279,6 +405,45 @@ public class UserService {
     }
 
     /**
+     * Kakao 소셜 회원 재인증 및 연결 해제
+     */
+    private void verifyKakaoWithdrawal(
+            SocialAccount socialAccount,
+            WithdrawRequest request
+    ) {
+        // 1. Kakao 재인증 정보 확인
+        if (request.token() == null || request.token().isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.SOCIAL_REAUTHENTICATION_REQUIRED
+            );
+        }
+
+        // 2. Kakao Access Token 및 앱 소유권 검증
+        SocialUserInfo requestedUser = kakaoTokenVerifier.verify(
+                new SocialLoginRequest(
+                        SocialProvider.KAKAO,
+                        request.token(),
+                        null,
+                        null
+                )
+        );
+
+        // 3. 실제 탈퇴 요청 계정과 Kakao 사용자 ID 비교
+        String savedProviderUserId = socialAccount.getProviderUserId();
+
+        if (!savedProviderUserId.equals(requestedUser.providerUserId())) {
+            throw new BusinessException(ErrorCode.INVALID_SOCIAL_TOKEN);
+        }
+
+        // 4. DB 삭제 전 Kakao 연결 해제
+        kakaoTokenClient.unlink(
+                request.token(),
+                savedProviderUserId
+        );
+    }
+
+
+    /**
      * 철회할 refresh token 선택 메서드 추가
      */
     private String resolveRefreshTokenForRevocation(SocialAccount socialAccount, AppleTokenResponse tokenResponse) {
@@ -302,7 +467,7 @@ public class UserService {
     /**
      * 탈퇴 사용자에 대한 처리
      */
-    private void completeWithdrawal(User user, String accessToken) {
+    private void completeWithdrawal(User user) {
         UUID userId = user.getId();
 //        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         String role = user.getRole().name();
@@ -382,12 +547,6 @@ public class UserService {
                 user.softDelete(userId);
          현재 Access Token 블랙리스트 등록
          */
-        long remainingMillis = authService.calculateTokenTtl(accessToken);
-
-        if (remainingMillis > 0) {
-            accessTokenService.addToWithdrawalList(accessToken, remainingMillis);
-        }
-        refreshTokenService.delete(userId);
 
         /* 회원 탈퇴 N년 후 정보 완전 파기
             @Scheduled(cron = "0 0 3 * * *")
@@ -403,5 +562,19 @@ public class UserService {
                 userProfileImageService.deleteStoredImage(user.getProfileImageUrl());
             }
         });
+    }
+
+    @Transactional(readOnly = true)
+    public UserConsentStatusResponse getTermsConsent(UUID userId) {
+        UserTermsAgreement agreement =
+                userTermsAgreementRepository
+                        .findTopByUserIdOrderByCreatedAtDesc(userId)
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        ErrorCode.TERMS_NOT_FOUND
+                                )
+                        );
+
+        return UserConsentStatusResponse.from(agreement);
     }
 }

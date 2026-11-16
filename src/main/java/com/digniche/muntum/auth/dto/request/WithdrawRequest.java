@@ -10,6 +10,8 @@ package com.digniche.muntum.auth.dto.request;
  * - token
  * - authorizationCode
  * - nonce 사용
+ * Kakao 회원:
+ * - token (Kakao Access Token) 사용
  */
 public record WithdrawRequest(
 

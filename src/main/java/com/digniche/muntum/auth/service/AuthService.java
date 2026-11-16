@@ -12,9 +12,7 @@ import com.digniche.muntum.global.security.jwt.JwtProvider;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.user.entity.*;
-import com.digniche.muntum.user.repository.TermsRepository;
 import com.digniche.muntum.user.repository.UserRepository;
-import com.digniche.muntum.user.repository.UserTermsAgreementRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.digniche.muntum.global.analytics.event.SignupCompletedEvent;
 import org.springframework.context.ApplicationEventPublisher;
-
-import java.time.LocalDateTime;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import java.util.UUID;
 
 /**
@@ -36,91 +34,140 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final UserTermsAgreementRepository userTermsAgreementRepository;
-    private final TermsRepository termsRepository;
+    private final SignupConsentRecorder signupConsentRecorder;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
     private final TokenIssuer tokenIssuer;
     private final ApplicationEventPublisher eventPublisher;
     private final EmailVerificationRedisService emailVerificationRedisService;
+    private final PlatformTransactionManager transactionManager;
 
     // 회원가입
-    @Transactional
+
     public SignupResponse signup(SignUpRequest request) {
 
-        // 이메일 인증 토큰 검증
-        String verifiedEmail = emailVerificationRedisService.getEmailBySignupToken(request.signupToken());
-        if (verifiedEmail == null || !verifiedEmail.equalsIgnoreCase(request.email().trim())) {
+        // 1. 이메일 인증 토큰 검증
+        String verifiedEmail =
+                emailVerificationRedisService.getEmailBySignupToken(
+                        request.signupToken()
+                );
+
+        if (verifiedEmail == null
+                || !verifiedEmail.equalsIgnoreCase(request.email().trim())) {
             throw new BusinessException(ErrorCode.INVALID_SIGNUP_TOKEN);
         }
 
-        String encodedPassword = passwordEncoder.encode(request.password());
+        String encodedPassword =
+                passwordEncoder.encode(request.password());
 
-        // 신규 가입자 이메일 중복 방지
-        if (userRepository.existsByEmailAndStatusNot(request.email(), UserStatus.DELETED)) {
-            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
-        }
+        // 2. 회원 및 약관 동의 저장
+        TransactionTemplate transactionTemplate =
+                new TransactionTemplate(transactionManager);
 
-        User user = userRepository.save(request.toEntity(encodedPassword, UserRole.AUDIENCE));
-        user.verifyEmail(); // 인증 완료 상태로 생성
+        User committedUser = transactionTemplate.execute(status -> {
 
-        // 사용자 약관 동의 (필수)
-        LocalDateTime agreedAt = user.getCreatedAt();
-        // -- 여기부터 : 약관 버전 리팩토링 후 삭제
-        Terms activeTermsOfService = termsRepository.findByTypeAndActiveTrueAndDeletedAtIsNull(UserTermsType.TERMS_OF_SERVICE)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACTIVE_TERMS_NOT_FOUND));
-        Terms activePrivcyPolicy = termsRepository.findByTypeAndActiveTrueAndDeletedAtIsNull(UserTermsType.PRIVACY_POLICY)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACTIVE_TERMS_NOT_FOUND));
-        // -- 여기까지
-        UserTermsAgreement temrs = UserTermsAgreement.builder()
-                .user(user)
-                .termsOfServiceAt(agreedAt)
-                .privacyPolicyAt(agreedAt)
-                .version(activeTermsOfService.getVersion()) //request.userTermsAgreementVersion())
-                .build();
-        userTermsAgreementRepository.save(temrs);
+            if (userRepository.existsByEmailAndStatusNot(
+                    request.email(),
+                    UserStatus.DELETED
+            )) {
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            }
 
-        // 가입 직후 자동 로그인: 로그인 시각 기록
-        user.updateLastLogin();
-
-        // 토큰 발급 전 DB 제약 오류(이메일 중복 등)체크 위한 flush
-        userRepository.flush();
-
-        // Redis 저장이 포함되므로 모든 검증, 저장 이후에 발급
-        TokenResponse token = tokenIssuer.issue(user);
-
-        eventPublisher.publishEvent(new SignupCompletedEvent(user.getId()));
-
-        // 1회용 토큰 소비: 토큰 발급 이후에 삭제해 발급 실패 시 재시도 가능
-        emailVerificationRedisService.deleteSignupToken(request.signupToken());
-
-        return new SignupResponse(user.getId(), user.getEmail(), user.getCreatedAt(), token);
-    }
-
-
-    // 로그인
-    @Transactional
-    public AuthenticationResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        if (user.getPassword() == null) {
-            throw new BusinessException(
-                    ErrorCode.PASSWORD_LOGIN_NOT_AVAILABLE
+            User user = userRepository.save(
+                    request.toEntity(encodedPassword, UserRole.AUDIENCE)
             );
-        }
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+
+            user.verifyEmail();
+
+            if (request.signupConsent() != null) {
+                signupConsentRecorder.saveExplicitSignup(
+                        user,
+                        request.signupConsent()
+                );
+            } else {
+                signupConsentRecorder.saveLegacyUnverifiedSignup(user);
+            }
+
+            user.updateLastLogin();
+
+            userRepository.flush();
+
+            // 기존 Amplitude 가입 완료 이벤트 유지
+            eventPublisher.publishEvent(
+                    new SignupCompletedEvent(user.getId())
+            );
+
+            return user;
+        });
+
+        if (committedUser == null) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
         }
 
-        if (!user.isActive()) {
-            throw new BusinessException(ErrorCode.INACTIVE_ACCOUNT);
-        }
+        // 3. DB 커밋 완료 후 가입 토큰 소비
+        emailVerificationRedisService.deleteSignupToken(
+                request.signupToken()
+        );
 
-        user.updateLastLogin();
+        // 4. JWT 발급
+        TokenResponse token = tokenIssuer.issue(committedUser);
 
-        return AuthenticationResponse.of(tokenIssuer.issue(user), user);
+        return new SignupResponse(
+                committedUser.getId(),
+                committedUser.getEmail(),
+                committedUser.getCreatedAt(),
+                token
+        );
     }
+
+
+
+
+    public AuthenticationResponse login(LoginRequest request) {
+
+        TransactionTemplate transactionTemplate =
+                new TransactionTemplate(transactionManager);
+
+        User committedUser = transactionTemplate.execute(status -> {
+
+            User user = userRepository.findByEmail(request.email())
+                    .orElseThrow(() ->
+                            new BusinessException(ErrorCode.USER_NOT_FOUND)
+                    );
+
+            if (user.getPassword() == null) {
+                throw new BusinessException(
+                        ErrorCode.PASSWORD_LOGIN_NOT_AVAILABLE
+                );
+            }
+
+            if (!passwordEncoder.matches(
+                    request.password(),
+                    user.getPassword()
+            )) {
+                throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+            }
+
+            if (!user.isActive()) {
+                throw new BusinessException(ErrorCode.INACTIVE_ACCOUNT);
+            }
+
+            user.updateLastLogin();
+
+            return user;
+        });
+
+        if (committedUser == null) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
+
+        return AuthenticationResponse.of(
+                tokenIssuer.issue(committedUser),
+                committedUser
+        );
+    }
+
 
 
     // 로그아웃

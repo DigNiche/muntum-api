@@ -74,6 +74,10 @@ public class SecurityConfig {
                                                         "/api/v1/programs", "/api/v1/programs/**"
 
                         ).permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/v1/terms/active"
+                        ).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
