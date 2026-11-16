@@ -39,6 +39,21 @@ public class TermsController {
                 .body(ApiResponse.success("약관이 등록되었습니다.", response));
     }
 
+    // Public: current published terms for signup
+    @GetMapping("/active")
+    public ResponseEntity<ApiResponse<List<TermsResponse>>>
+    getPublicActiveTerms() {
+
+        List<TermsResponse> response =
+                termsService.getPublicActiveTerms();
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "현재 게시 중인 약관 조회에 성공했습니다.",
+                        response
+                )
+        );
+    }
     // 약관 수정
     @PreAuthorize("hasAnyRole('MANAGER')")
     @PutMapping("/{terms_id}")

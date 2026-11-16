@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -22,4 +24,11 @@ public interface UserTermsAgreementRepository extends JpaRepository<UserTermsAgr
     @Modifying
     @Query("DELETE FROM UserTermsAgreement uta WHERE uta.user.id = :userId")
     void deleteAllByUserId(@Param("userId") UUID userId);
+
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<UserTermsAgreement>
+    findTopByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(
+            UUID userId
+    );
 }

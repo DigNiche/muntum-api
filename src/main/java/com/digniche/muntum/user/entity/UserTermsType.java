@@ -19,4 +19,19 @@ public enum UserTermsType {
 
     private final boolean required;
     private final String description;
+
+    /**
+     * Whether this document requires affirmative acceptance
+     * during the new signup flow.
+     */
+    public boolean requiresSignupConsent() {
+        return this == TERMS_OF_SERVICE;
+    }
+
+    /**
+     * Privacy Policy is a notice, not a consent item.
+     */
+    public boolean isPrivacyNotice() {
+        return this == PRIVACY_POLICY;
+    }
 }

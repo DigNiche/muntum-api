@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.digniche.muntum.auth.service.SocialLoginService;
+import com.digniche.muntum.auth.service.SocialSignupService;
 
 /**
  * 인증/인가 컨트롤러
@@ -29,6 +30,7 @@ public class AuthController {
     private final PasswordResetService passwordResetService;
     private final SocialLoginService socialLoginService;
     private final EmailVerificationService emailVerificationService;
+    private final SocialSignupService socialSignupService;
 
 
     // 회원가입
@@ -135,6 +137,40 @@ public class AuthController {
                 .body(
                         ApiResponse.success(
                                 "소셜 로그인이 완료되었습니다.",
+                                response
+                        )
+                );
+    }
+
+    //약관동의 소셜 로그인
+    @PostMapping("/social/prepare")
+    public ResponseEntity<ApiResponse<SocialPrepareResponse>>
+    prepareSocialLogin(
+            @RequestBody @Valid SocialLoginRequest request
+    ) {
+        SocialPrepareResponse response = socialLoginService.prepare(request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("소셜 인증이 완료되었습니다.", response)
+        );
+    }
+
+    /**
+     * 소셜 제공자 인증과 명시적 약관 동의 후
+     * 신규 Apple/Kakao 회원가입을 완료한다.
+     */
+    @PostMapping("/social/signup")
+    public ResponseEntity<ApiResponse<AuthenticationResponse>>
+    completeSocialSignup(
+            @RequestBody @Valid SocialSignupRequest request
+    ) {
+        AuthenticationResponse response =
+                socialSignupService.signup(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.success(
+                                "소셜 회원가입이 완료되었습니다.",
                                 response
                         )
                 );
