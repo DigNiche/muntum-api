@@ -7,15 +7,10 @@ import com.digniche.muntum.auth.social.SocialUserInfo;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.user.entity.SocialAccount;
-import com.digniche.muntum.user.entity.Terms;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserStatus;
-import com.digniche.muntum.user.entity.UserTermsAgreement;
-import com.digniche.muntum.user.entity.UserTermsType;
 import com.digniche.muntum.user.repository.SocialAccountRepository;
-import com.digniche.muntum.user.repository.TermsRepository;
 import com.digniche.muntum.user.repository.UserRepository;
-import com.digniche.muntum.user.repository.UserTermsAgreementRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.digniche.muntum.auth.social.AppleTokenClient;
@@ -24,8 +19,7 @@ import com.digniche.muntum.auth.social.SocialTokenCipher;
 import com.digniche.muntum.user.entity.SocialProvider;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import java.time.LocalDateTime;
+import com.digniche.muntum.auth.dto.response.SocialPrepareResponse;
 import java.util.List;
 
 @Service
@@ -36,14 +30,14 @@ public class SocialLoginService {
 
     private final SocialAccountRepository socialAccountRepository;
     private final UserRepository userRepository;
-    private final UserTermsAgreementRepository userTermsAgreementRepository;
-    private final TermsRepository termsRepository;
+    private final SignupConsentRecorder signupConsentRecorder;
 
     private final TokenIssuer tokenIssuer;
 
     private final AppleTokenClient appleTokenClient;
     private final SocialTokenCipher socialTokenCipher;
     private final PlatformTransactionManager transactionManager;
+    private final PendingSocialSignupStore pendingSocialSignupStore;
 
     public AuthenticationResponse login(
             SocialLoginRequest request
@@ -51,14 +45,7 @@ public class SocialLoginService {
         /*
          * 요청 provider에 맞는 검증기 선택
          */
-        SocialTokenVerifier verifier = verifiers.stream()
-                .filter(v -> v.supports() == request.provider())
-                .findFirst()
-                .orElseThrow(() ->
-                        new BusinessException(
-                                ErrorCode.UNSUPPORTED_SOCIAL_PROVIDER
-                        )
-                );
+        SocialTokenVerifier verifier = findVerifier(request.provider());
 
         /*
          * 앱이 전달한 Identity Token 검증
@@ -73,11 +60,7 @@ public class SocialLoginService {
          * DB 트랜잭션 시작 전에 실행
          */
         String encryptedProviderRefreshToken =
-                prepareProviderRefreshToken(
-                        request,
-                        verifier,
-                        socialUser
-                );
+                prepareProviderRefreshToken(request, verifier, socialUser);
 
         /*
          * 아래 DB 작업만 트랜잭션으로 실행
@@ -85,22 +68,78 @@ public class SocialLoginService {
         TransactionTemplate transactionTemplate =
                 new TransactionTemplate(transactionManager);
 
-        AuthenticationResponse response =
-                transactionTemplate.execute(status ->
-                        completeLogin(
-                                socialUser,
-                                encryptedProviderRefreshToken
-                        )
-                );
+        User committedUser = transactionTemplate.execute(status->
+                completeLogin(socialUser, encryptedProviderRefreshToken));
 
-        if (response == null) {
-            throw new BusinessException(
-                    ErrorCode.SERVER_ERROR
-            );
+        if (committedUser == null) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
+        return AuthenticationResponse.of(
+                tokenIssuer.issue(committedUser),
+                committedUser
+        );
+    }
+
+    /**
+     * New two-phase social authentication entry point.
+     *
+     * Existing user:
+     *   complete login and return Muntum JWTs.
+     *
+     * New user:
+     *   issue a temporary signup ticket.
+     *   Do NOT create a Muntum User.
+     */
+
+    public SocialPrepareResponse prepare(SocialLoginRequest request) {
+        SocialTokenVerifier verifier = findVerifier(request.provider());
+        SocialUserInfo socialUser = verifier.verify(request);
+
+        String encryptedProviderRefreshToken =
+                prepareProviderRefreshToken(request, verifier, socialUser);
+
+        TransactionTemplate transactionTemplate =
+                new TransactionTemplate(transactionManager);
+
+        User existingUser = transactionTemplate.execute(status ->
+                socialAccountRepository
+                        .findByProviderAndProviderUserId(
+                                socialUser.provider(),
+                                socialUser.providerUserId()
+                        )
+                        .map(socialAccount ->
+                                prepareAuthenticatedUser(
+                                        socialAccount,
+                                        encryptedProviderRefreshToken
+                                )
+                        )
+                        .orElse(null)
+        );
+
+        // 기존 회원: DB 커밋 이후 JWT 발급
+        if (existingUser != null) {
+            AuthenticationResponse authentication =
+                    AuthenticationResponse.of(
+                            tokenIssuer.issue(existingUser),
+                            existingUser
+                    );
+
+            return SocialPrepareResponse.loginComplete(authentication);
         }
 
-        return response;
+        // 신규 회원: 계정 생성 없이 가입 티켓 발급
+        PendingSocialSignupStore.IssuedTicket issuedTicket =
+                pendingSocialSignupStore.issue(
+                        socialUser,
+                        encryptedProviderRefreshToken
+                );
+
+        return SocialPrepareResponse.signupRequired(
+                issuedTicket.ticket(),
+                issuedTicket.expiresIn()
+        );
     }
+
 
     private String prepareProviderRefreshToken(
             SocialLoginRequest request,
@@ -127,9 +166,7 @@ public class SocialLoginService {
                 || tokenResponse.idToken().isBlank()
                 || tokenResponse.refreshToken() == null
                 || tokenResponse.refreshToken().isBlank()) {
-            throw new BusinessException(
-                    ErrorCode.APPLE_TOKEN_EXCHANGE_FAILED
-            );
+            throw new BusinessException(ErrorCode.APPLE_TOKEN_EXCHANGE_FAILED);
         }
 
         /*
@@ -152,9 +189,7 @@ public class SocialLoginService {
         if (!socialUser.providerUserId().equals(
                 exchangedUser.providerUserId()
         )) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_SOCIAL_TOKEN
-            );
+            throw new BusinessException(ErrorCode.INVALID_SOCIAL_TOKEN);
         }
 
         /*
@@ -166,7 +201,8 @@ public class SocialLoginService {
         );
     }
 
-    private AuthenticationResponse completeLogin(
+
+    private User completeLogin(
             SocialUserInfo socialUser,
             String encryptedProviderRefreshToken
     ) {
@@ -180,18 +216,23 @@ public class SocialLoginService {
                                 createSocialAccount(socialUser)
                         );
 
+        return prepareAuthenticatedUser(
+                socialAccount,
+                encryptedProviderRefreshToken
+        );
+    }
+
+
+    private User prepareAuthenticatedUser(
+            SocialAccount socialAccount,
+            String encryptedProviderRefreshToken
+    ) {
         User user = socialAccount.getUser();
 
         if (!user.isActive()) {
-            throw new BusinessException(
-                    ErrorCode.INACTIVE_ACCOUNT
-            );
+            throw new BusinessException(ErrorCode.INACTIVE_ACCOUNT);
         }
 
-        /*
-         * 신규·기존 Apple 회원 모두
-         * 가장 최근에 발급받은 refresh token으로 갱신
-         */
         if (encryptedProviderRefreshToken != null) {
             socialAccount.updateProviderRefreshToken(
                     encryptedProviderRefreshToken
@@ -200,34 +241,39 @@ public class SocialLoginService {
 
         user.updateLastLogin();
 
-        return AuthenticationResponse.of(
-                tokenIssuer.issue(user),
-                user
-        );
+        return user;
     }
 
     /**
-     * Apple 최초 로그인 회원 생성
+     * 구버전 앱과의 임시 회원가입 호환성 유지.
+     *
+     * 기존 계정은 completeLogin()에서 처리한다.
+     * 처음 가입하는 Apple 사용자만 이 메서드로 들어와
+     * 기존 API를 통해 계정을 생성할 수 있다.
      */
     private SocialAccount createSocialAccount(
             SocialUserInfo socialUser
     ) {
+
+        // 1. 신규 Kakao 사용자는 명시적 동의 절차를 따라야 한다.
+        if (socialUser.provider() != SocialProvider.APPLE) {
+            throw new BusinessException(
+                    ErrorCode.SOCIAL_SIGNUP_REQUIRED
+            );
+        }
+
+        // 2. 기존 이메일 필수 정책 유지
         String email = socialUser.email();
 
-        /*
-         * 문틈 정책:
-         * 소셜 신규 가입도 이메일 필수
-         */
         if (email == null || email.isBlank()) {
             throw new BusinessException(
                     ErrorCode.SOCIAL_EMAIL_REQUIRED
             );
         }
 
-        /*
-         * 계정 자동 연결 기능을 사용하지 않으므로,
-         * 같은 이메일의 일반·다른 소셜 계정이 있으면 가입 거절
-         */
+        email = email.trim();
+
+        // 3. 이메일을 기준으로 계정을 자동 연결하지 않는 정책 유지
         if (userRepository.existsByEmailAndStatusNot(
                 email,
                 UserStatus.DELETED
@@ -237,6 +283,7 @@ public class SocialLoginService {
             );
         }
 
+        // 4. 구버전 Apple 사용자 생성
         User user = User.createSocialUser(
                 email,
                 socialUser.emailVerified()
@@ -244,8 +291,11 @@ public class SocialLoginService {
 
         userRepository.save(user);
 
-        saveRequiredTermsAgreement(user);
+        // 5. 실제 확인되지 않은 동의를 동의한 것으로 기록하지 않음
+        // 이 메서드는 기존 DB 트랜잭션 안에서 실행되어야 함
+        signupConsentRecorder.saveLegacyUnverifiedSignup(user);
 
+        // 6. 기존 방식과 동일하게 소셜 계정 생성
         SocialAccount socialAccount =
                 SocialAccount.builder()
                         .user(user)
@@ -256,52 +306,16 @@ public class SocialLoginService {
                         .providerEmail(email)
                         .build();
 
-        return socialAccountRepository.save(
-                socialAccount
-        );
+        return socialAccountRepository.save(socialAccount);
     }
 
-    /**
-     * 기존 일반 회원가입과 동일하게
-     * 현재 활성 필수 약관 동의 내역 생성
-     */
-    private void saveRequiredTermsAgreement(User user) {
-        Terms activeTermsOfService =
-                termsRepository
-                        .findByTypeAndActiveTrueAndDeletedAtIsNull(
-                                UserTermsType.TERMS_OF_SERVICE
-                        )
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        ErrorCode.ACTIVE_TERMS_NOT_FOUND
-                                )
-                        );
-
-        /*
-         * 개인정보 처리방침도 활성 상태인지 확인
-         */
-        termsRepository
-                .findByTypeAndActiveTrueAndDeletedAtIsNull(
-                        UserTermsType.PRIVACY_POLICY
-                )
-                .orElseThrow(() ->
-                        new BusinessException(
-                                ErrorCode.ACTIVE_TERMS_NOT_FOUND
-                        )
+    private SocialTokenVerifier findVerifier(
+            SocialProvider provider
+    ) {
+        return verifiers.stream()
+                .filter(v -> v.supports() == provider)
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNSUPPORTED_SOCIAL_PROVIDER)
                 );
-
-        LocalDateTime agreedAt = LocalDateTime.now();
-
-        UserTermsAgreement agreement =
-                UserTermsAgreement.builder()
-                        .user(user)
-                        .termsOfServiceAt(agreedAt)
-                        .privacyPolicyAt(agreedAt)
-                        .version(
-                                activeTermsOfService.getVersion()
-                        )
-                        .build();
-
-        userTermsAgreementRepository.save(agreement);
     }
 }

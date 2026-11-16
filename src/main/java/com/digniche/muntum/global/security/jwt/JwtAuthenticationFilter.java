@@ -17,6 +17,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.digniche.muntum.user.repository.UserRepository;
+import com.digniche.muntum.user.entity.UserStatus;
+import com.digniche.muntum.global.exception.BusinessException;
+import com.digniche.muntum.global.exception.ErrorCode;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -36,15 +40,45 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final AccessTokenService accessTokenService;
     private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
 
+    // JWT Access Token 검증 및 활성 사용자 확인
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String token = resolveToken(request);
 
         if (StringUtils.hasText(token)) {
-            Claims claims = jwtProvider.validateToken(token); // 토큰 검증 및 파싱
+            Claims claims;
+            try {
+                // Refresh Token으로 일반 API 인증 불가
+                claims = jwtProvider.validAccessToken(token);
+            } catch (BusinessException exception) {
 
-            if (accessTokenService.isWithdrawn(token)) {
+                SecurityContextHolder.clearContext();
+
+                ErrorCode errorCode = exception.getErrorCode();
+
+                response.setStatus(errorCode.getStatus().value());
+                response.setContentType("application/json;charset=UTF-8");
+
+                response.getWriter().write(
+                        objectMapper.writeValueAsString(
+                                ApiResponse.fail(errorCode.getStatus().value(), errorCode.getCode(), errorCode.getMessage())
+                        )
+                );
+                return;
+            }
+
+            UUID userId = UUID.fromString(claims.getSubject());
+
+            // 기존 블랙리스트 및 실제 활성 계정 확인
+            if (accessTokenService.isWithdrawn(token)
+                    || !userRepository.existsByIdAndStatus(
+                    userId,
+                    UserStatus.ACTIVE
+            )) {
+                SecurityContextHolder.clearContext();
+
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write(objectMapper.writeValueAsString(
@@ -52,8 +86,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 ));
                 return;
             }
-
-            UUID userId = UUID.fromString(claims.getSubject());
             String userRole = claims.get(JwtProvider.CLAIM_ROLE, String.class);
 
             SecurityContextHolder.getContext().setAuthentication(createAuthentication(userId, userRole));

@@ -64,6 +64,11 @@ kakao:
     key: ${kakao.api.rest.api.key}
     geocoding-url: https://dapi.kakao.com/v2/local/search/address.json
 
+# Kakao
+social:
+  kakao:
+    app-id: ${KAKAO_APP_ID}
+
 
 # AWS S3
 storage:

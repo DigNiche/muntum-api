@@ -7,6 +7,7 @@ import com.digniche.muntum.global.security.UserPrincipal;
 import com.digniche.muntum.user.dto.request.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.request.PasswordChangeRequest;
 import com.digniche.muntum.user.dto.request.TermsConsentListRequest;
+import com.digniche.muntum.user.dto.response.UserConsentStatusResponse;
 import com.digniche.muntum.user.dto.response.UserProfileResponse;
 import com.digniche.muntum.user.service.UserProfileImageService;
 import com.digniche.muntum.user.service.UserService;
@@ -113,5 +114,21 @@ public class UserController {
             @RequestBody @Valid PasswordChangeRequest request) {
         userService.changePassword(userPrincipal.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다.", null));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/terms")
+    public ResponseEntity<ApiResponse<UserConsentStatusResponse>>
+    getMyTermsConsent(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "약관 동의 상태 조회에 성공했습니다.",
+                        userService.getTermsConsent(
+                                userPrincipal.getUserId()
+                        )
+                )
+        );
     }
 }

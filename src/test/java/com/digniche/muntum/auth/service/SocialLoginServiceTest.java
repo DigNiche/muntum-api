@@ -29,7 +29,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.TransactionSystemException;
 
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.doThrow;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -63,12 +68,12 @@ class SocialLoginServiceTest {
     @Mock AppleTokenVerifier appleTokenVerifier;
     @Mock SocialAccountRepository socialAccountRepository;
     @Mock UserRepository userRepository;
-    @Mock UserTermsAgreementRepository userTermsAgreementRepository;
-    @Mock TermsRepository termsRepository;
+    @Mock SignupConsentRecorder signupConsentRecorder;
     @Mock TokenIssuer tokenIssuer;
     @Mock AppleTokenClient appleTokenClient;
     @Mock SocialTokenCipher socialTokenCipher;
     @Mock PlatformTransactionManager transactionManager;
+    @Mock private PendingSocialSignupStore pendingSocialSignupStore;
 
     private SocialLoginService socialLoginService;
 
@@ -77,14 +82,19 @@ class SocialLoginServiceTest {
     void setUp() {
         socialLoginService = new SocialLoginService(
                 List.of(appleTokenVerifier),
-                socialAccountRepository, userRepository, userTermsAgreementRepository, termsRepository,
+                socialAccountRepository,
+                userRepository,
+                signupConsentRecorder,
                 tokenIssuer,
                 appleTokenClient,
                 socialTokenCipher,
-                transactionManager
+                transactionManager,
+                pendingSocialSignupStore
         );
 
         when(appleTokenVerifier.supports()).thenReturn(SocialProvider.APPLE);
+        lenient().when(transactionManager.getTransaction(any()))
+                .thenReturn(new SimpleTransactionStatus());
     }
 
 
@@ -132,7 +142,6 @@ class SocialLoginServiceTest {
         when(socialAccountRepository.findByProviderAndProviderUserId(SocialProvider.APPLE, APPLE_SUB))
                 .thenReturn(Optional.empty());
         when(userRepository.existsByEmailAndStatusNot(EMAIL, UserStatus.DELETED)).thenReturn(false);
-        givenActiveTerms();
         when(socialAccountRepository.save(any(SocialAccount.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(tokenIssuer.issue(any(User.class))).thenReturn(ISSUED_TOKEN);
@@ -144,7 +153,8 @@ class SocialLoginServiceTest {
         verify(userRepository).save(savedUser.capture());
         ArgumentCaptor<SocialAccount> savedAccount = ArgumentCaptor.forClass(SocialAccount.class);
         verify(socialAccountRepository).save(savedAccount.capture());
-        verify(userTermsAgreementRepository).save(any());
+        verify(signupConsentRecorder)
+                .saveLegacyUnverifiedSignup(any(User.class));
 
         assertThat(savedUser.getValue().getEmail()).isEqualTo(EMAIL);
         assertThat(savedUser.getValue().getRole()).isEqualTo(UserRole.AUDIENCE);
@@ -242,16 +252,6 @@ class SocialLoginServiceTest {
     }
 
 
-    private void givenActiveTerms() {
-        Terms termsOfService = mock(Terms.class);
-        when(termsOfService.getVersion()).thenReturn("1.0");
-        when(termsRepository.findByTypeAndActiveTrueAndDeletedAtIsNull(UserTermsType.TERMS_OF_SERVICE))
-                .thenReturn(Optional.of(termsOfService));
-        when(termsRepository.findByTypeAndActiveTrueAndDeletedAtIsNull(UserTermsType.PRIVACY_POLICY))
-                .thenReturn(Optional.of(mock(Terms.class)));
-    }
-
-
     private AppleTokenResponse appleTokenResponse() {
         return new AppleTokenResponse("apple-access-token", 3600L, "exchanged-id-token", APPLE_REFRESH_TOKEN, "bearer");
     }
@@ -277,5 +277,32 @@ class SocialLoginServiceTest {
                 .providerUserId(APPLE_SUB)
                 .providerEmail(EMAIL)
                 .build();
+    }
+
+    @Test
+    void commitFailureMustNotIssueJwt() {
+
+        User existingUser = createUser();
+
+        SocialAccount socialAccount =
+                createSocialAccount(existingUser);
+
+        givenAppleVerifiedAndExchanged();
+
+        when(socialAccountRepository
+                .findByProviderAndProviderUserId(
+                        SocialProvider.APPLE,
+                        APPLE_SUB
+                ))
+                .thenReturn(Optional.of(socialAccount));
+
+        doThrow(new TransactionSystemException("Commit failed"))
+                .when(transactionManager)
+                .commit(any(TransactionStatus.class));
+
+        assertThatThrownBy(() -> socialLoginService.login(REQUEST))
+                .isInstanceOf(TransactionSystemException.class);
+
+        verify(tokenIssuer, never()).issue(any());
     }
 }

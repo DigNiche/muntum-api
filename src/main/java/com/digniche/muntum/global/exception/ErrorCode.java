@@ -39,8 +39,14 @@ public enum ErrorCode {
     INVALID_SIGNUP_TOKEN("A022", "이메일 인증이 만료되었습니다. 처음부터 다시 시도해주세요", HttpStatus.BAD_REQUEST),
     VERIFICATION_CODE_COOLDOWN("A023", "잠시 후 다시 요청해주세요", HttpStatus.TOO_MANY_REQUESTS),
     VERIFICATION_SEND_LIMIT_EXCEEDED("A024", "인증번호 발송 횟수를 초과했습니다. 24시간 후 다시 시도해주세요", HttpStatus.TOO_MANY_REQUESTS),
+    KAKAO_API_UNAVAILABLE("A025", "카카오 인증 서버에 연결할 수 없습니다", HttpStatus.BAD_GATEWAY),
+    INVALID_SOCIAL_SIGNUP_TICKET("A026", "소셜 회원가입 인증이 만료되었거나 유효하지 않습니다", HttpStatus.BAD_REQUEST),
 
-
+    SOCIAL_SIGNUP_IN_PROGRESS("A027", "소셜 회원가입 요청을 처리 중입니다", HttpStatus.CONFLICT),
+    SOCIAL_SIGNUP_CONFLICT("A028", "이미 가입된 소셜 계정이거나 계정 정보가 중복되었습니다. 다시 로그인해주세요", HttpStatus.CONFLICT),
+    SOCIAL_SIGNUP_CONFIRMATION_FAILED("A029", "회원가입 처리 결과를 확인할 수 없습니다. 소셜 로그인부터 다시 시도해주세요", HttpStatus.SERVICE_UNAVAILABLE),
+    SOCIAL_SIGNUP_REQUIRED("A030", "신규 소셜 회원은 약관 동의 후 가입해야 합니다", HttpStatus.CONFLICT),
+    KAKAO_UNLINK_FAILED("A031", "카카오 인증 연결 해제에 실패했습니다", HttpStatus.BAD_GATEWAY),
     // 사용자 닉네임
     NICKNAME_ALREADY_EXISTS("U001", "이미 사용 중인 닉네임입니다", HttpStatus.CONFLICT),
 
@@ -50,7 +56,10 @@ public enum ErrorCode {
     REQUIRED_TERMS_NOT_AGREED("T003", "필수 약관에 동의하지 않았습니다", HttpStatus.BAD_REQUEST),
     TERMS_VERSION_ALREADY_EXISTS("T004", "이미 존재하는 약관 버전입니다", HttpStatus.CONFLICT),
     ACTIVE_TERMS_NOT_FOUND("T005", "게시된 약관이 존재하지 않습니다", HttpStatus.INTERNAL_SERVER_ERROR),
-
+    INVALID_SIGNUP_CONSENT("T006", "유효하지 않은 회원가입 약관 동의 정보입니다", HttpStatus.BAD_REQUEST),
+    TERMS_VERSION_MISMATCH("T007", "약관이 변경되었습니다. 최신 약관을 확인해주세요", HttpStatus.CONFLICT),
+    INVALID_TERMS_CONSENT_UPDATE("T008", "유효하지 않은 약관 동의 변경 요청입니다", HttpStatus.BAD_REQUEST),
+    OPTIONAL_TERMS_NOT_AVAILABLE("T009", "현재 동의할 수 있는 선택 약관이 없습니다", HttpStatus.CONFLICT),
     // 큐레이터 지원
     CURATOR_APPLICATION_NOT_FOUND("CA001", "존재하지 않는 지원서입니다", HttpStatus.NOT_FOUND),
     CURATOR_APPLICATION_ACCESS_DENIED("CA002", "해당 지원서에 접근할 권한이 없습니다", HttpStatus.FORBIDDEN),

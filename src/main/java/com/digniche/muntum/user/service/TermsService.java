@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -78,5 +79,19 @@ public class TermsService {
     private Terms getExistingTerms(UUID termsId) {
         return termsRepository.findByIdAndDeletedAtIsNull(termsId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TERMS_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public List<TermsResponse> getPublicActiveTerms() {
+        LocalDateTime now = LocalDateTime.now();
+
+        return termsRepository
+                .findAllByActiveTrueAndDeletedAtIsNull()
+                .stream()
+                .filter(terms ->
+                        TermsAvailability.canCollectConsent(terms, now)
+                )
+                .map(TermsResponse::forSignup)
+                .toList();
     }
 }

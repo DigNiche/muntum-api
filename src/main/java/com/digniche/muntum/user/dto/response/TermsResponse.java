@@ -35,4 +35,22 @@ public record TermsResponse(
                 terms.getUpdatedAt()
         );
     }
+
+    public static TermsResponse forSignup(Terms terms) {
+
+        TermsResponse existing = from(terms);
+
+        return new TermsResponse(
+                existing.id(),
+                existing.type(),
+                terms.getType().requiresSignupConsent(),
+                existing.version(),
+                existing.title(),
+                existing.content(),
+                existing.effectiveAt(),
+                existing.active(),
+                existing.createdAt(),
+                existing.updatedAt()
+        );
+    }
 }

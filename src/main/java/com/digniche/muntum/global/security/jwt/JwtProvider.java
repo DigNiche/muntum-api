@@ -90,19 +90,32 @@ public class JwtProvider {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+    // Access Token 전용 검증
+    public Claims validAccessToken(String token) {
 
+        Claims claims = validateToken(token);
+
+        String tokenType =
+                claims.get(CLAIM_TOKEN_TYPE, String.class);
+
+        if (!TokenType.ACCESS.name().equals(tokenType)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        return claims;
+    }
     // 토큰 검증
     public Claims validateToken(String token) {
         try {
             return parseClaims(token);     // 토큰 파싱
         } catch (ExpiredJwtException e) {
-            log.warn("🚫 JWT 토큰 만료: {}", e.getMessage());
+            log.warn("JWT 토큰 만료: {}", e.getMessage());
             throw new BusinessException(ErrorCode.EXPIRED_TOKEN);
         } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
-            log.warn("❌ JWT 토큰 잘못됨: {}", e.getMessage());
+            log.warn("JWT 토큰 잘못됨: {}", e.getMessage());
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         } catch (io.jsonwebtoken.security.SignatureException e) {
-            log.warn("❗ JWT 서명 불일치: {}", e.getMessage());
+            log.warn("JWT 서명 불일치: {}", e.getMessage());
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
     }
@@ -124,5 +137,7 @@ public class JwtProvider {
         Date expiration = parseClaims(token).getExpiration();
         return expiration.getTime() - System.currentTimeMillis();
     }
+
+
 
 }
