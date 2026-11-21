@@ -117,8 +117,8 @@ class CurationLikeLockTimeoutTest {
         DataAccessException e;
         try {
             e = catchThrowableOfType(
-                    () -> curationLikeService.like(curationId, userId, UserRole.AUDIENCE),
-                    DataAccessException.class);
+                    DataAccessException.class,
+                    () -> curationLikeService.like(curationId, userId, UserRole.AUDIENCE));
         } finally {
             release.countDown();
             holder.get(10, TimeUnit.SECONDS);

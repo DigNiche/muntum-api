@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import com.digniche.muntum.curation.entity.CurationPublicationStatus;
 import com.digniche.muntum.program.entity.ProgramStatus;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -133,6 +134,30 @@ public interface CurationRepository extends JpaRepository<Curation, UUID> {
     """)
     int decreaseLikeCount(@Param("curationId") UUID curationId);
 
+
+    /**
+     * 여러 큐레이션을 ID 순서로 배타 잠금 조회
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT c
+        FROM Curation c
+        WHERE c.id IN :curationIds
+        ORDER BY c.id
+    """)
+    List<Curation> findAllByIdInForUpdate(@Param("curationIds") Collection<UUID> curationIds);
+
+
+    /**
+     * 여러 큐레이션 좋아요 수 1씩 감소
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+        UPDATE Curation c
+        SET c.likeCount = c.likeCount - 1
+        WHERE c.id IN :curationIds
+    """)
+    int decreaseLikeCountIn(@Param("curationIds") Collection<UUID> curationIds);
 
     /**
      * 큐레이션과 프로그램을 상태 조건 없이 함께 조회 (좋아요 불가 이유 분류용)

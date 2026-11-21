@@ -5,7 +5,9 @@ import com.digniche.muntum.user.entity.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
@@ -49,4 +51,22 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     );
 
     boolean existsByIdAndStatus(UUID id, UserStatus status);
+
+
+    /**
+     * 사용자 행 배타 잠금 조회
+     * - Lock 순서: 사용자 > 큐레이션 > 좋아요
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.id = :userId")
+    Optional<User> findByIdForUpdate(@Param("userId") UUID userId);
+
+
+    /**
+     * 사용자 행 공유 잠금(행 개수만 세고, 정보 읽지는 않음)
+     * - 사용자 행이 있으면 1, 없으면 0 반환
+     * - FOR SHARE를 그대로 드러내고, 결과를 숫자 하나로 받으려고 네이티브 쿼리 사용
+     */
+    @Query(value = "SELECT COUNT(*) FROM users WHERE id = :userId FOR SHARE", nativeQuery = true)
+    long countByIdForShare(@Param("userId") UUID userId);
 }

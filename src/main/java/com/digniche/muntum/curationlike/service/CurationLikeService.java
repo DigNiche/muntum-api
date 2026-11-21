@@ -10,11 +10,13 @@ import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.program.entity.Program;
 import com.digniche.muntum.program.entity.ProgramStatus;
 import com.digniche.muntum.user.entity.UserRole;
+import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -27,6 +29,7 @@ public class CurationLikeService {
 
     private final CurationRepository curationRepository;
     private final CurationLikeRepository curationLikeRepository;
+    private final UserRepository userRepository;
 
     /**
      * 좋아요
@@ -35,6 +38,12 @@ public class CurationLikeService {
     @Transactional
     public CurationLikeResponse like(UUID curationId, UUID userId, UserRole userRole) {
         validateLikeableRole(userRole);
+
+        // 존재하는 사용자인지 확인. 사용자 조회 시점을 FK 확인할 때보다 앞당김
+        if (userRepository.countByIdForShare(userId) == 0) { // 사용자가 없을 경우
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
         Curation curation = getLikeableCurationForUpdate(curationId);
 
         int inserted = curationLikeRepository.insertIfAbsent(userId, curationId, LocalDateTime.now());
@@ -61,6 +70,37 @@ public class CurationLikeService {
         }
 
         return new CurationLikeResponse(curation.getLikeCount() - deleted, false);
+    }
+
+
+    /**
+     * 특정 사용자의 '큐레이션 좋아요' 관련 활동을 모두 정리
+     * - 사용자의 큐레이션 좋아요 모두 삭제 및 좋아요 수 줄이기
+     * - 이 메서드 호출하는 쪽은 같은 트랜잭션에서 사용자 행을 먼저 배타 잠금하는 것이 필요
+     * - Lock 순서: 사용자 > 큐레이션 > 좋아요
+     */
+    @Transactional
+    public void clearLikeActivity(UUID userId) {
+        // 사용자가 좋아요 한 큐레이션 조회(잠금 X)
+        List<UUID> candidateCurationIds = curationLikeRepository.findCurationIdsByUserId(userId);
+        if (candidateCurationIds.isEmpty()) {
+            return;
+        }
+
+        // 큐레이션 행 ID 순서로 배타 잠금
+        List<UUID> lockedCurationIds = curationRepository.findAllByIdInForUpdate(candidateCurationIds).stream().map(Curation::getId).toList();
+
+        // 위의 두 조회-잠금 사이에 놓친 것 조회하여 포함 
+        List<UUID> likedCurationIds = curationLikeRepository.findAllByUserIdAndCurationIdInForUpdate(userId, lockedCurationIds).stream().map(like -> like.getId().getCurationId()).toList();
+        if (likedCurationIds.isEmpty()) {
+            return;
+        }
+
+        // 확인한 좋아요만 삭제
+        curationLikeRepository.deleteByUserIdAndCurationIdIn(userId, likedCurationIds);
+
+        // 그 큐레이션들만 좋아요 수 감소
+        curationRepository.decreaseLikeCountIn(likedCurationIds);
     }
 
 

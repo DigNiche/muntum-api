@@ -2,7 +2,9 @@ package com.digniche.muntum.curationlike.repository;
 
 import com.digniche.muntum.curationlike.entity.CurationLike;
 import com.digniche.muntum.curationlike.entity.CurationLikeId;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +16,7 @@ import java.util.UUID;
 
 /**
  * CurationLike 레포지토리
- * - Lock 순서: 큐레이션 행 -> 좋아요 행
+ * - Lock 순서: 사용자 > 큐레이션 > 좋아요
  */
 public interface CurationLikeRepository extends JpaRepository<CurationLike, CurationLikeId> {
 
@@ -65,4 +67,46 @@ public interface CurationLikeRepository extends JpaRepository<CurationLike, Cura
           AND l.id.curationId IN :curationIds
     """)
     List<UUID> findLikedCurationIds(@Param("userId") UUID userId, @Param("curationIds") Collection<UUID> curationIds);
+
+
+    /**
+     * 사용자가 좋아요를 누른 큐레이션 id 목록 조회
+     * - 잠글 큐레이션 후보를 고르는 용도. 이후 잠금 조회로 다시 확인한다
+     * - 기본키 (user_id, curation_id)의 앞부분으로 찾는다
+     */
+    @Query("""
+        SELECT l.id.curationId
+        FROM CurationLike l
+        WHERE l.id.userId = :userId
+    """)
+    List<UUID> findCurationIdsByUserId(@Param("userId") UUID userId);
+
+
+    /**
+     * 주어진 큐레이션들 중 사용자의 좋아요 행 배타 잠금 조회
+     * - 호출 전제: 주어진 큐레이션 행들을 먼저 잠근 상태여야 한다 (Lock 순서: 사용자 > 큐레이션 > 좋아요)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT l
+        FROM CurationLike l
+        WHERE l.id.userId = :userId
+          AND l.id.curationId IN :curationIds
+        ORDER BY l.id.curationId
+    """)
+    List<CurationLike> findAllByUserIdAndCurationIdInForUpdate(@Param("userId") UUID userId, @Param("curationIds") Collection<UUID> curationIds);
+
+
+    /**
+     * 주어진 큐레이션들에서 사용자의 좋아요 삭제
+     * - 지운 행 수 반환
+     * - 호출 전제: 지울 좋아요 행들을 먼저 잠금 조회한 상태여야 한다
+     */
+    @Modifying
+    @Query("""
+        DELETE FROM CurationLike l
+        WHERE l.id.userId = :userId
+          AND l.id.curationId IN :curationIds
+    """)
+    int deleteByUserIdAndCurationIdIn(@Param("userId") UUID userId, @Param("curationIds") Collection<UUID> curationIds);
 }

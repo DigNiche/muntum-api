@@ -1,5 +1,6 @@
 package com.digniche.muntum.curationlike.service;
 
+import com.digniche.muntum.global.auditor.UserDisplayResolver;
 import com.digniche.muntum.curation.dto.response.CurationListResponse;
 import com.digniche.muntum.curation.dto.response.ManagerCurationListResponse;
 import com.digniche.muntum.curation.dto.response.PublicCurationDetailResponse;
@@ -71,6 +72,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         CurationService.class,
         CurationImageService.class,
         CuratorProfileService.class,
+        UserDisplayResolver.class,
         CurationLikeResponseTest.TestAuditConfig.class
 })
 class CurationLikeResponseTest {
