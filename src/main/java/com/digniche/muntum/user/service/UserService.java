@@ -53,7 +53,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.digniche.muntum.programreaction.repository.ProgramReactionRepository;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import com.digniche.muntum.user.entity.Terms;
@@ -73,7 +72,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final SpotSuggestionRepository spotSuggestionRepository;
     private final ScrapRepository scrapRepository;
-    private final ProgramReactionRepository programReactionRepository;
     private final UserKeywordRepository userKeywordRepository;
     private final KeywordRepository keywordRepository;
     private final ProgramRepository programRepository;
@@ -86,6 +84,10 @@ public class UserService {
     private final AccessTokenService accessTokenService;
     private final AuthService authService;
     private final UserProfileImageService userProfileImageService;
+    private final CurationLikeService curationLikeService;
+    private final CurationService curationService;
+    private final CurationRepository curationRepository;
+    private final CurationImageRepository curationImageRepository;
     private final PasswordEncoder passwordEncoder;
     private final AppleTokenVerifier appleTokenVerifier;
     private final AppleTokenClient appleTokenClient;
@@ -108,6 +110,7 @@ public class UserService {
         return toProfileResponses(List.of(user)).get(0);
     }
 
+
     /**
      * 전체 사용자 목록 조회  - 검색(닉네임/이메일)
      */
@@ -123,6 +126,7 @@ public class UserService {
         return PageResponse.from(new PageImpl<>(content, pageable, users.getTotalElements()));
     }
 
+
     /**
      * 닉네임 설정(생성, 수정)
      */
@@ -135,6 +139,7 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.updateNickname(request.nickname());
     }
+
 
     /**
      * 마이페이지에서 선택 약관 동의 상태 변경
@@ -528,9 +533,6 @@ public class UserService {
 
         // 사용자 관련 데이터 삭제
         userTermsAgreementRepository.deleteAllByUserId(userId);
-        scrapRepository.deleteAllByUserId(userId);
-        programReactionRepository.deleteAllByUserId(userId);
-        userKeywordRepository.deleteAllByUserId(userId);
         curatorApplicationRepository.deleteAllByUserId(userId);
 
         // social_accounts가 users를 외래키로 참조하므로 users보다 먼저 삭제
@@ -552,7 +554,7 @@ public class UserService {
             @Scheduled(cron = "0 0 3 * * *")
         */
 
-        // 사용자 객체 삭제
+        // 사용자 객체 삭제 : [ CASCADE DELETE ] 스크랩(scraps), 관심 키워드(user_keywords), 프로그램 반응(program_reactions)
         userRepository.delete(user);
 
         // 프로필 이미지 스토리지에서 삭제

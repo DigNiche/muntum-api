@@ -8,6 +8,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.UUID;
 
@@ -40,45 +42,27 @@ public class ProgramReaction extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false
-    )
+    @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_program_reaction_user"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "program_id",
-            nullable = false
-    )
+    @JoinColumn(name = "program_id", nullable = false)
     private Program program;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "reaction_type",
-            nullable = false,
-            length = 10
-    )
+    @Column(name = "reaction_type", nullable = false, length = 10)
     private ReactionType reactionType;
 
     @Column(name = "comment", length = 500, nullable = true)
     private String comment;
 
     @Builder
-    public ProgramReaction(
-            User user,
-            Program program,
-            ReactionType reactionType
-    ) {
+    public ProgramReaction(User user, Program program, ReactionType reactionType) {
         this.user = user;
         this.program = program;
         this.reactionType = reactionType;
@@ -88,10 +72,7 @@ public class ProgramReaction extends BaseEntity {
      * 좋아요 ↔ 싫어요 변경
      */
     public void changeType(ReactionType newType) {
-        if (this.reactionType == newType) {
-            return;
-        }
-
+        if (this.reactionType == newType) { return; }
         this.reactionType = newType;
     }
 
@@ -102,10 +83,7 @@ public class ProgramReaction extends BaseEntity {
      * - 그 외: 앞뒤 공백을 제거하여 저장
      */
     public void changeComment(String comment) {
-        if (comment == null) {
-            return;
-        }
-
+        if (comment == null) { return; }
         this.comment = comment.isBlank() ? null : comment.strip();
     }
 }
