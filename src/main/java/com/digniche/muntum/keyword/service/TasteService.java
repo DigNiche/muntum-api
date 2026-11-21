@@ -47,6 +47,11 @@ public class TasteService {
     // 키워드 선택(온보딩 생성 / 마이페이지 수정)
     @Transactional
     public List<KeywordResponse> setTasteKeywords(UUID userId, SelectKeywordsRequest request) {
+        // 회원 행 배타 잠금 (회원 본인의 데이터를 바꾸는 트랜잭션은 맨 앞에서 회원 행을 잠근다)
+        // - 관심 키워드 삭제·추가 전에 잠가, 같은 회원의 탈퇴(회원 행 → 관심 키워드 CASCADE)와 순서를 맞춘다
+        // - 아래에서 회원 행 자체도 수정하므로(tasteSelected) 공유가 아닌 배타 잠금. 같은 회원의 연속 저장은 차례로 처리된다
+        User user = userRepository.findByIdForUpdate(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         List<Keyword> keywords = keywordRepository.findAllByNameInAndActiveTrue(request.selectKeywords());
 
         if (keywords.size() != request.selectKeywords().size()) {
@@ -55,7 +60,6 @@ public class TasteService {
 
         userKeywordRepository.deleteAllByUserId(userId);
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         boolean wasTasteSelected = user.isTasteSelected();
         boolean tasteSelected = !request.selectKeywords().isEmpty();
 
