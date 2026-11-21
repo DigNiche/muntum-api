@@ -159,6 +159,46 @@ public interface CurationRepository extends JpaRepository<Curation, UUID> {
     """)
     int decreaseLikeCountIn(@Param("curationIds") Collection<UUID> curationIds);
 
+
+    /**
+     * 큐레이터의 한 번도 승인되지 않은(=프로그램과 연결되지 않은) 큐레이션 배타 잠금 조회 (id 순서)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT c
+        FROM Curation c
+        WHERE c.curatorId = :curatorId
+          AND c.program IS NULL
+        ORDER BY c.id
+    """)
+    List<Curation> findAllNeverApprovedByCuratorIdForUpdate(@Param("curatorId") UUID curatorId);
+
+
+    /**
+     * 사용자 삭제 시
+     * - 작성자 / 생성자 / 수정자 / 검토자 / 삭제자 Withdrawn UUID로 채우기
+     */
+    @Modifying
+    @Query("UPDATE Curation c SET c.curatorId = :withdrawnUuid WHERE c.curatorId = :userId")
+    void replaceCuratorIdWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+    @Modifying
+    @Query("UPDATE Curation c SET c.createdBy = :withdrawnUuid WHERE c.createdBy = :userId")
+    void replaceCreatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+    @Modifying
+    @Query("UPDATE Curation c SET c.updatedBy = :withdrawnUuid WHERE c.updatedBy = :userId")
+    void replaceUpdatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+    @Modifying
+    @Query("UPDATE Curation c SET c.reviewedBy = :withdrawnUuid WHERE c.reviewedBy = :userId")
+    void replaceReviewedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+    @Modifying
+    @Query("UPDATE Curation c SET c.deletedBy = :withdrawnUuid WHERE c.deletedBy = :userId")
+    void replaceDeletedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+
     /**
      * 큐레이션과 프로그램을 상태 조건 없이 함께 조회 (좋아요 불가 이유 분류용)
      */

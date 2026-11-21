@@ -4,6 +4,9 @@ import com.digniche.muntum.Announcement.repository.AnnouncementRepository;
 import com.digniche.muntum.auth.dto.request.WithdrawRequest;
 import com.digniche.muntum.auth.service.AccessTokenService;
 import com.digniche.muntum.auth.service.AuthService;
+import com.digniche.muntum.curation.repository.CurationImageRepository;
+import com.digniche.muntum.curation.repository.CurationRepository;
+import com.digniche.muntum.curation.service.CurationService;
 import com.digniche.muntum.curationlike.service.CurationLikeService;
 import com.digniche.muntum.curator.repository.CuratorApplicationRepository;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
@@ -475,13 +478,15 @@ public class UserService {
      */
     private void completeWithdrawal(User user) {
         UUID userId = user.getId();
-//        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // User 행 배타 잠금. 잠금 조회 후 일반 조회 시 스냅샷 생성. Lock 순서 : User -> Curation -> Curation Like
         userRepository.findByIdForUpdate(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 큐레이션 좋아요 삭제 및 좋아요 수 감소
         curationLikeService.clearLikeActivity(userId);
+
+        // 한 번도 승인되지 않은 큐레이션과 이미지 삭제 (이미지 파일은 커밋 후)
+        curationService.deleteNeverApprovedCurations(userId);
 
         String role = user.getRole().name();
         UUID withdrawnUuid = AuditorAwareImpl.toWithdrawnUserUuid(role, userId);
