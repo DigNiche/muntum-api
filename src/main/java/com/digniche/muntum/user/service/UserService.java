@@ -480,11 +480,11 @@ public class UserService {
 
         switch (role) {
             case "MANAGER" -> {
-                // 제보의 생성/수정/검토자/제보자/삭제자 시스템 UUID 처리
+                // 제보의 생성/수정/검토자/제보자/삭제자는 탈퇴자 UUID 처리
                 spotSuggestionRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
-                spotSuggestionRepository.clearReviewedBy(userId);
-                spotSuggestionRepository.clearInformer(userId);
+                spotSuggestionRepository.replaceReviewedByWith(userId, withdrawnUuid);
+                spotSuggestionRepository.replaceInformerWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
                 // 키워드의 생성/수정/삭제자 시스템 UUID 처리
@@ -513,10 +513,10 @@ public class UserService {
 
             }
             case "CURATOR" -> {
-                // 제보의 생성자/수정자/제보자 시스템 UUID 처리
+                // 제보의 생성자/수정자/제보자는 탈퇴자 UUID 처리
                 spotSuggestionRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
-                spotSuggestionRepository.clearInformer(userId);
+                spotSuggestionRepository.replaceInformerWith(userId, withdrawnUuid);
 
                 // 프로그램의 생성자/수정자 Null 처리 및 시스템 UUID 처리
                 programRepository.replaceCreatedByWith(userId, withdrawnUuid);
@@ -524,10 +524,10 @@ public class UserService {
 
             }
             case "AUDIENCE" -> {
-                // 제보의 생성자/수정자/제보자 Null 처리 및 시스템 UUID 처리
+                // 제보의 생성자/수정자/제보자는 탈퇴자 UUID 처리
                 spotSuggestionRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
-                spotSuggestionRepository.clearInformer(userId);
+                spotSuggestionRepository.replaceInformerWith(userId, withdrawnUuid);
             }
         }
 

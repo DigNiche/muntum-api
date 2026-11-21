@@ -1,5 +1,6 @@
 package com.digniche.muntum.suggestion.dto.response;
 
+import com.digniche.muntum.global.auditor.UserDisplay;
 import com.digniche.muntum.suggestion.entity.SpotSuggestion;
 import com.digniche.muntum.suggestion.entity.SuggestionStatus;
 
@@ -13,8 +14,8 @@ public record SpotSuggestionResponse(
         UUID id,
         UUID informerId,
         String informerNickname,
-        UUID reviewedById,
-        String reviewedByNickname,
+        UUID reviewerId,
+        String reviewerNickname,
         LocalDateTime reviewedAt,
         String programName,
         String address,
@@ -24,14 +25,14 @@ public record SpotSuggestionResponse(
         LocalDateTime updatedAt,
         boolean deleted
 ) {
-    // FetchType.LAZY 필드가 있으므로 from은 반드시 서비스의 @Transactional 안에서 호출
-    public static SpotSuggestionResponse from(SpotSuggestion suggestion) {
+    // informer, reviewer: 제보자·검토자 표시 값(UserDisplayResolver 결과). 값이 없으면 null
+    public static SpotSuggestionResponse from(SpotSuggestion suggestion, UserDisplay informer, UserDisplay reviewer) {
         return new SpotSuggestionResponse(
                 suggestion.getId(),
-                suggestion.getInformer() != null ? suggestion.getInformer().getId() : null,
-                suggestion.getInformer() != null ? suggestion.getInformer().getNickname() : null,
-                suggestion.getReviewedBy() != null ? suggestion.getReviewedBy().getId() : null,
-                suggestion.getReviewedBy() != null ? suggestion.getReviewedBy().getNickname() : null,
+                informer != null ? informer.id() : null,
+                informer != null ? informer.nickname() : null,
+                reviewer != null ? reviewer.id() : null,
+                reviewer != null ? reviewer.nickname() : null,
                 suggestion.getReviewedAt(),
                 suggestion.getProgramName(),
                 suggestion.getAddress(),

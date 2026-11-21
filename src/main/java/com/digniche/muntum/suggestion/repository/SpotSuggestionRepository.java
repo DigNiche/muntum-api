@@ -4,7 +4,6 @@ import com.digniche.muntum.suggestion.entity.SpotSuggestion;
 import com.digniche.muntum.suggestion.entity.SuggestionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,19 +20,15 @@ public interface SpotSuggestionRepository extends JpaRepository<SpotSuggestion, 
      */
 
     // 내 제보 목록 조회
-    @EntityGraph(attributePaths = {"informer", "reviewedBy"})
-    Page<SpotSuggestion> findByInformer_Id(UUID informerId, Pageable pageable);
+    Page<SpotSuggestion> findByInformer(UUID informer, Pageable pageable);
 
     // 관리자용 전체 목록 조회 - 상태 필터
-    @EntityGraph(attributePaths = {"informer", "reviewedBy"})
     Page<SpotSuggestion> findByStatusAndDeletedAtIsNull(SuggestionStatus status, Pageable pageable);
 
-    // 관리자용 전체 목록 조회 - 상태 필터 없음 (N+1 방지용 fetch join)
-    @EntityGraph(attributePaths = {"informer", "reviewedBy"})
+    // 관리자용 전체 목록 조회 - 상태 필터 없음
     Page<SpotSuggestion> findAllByDeletedAtIsNull(Pageable pageable);
 
     // 관리자용 삭제된 목록 조회
-    @EntityGraph(attributePaths = {"informer", "reviewedBy"})
     Page<SpotSuggestion> findByDeletedAtIsNotNull(Pageable pageable);
 
     /**
@@ -50,12 +45,12 @@ public interface SpotSuggestionRepository extends JpaRepository<SpotSuggestion, 
     void replaceUpdatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
     @Modifying
-    @Query("UPDATE SpotSuggestion s SET s.informer = null WHERE s.informer.id = :userId")
-    void clearInformer(@Param("userId") UUID userId);
+    @Query("UPDATE SpotSuggestion s SET s.informer = :withdrawnUuid WHERE s.informer = :userId")
+    void replaceInformerWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
     @Modifying
-    @Query("UPDATE SpotSuggestion s SET s.reviewedBy = null WHERE s.reviewedBy.id = :userId")
-    void clearReviewedBy(@Param("userId") UUID userId);
+    @Query("UPDATE SpotSuggestion s SET s.reviewedBy = :withdrawnUuid WHERE s.reviewedBy = :userId")
+    void replaceReviewedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
     @Modifying
     @Query("UPDATE SpotSuggestion s SET s.deletedBy = :withdrawnUuid WHERE s.deletedBy = :userId")
@@ -64,10 +59,10 @@ public interface SpotSuggestionRepository extends JpaRepository<SpotSuggestion, 
 
     // 사용자별 제보 개수 집계 (프로필/사용자 관리 조회용)
     @Query("""
-    SELECT s.informer.id, COUNT(s)
+    SELECT s.informer, COUNT(s)
     FROM SpotSuggestion s
-    WHERE s.informer.id IN :userIds
-    GROUP BY s.informer.id
+    WHERE s.informer IN :userIds
+    GROUP BY s.informer
 """)
     List<Object[]> countByInformerIds(@Param("userIds") Collection<UUID> userIds);
 }

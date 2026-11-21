@@ -1,7 +1,6 @@
 package com.digniche.muntum.suggestion.entity;
 
 import com.digniche.muntum.common.entity.BaseEntity;
-import com.digniche.muntum.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -27,13 +26,11 @@ public class SpotSuggestion extends BaseEntity {
     @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "informer")    //제보한 사용자
-    private User informer;
+    @Column(name = "informer")
+    private UUID informer; // 제보자
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewed_by") // 검토한 관리자
-    private User reviewedBy;
+    @Column(name = "reviewed_by")
+    private UUID reviewedBy;
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
@@ -59,12 +56,7 @@ public class SpotSuggestion extends BaseEntity {
     private UUID deletedBy;
 
     @Builder
-    public SpotSuggestion(
-            User informer,
-            String programName,
-            String address,
-            String reason
-    ) {
+    public SpotSuggestion(UUID informer, String programName, String address, String reason) {
         this.informer = informer;
         this.programName = programName;
         this.address = address;
@@ -87,19 +79,19 @@ public class SpotSuggestion extends BaseEntity {
         this.reason = reason;
     }
 
-    public void startReview(User reviewer) {
-        this.reviewedBy = reviewer;
+    public void startReviewBy(UUID reviewerId) {
+        this.reviewedBy = reviewerId;
         this.status = SuggestionStatus.REVIEWING;
     }
 
-    public void approve(User reviewer) {
-        this.reviewedBy = reviewer;
+    public void approveBy(UUID reviewerId) {
+        this.reviewedBy = reviewerId;
         this.reviewedAt = LocalDateTime.now();
         this.status = SuggestionStatus.APPROVED;
     }
 
-    public void reject(User reviewer) {
-        this.reviewedBy = reviewer;
+    public void rejectBy(UUID reviewerId) {
+        this.reviewedBy = reviewerId;
         this.reviewedAt = LocalDateTime.now();
         this.status = SuggestionStatus.REJECTED;
     }
