@@ -67,4 +67,39 @@ public interface CurationImageRepository
             @Param("curationIds")
             Collection<UUID> curationIds
     );
+
+
+    /**
+     * 여러 큐레이션의 이미지 주소 조회
+     */
+    @Query("""
+        SELECT image.imageUrl
+        FROM CurationImage image
+        WHERE image.curation.id IN :curationIds
+    """)
+    List<String> findImageUrlsByCurationIdIn(@Param("curationIds") Collection<UUID> curationIds);
+
+
+    /**
+     * 여러 큐레이션의 이미지 전체 삭제
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        DELETE FROM CurationImage image
+        WHERE image.curation.id IN :curationIds
+    """)
+    void deleteAllByCurationIdIn(@Param("curationIds") Collection<UUID> curationIds);
+
+
+    /**
+     * 사용자 삭제 시
+     * - 생성자 / 수정자 Withdrawn UUID로 채우기
+     */
+    @Modifying
+    @Query("UPDATE CurationImage image SET image.createdBy = :withdrawnUuid WHERE image.createdBy = :userId")
+    void replaceCreatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+    @Modifying
+    @Query("UPDATE CurationImage image SET image.updatedBy = :withdrawnUuid WHERE image.updatedBy = :userId")
+    void replaceUpdatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 }

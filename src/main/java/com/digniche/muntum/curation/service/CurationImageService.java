@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
@@ -109,6 +111,38 @@ public class CurationImageService {
     }
 
     /**
+     * 여러 큐레이션의 이미지 전체 삭제
+     * - 트랜잭션 커밋된 후 스토리지 파일 삭제
+     */
+    @Transactional
+    public void deleteImagesOfCurations(Collection<UUID> curationIds) {
+        List<String> imageUrls = curationImageRepository.findImageUrlsByCurationIdIn(curationIds);
+
+        curationImageRepository.deleteAllByCurationIdIn(curationIds);
+
+        if (imageUrls.isEmpty()) { return; }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                imageUrls.forEach(CurationImageService.this::deleteStoredFileSafely);
+            }
+        });
+    }
+
+    /**
+     * 스토리지 파일 삭제
+     * - 실패 시, 예외를 던지지 않고 로그만 남김
+     */
+    private void deleteStoredFileSafely(String imageUrl) {
+        try {
+            imageStorageService.delete(imageUrl);
+        } catch (Exception exception) {
+            log.warn("[STORAGE_DELETE_FAILED] 큐레이션 이미지 파일 삭제 실패, 수동 정리 필요: {}", imageUrl, exception);
+        }
+    }
+
+    /**
      * 이미지 개수 및 파일 형식 검증
      */
     private void validateImageFiles(List<MultipartFile> files) {
@@ -156,28 +190,19 @@ public class CurationImageService {
         try {
             imageStorageService.delete(image.getImageUrl());
         } catch (Exception exception) {
-            log.warn(
-                    "큐레이션 이미지 파일 삭제 실패, 수동 정리 필요: {}",
-                    image.getImageUrl(),
-                    exception
-            );
+            log.warn("큐레이션 이미지 파일 삭제 실패, 수동 정리 필요: {}", image.getImageUrl(), exception);
         }
     }
 
     /**
      * 대표 이미지 일괄 조회
      */
-    public Map<UUID, String> getThumbnailMap(
-            Collection<UUID> curationIds
-    ) {
-        if (curationIds == null
-                || curationIds.isEmpty()) {
+    public Map<UUID, String> getThumbnailMap(Collection<UUID> curationIds) {
+        if (curationIds == null || curationIds.isEmpty()) {
             return Map.of();
         }
 
-        return curationImageRepository
-                .findThumbnailsByCurationIds(curationIds)
-                .stream()
+        return curationImageRepository.findThumbnailsByCurationIds(curationIds).stream()
                 .collect(Collectors.toMap(
                         image -> image.getCuration().getId(),
                         CurationImage::getImageUrl

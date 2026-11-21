@@ -83,7 +83,7 @@ public class PublicCurationQueryService {
                                              )
                                              .orElseThrow(() -> new BusinessException(ErrorCode.CURATION_NOT_FOUND));
 
-        CuratorProfileResponse curator = curatorProfileService.getCuratorProfile(curation.getCuratorId());
+        CuratorProfileResponse curator = curatorProfileService.getCurationAuthorProfile(curation.getCuratorId());
 
         List<CurationImageResponse> images = curationImageService.getOrderedImages(curationId);
         CurationLikeResponse like = curationLikeQueryService.getLike(curation, userId);
@@ -96,7 +96,7 @@ public class PublicCurationQueryService {
         List<UUID> curationIds = curations.stream().map(Curation::getId).toList();
         List<UUID> curatorIds = curations.stream().map(Curation::getCuratorId).distinct().toList();
 
-        Map<UUID, CuratorProfileResponse> curatorMap =curatorProfileService.getCuratorProfiles(curatorIds);
+        Map<UUID, CuratorProfileResponse> curatorMap =curatorProfileService.getCurationAuthorProfiles(curatorIds);
         Map<UUID, String> thumbnailMap = curationImageService.getThumbnailMap(curationIds);
         Map<UUID, CurationLikeResponse> likeMap = curationLikeQueryService.getLikes(curations, userId);
 

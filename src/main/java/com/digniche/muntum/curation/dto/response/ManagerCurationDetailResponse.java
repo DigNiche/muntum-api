@@ -4,6 +4,7 @@ import com.digniche.muntum.curation.entity.Curation;
 import com.digniche.muntum.curationlike.dto.response.CurationLikeResponse;
 import com.digniche.muntum.curation.entity.CurationPublicationStatus;
 import com.digniche.muntum.curation.entity.CurationStatus;
+import com.digniche.muntum.global.auditor.UserDisplay;
 import com.digniche.muntum.user.dto.response.CuratorProfileResponse;
 
 import java.time.LocalDateTime;
@@ -23,12 +24,14 @@ public record ManagerCurationDetailResponse(
         CurationPublicationStatus publicationStatus,
         CurationLikeResponse like,
         String changeRequestReason,
-        UUID reviewedBy,
+        UUID reviewerId,
+        String reviewerNickname,
         LocalDateTime reviewedAt,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static ManagerCurationDetailResponse from(Curation curation, CuratorProfileResponse curator, List<CurationImageResponse> images, CurationLikeResponse like) {
+
+    public static ManagerCurationDetailResponse from(Curation curation, CuratorProfileResponse curator, List<CurationImageResponse> images, CurationLikeResponse like, UserDisplay reviewer) {
         return new ManagerCurationDetailResponse(
                 curation.getId(),
                 curation.getProgram() != null
@@ -44,7 +47,8 @@ public record ManagerCurationDetailResponse(
                 curation.getPublicationStatus(),
                 like,
                 curation.getChangeRequestReason(),
-                curation.getReviewedBy(),
+                reviewer != null ? reviewer.id() : null,
+                reviewer != null ? reviewer.nickname() : null,
                 curation.getReviewedAt(),
                 curation.getCreatedAt(),
                 curation.getUpdatedAt()

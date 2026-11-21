@@ -9,6 +9,9 @@ import com.digniche.muntum.curation.repository.CurationRepository;
 import com.digniche.muntum.curationlike.dto.response.CurationLikeResponse;
 import com.digniche.muntum.curationlike.service.CurationLikeQueryService;
 import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.global.auditor.UserDisplay;
+import com.digniche.muntum.global.auditor.UserDisplayLabels;
+import com.digniche.muntum.global.auditor.UserDisplayResolver;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.program.repository.ProgramRepository;
@@ -28,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.digniche.muntum.curation.dto.request.CurationUpdateRequest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,6 +40,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CurationService {
+
+    private static final UserDisplayLabels REVIEWER_LABELS = new UserDisplayLabels("문틈", "문틈", "문틈", "문틈");
+
+    private final UserDisplayResolver userDisplayResolver;
     private final CurationRepository curationRepository;
     private final CurationImageService curationImageService;
     private final CuratorProfileService curatorProfileService;
@@ -98,7 +106,7 @@ public class CurationService {
 
         List<UUID> curatorIds = curations.getContent().stream().map(Curation::getCuratorId).distinct().toList();
 
-        Map<UUID, CuratorProfileResponse> curatorMap = curatorProfileService.getCuratorProfiles(curatorIds);
+        Map<UUID, CuratorProfileResponse> curatorMap = curatorProfileService.getCurationAuthorProfiles(curatorIds);
 
         Page<ManagerCurationListResponse> responses =
                 curations.map(curation ->
@@ -112,11 +120,15 @@ public class CurationService {
      * 관리자 승인.반려 후 응답 변환 메서드
      */
     private ManagerCurationDetailResponse toManagerDetailResponse(Curation curation) {
-        CuratorProfileResponse curator = curatorProfileService.getCuratorProfile(curation.getCuratorId());
+        CuratorProfileResponse curator = curatorProfileService.getCurationAuthorProfile(curation.getCuratorId());
+
+        // 검토자 표시 값 (검토 전이면 null)
+        UUID reviewedBy = curation.getReviewedBy();
+        UserDisplay reviewer = userDisplayResolver.load(Collections.singletonList(reviewedBy)).display(reviewedBy, REVIEWER_LABELS);
 
         List<CurationImageResponse> images = curationImageService.getOrderedImages(curation.getId());
 
-        return ManagerCurationDetailResponse.from(curation, curator, images, CurationLikeResponse.of(curation, false)); // 관리자는 좋아요 사용 x
+        return ManagerCurationDetailResponse.from(curation, curator, images, CurationLikeResponse.of(curation, false), reviewer); // 관리자는 좋아요 사용 x
     }
 
     /**
@@ -255,6 +267,21 @@ public class CurationService {
         List<CurationImageResponse> images = curationImageService.getOrderedImages(curationId);
 
         return CurationDetailResponse.from(curation, images, curationLikeQueryService.getLike(curation, curatorId));
+    }
+
+    /**
+     * 큐레이터의 한 번도 승인되지 않은 큐레이션을 이미지와 함께 삭제
+     * - 한 번도 승인되지 않음 = 프로그램과 연결된 적 없음(program_id IS NULL)
+     * - 이미지 스토리지 파일은 커밋 후 삭제
+     * - 호출 전제: 호출하는 쪽이 같은 트랜잭션에서 그 사용자 행을 먼저 배타 잠금해야 한다 (Lock 순서: 사용자 > 큐레이션)
+     */
+    @Transactional
+    public void deleteNeverApprovedCurations(UUID curatorId) {
+        List<UUID> curationIds = curationRepository.findAllNeverApprovedByCuratorIdForUpdate(curatorId).stream().map(Curation::getId).toList();
+        if (curationIds.isEmpty()) { return; }
+
+        curationImageService.deleteImagesOfCurations(curationIds);
+        curationRepository.deleteAllByIdInBatch(curationIds);
     }
 
     private Curation getMyCurationForUpdate(UUID curationId, UUID curatorId) {

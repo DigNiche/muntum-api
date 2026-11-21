@@ -524,6 +524,17 @@ public class UserService {
                 curatorApplicationRepository.replaceReviewedByWith(userId, withdrawnUuid);
                 curatorApplicationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
 
+                // 큐레이션의 작성자/생성자/수정자/검토자/삭제자
+                curationRepository.replaceCuratorIdWith(userId, withdrawnUuid);
+                curationRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                curationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                curationRepository.replaceReviewedByWith(userId, withdrawnUuid);
+                curationRepository.replaceDeletedByWith(userId, withdrawnUuid);
+
+                // 큐레이션 이미지의 생성자/수정자
+                curationImageRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                curationImageRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+
             }
             case "CURATOR" -> {
                 // 제보의 생성자/수정자/제보자는 탈퇴자 UUID 처리
@@ -534,6 +545,16 @@ public class UserService {
                 // 프로그램의 생성자/수정자 Null 처리 및 시스템 UUID 처리
                 programRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 programRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+
+                // 큐레이션의 작성자/생성자/수정자/삭제자
+                curationRepository.replaceCuratorIdWith(userId, withdrawnUuid);
+                curationRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                curationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                curationRepository.replaceDeletedByWith(userId, withdrawnUuid);
+
+                // 큐레이션 이미지의 생성자/수정자
+                curationImageRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                curationImageRepository.replaceUpdatedByWith(userId, withdrawnUuid);
 
             }
             case "AUDIENCE" -> {
