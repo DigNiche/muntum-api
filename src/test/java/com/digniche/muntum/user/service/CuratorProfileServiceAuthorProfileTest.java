@@ -1,5 +1,6 @@
 package com.digniche.muntum.user.service;
 
+import com.digniche.muntum.global.auditor.UserDisplayNames;
 import com.digniche.muntum.curation.repository.CurationRepository;
 import com.digniche.muntum.global.auditor.UserDisplayResolver;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
@@ -55,7 +56,7 @@ class CuratorProfileServiceAuthorProfileTest {
 
         CuratorProfileResponse profile = service.getCurationAuthorProfile(manager.getId());
 
-        assertThat(profile).isEqualTo(new CuratorProfileResponse(manager.getId(), "MANAGER", "문틈", "https://storage/manager.jpg"));
+        assertThat(profile).isEqualTo(new CuratorProfileResponse(manager.getId(), "MANAGER", UserDisplayNames.MUNTUM, "https://storage/manager.jpg"));
     }
 
     @Test
@@ -68,10 +69,10 @@ class CuratorProfileServiceAuthorProfileTest {
         Map<UUID, CuratorProfileResponse> profiles = service.getCurationAuthorProfiles(
                 List.of(withdrawnCurator, withdrawnManager, withdrawnAudience, system));
 
-        assertThat(profiles.get(withdrawnCurator)).isEqualTo(new CuratorProfileResponse(null, "CURATOR", "익명의 큐레이터", null));
-        assertThat(profiles.get(withdrawnManager)).isEqualTo(new CuratorProfileResponse(null, "MANAGER", "문틈", null));
-        assertThat(profiles.get(withdrawnAudience)).isEqualTo(new CuratorProfileResponse(null, "AUDIENCE", "익명의 큐레이터", null));
-        assertThat(profiles.get(system)).isEqualTo(new CuratorProfileResponse(null, "MANAGER", "문틈", null));
+        assertThat(profiles.get(withdrawnCurator)).isEqualTo(new CuratorProfileResponse(null, "CURATOR", UserDisplayNames.ANONYMOUS_CURATOR, null));
+        assertThat(profiles.get(withdrawnManager)).isEqualTo(new CuratorProfileResponse(null, "MANAGER", UserDisplayNames.MUNTUM, null));
+        assertThat(profiles.get(withdrawnAudience)).isEqualTo(new CuratorProfileResponse(null, "AUDIENCE", UserDisplayNames.ANONYMOUS_CURATOR, null));
+        assertThat(profiles.get(system)).isEqualTo(new CuratorProfileResponse(null, "MANAGER", UserDisplayNames.MUNTUM, null));
         verify(userRepository, times(0)).findAllById(any());
     }
 
@@ -82,7 +83,7 @@ class CuratorProfileServiceAuthorProfileTest {
 
         CuratorProfileResponse profile = service.getCurationAuthorProfile(missing);
 
-        assertThat(profile).isEqualTo(new CuratorProfileResponse(null, null, "알 수 없음", null));
+        assertThat(profile).isEqualTo(new CuratorProfileResponse(null, null, UserDisplayNames.UNKNOWN_USER, null));
     }
 
     @Test

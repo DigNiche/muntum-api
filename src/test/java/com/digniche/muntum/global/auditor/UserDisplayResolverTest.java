@@ -110,7 +110,7 @@ class UserDisplayResolverTest {
         UserDisplayLookup lookup = resolver.load(List.of(missing));
 
         assertThat(lookup.display(missing, LABELS_A))
-                .isEqualTo(new UserDisplay(null, UserDisplayLookup.UNKNOWN_USER_LABEL));
+                .isEqualTo(new UserDisplay(null, UserDisplayNames.UNKNOWN_USER));
     }
 
     @Test

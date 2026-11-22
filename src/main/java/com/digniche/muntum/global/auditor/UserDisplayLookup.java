@@ -11,7 +11,6 @@ import java.util.UUID;
  */
 public class UserDisplayLookup {
 
-    static final String UNKNOWN_USER_LABEL = "알 수 없음";
     private final Map<UUID, User> members;
 
     UserDisplayLookup(Map<UUID, User> members) {
@@ -39,7 +38,7 @@ public class UserDisplayLookup {
             return new UserDisplay(member.getId(), member.getNickname());
         }
         // users에 없는 일반 UUID (경고 로그는 load에서 남김)
-        return new UserDisplay(null, UNKNOWN_USER_LABEL);
+        return new UserDisplay(null, UserDisplayNames.UNKNOWN_USER);
     }
 
     /**

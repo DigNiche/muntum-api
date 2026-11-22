@@ -1,5 +1,6 @@
 package com.digniche.muntum.suggestion;
 
+import com.digniche.muntum.global.auditor.UserDisplayNames;
 import com.digniche.muntum.global.auditor.UserDisplayResolver;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
@@ -147,11 +148,11 @@ class SpotSuggestionWithdrawalTest {
 
         SpotSuggestionResponse detail = spotSuggestionService.getSpotSuggestion(suggestionId, audienceId, UserRole.AUDIENCE);
         assertThat(detail.reviewerId()).isNull();
-        assertThat(detail.reviewerNickname()).isEqualTo("문틈");
+        assertThat(detail.reviewerNickname()).isEqualTo(UserDisplayNames.MUNTUM);
 
         SpotSuggestionResponse inList = spotSuggestionService.getSpotSuggestionList(null, 0, 20).content().get(0);
         assertThat(inList.reviewerId()).isNull();
-        assertThat(inList.reviewerNickname()).isEqualTo("문틈");
+        assertThat(inList.reviewerNickname()).isEqualTo(UserDisplayNames.MUNTUM);
     }
 
     @Test
@@ -222,11 +223,11 @@ class SpotSuggestionWithdrawalTest {
 
         SpotSuggestionResponse detail = spotSuggestionService.getSpotSuggestion(suggestionId, managerId, UserRole.MANAGER);
         assertThat(detail.informerId()).isNull();
-        assertThat(detail.informerNickname()).isEqualTo("익명의 제보자");
+        assertThat(detail.informerNickname()).isEqualTo(UserDisplayNames.ANONYMOUS_INFORMER);
 
         SpotSuggestionResponse inList = spotSuggestionService.getSpotSuggestionList(null, 0, 20).content().get(0);
         assertThat(inList.informerId()).isNull();
-        assertThat(inList.informerNickname()).isEqualTo("익명의 제보자");
+        assertThat(inList.informerNickname()).isEqualTo(UserDisplayNames.ANONYMOUS_INFORMER);
     }
 
     private UUID createAndApprove(UUID informerId, UUID managerId) {

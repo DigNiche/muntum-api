@@ -3,6 +3,7 @@ package com.digniche.muntum.suggestion.service;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.auditor.UserDisplayLookup;
 import com.digniche.muntum.global.auditor.UserDisplayLabels;
+import com.digniche.muntum.global.auditor.UserDisplayNames;
 import com.digniche.muntum.global.auditor.UserDisplayResolver;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
@@ -42,10 +43,10 @@ public class SpotSuggestionService {
 
     // 탈퇴 시 검토자(reviewedBy) 화면 문구
     private static final UserDisplayLabels REVIEWER_LABELS
-            = new UserDisplayLabels("문틈", "익명의 큐레이터", "익명의 관람객", "문틈");
+            = new UserDisplayLabels(UserDisplayNames.MUNTUM, UserDisplayNames.ANONYMOUS_CURATOR, UserDisplayNames.ANONYMOUS_AUDIENCE, UserDisplayNames.MUNTUM);
     // 탈퇴 시 제보자(informer) 화면 문구
     private static final UserDisplayLabels INFORMER_LABELS
-            = new UserDisplayLabels("익명의 제보자", "익명의 제보자", "익명의 제보자", "문틈");
+            = new UserDisplayLabels(UserDisplayNames.ANONYMOUS_INFORMER, UserDisplayNames.ANONYMOUS_INFORMER, UserDisplayNames.ANONYMOUS_INFORMER, UserDisplayNames.MUNTUM);
 
     /**
      * 제보 등록

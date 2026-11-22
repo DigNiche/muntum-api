@@ -11,6 +11,7 @@ import com.digniche.muntum.curationlike.service.CurationLikeQueryService;
 import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.auditor.UserDisplay;
 import com.digniche.muntum.global.auditor.UserDisplayLabels;
+import com.digniche.muntum.global.auditor.UserDisplayNames;
 import com.digniche.muntum.global.auditor.UserDisplayResolver;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
@@ -41,7 +42,8 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class CurationService {
 
-    private static final UserDisplayLabels REVIEWER_LABELS = new UserDisplayLabels("문틈", "문틈", "문틈", "문틈");
+    private static final UserDisplayLabels REVIEWER_LABELS =
+            new UserDisplayLabels(UserDisplayNames.MUNTUM, UserDisplayNames.MUNTUM, UserDisplayNames.MUNTUM, UserDisplayNames.MUNTUM);
 
     private final UserDisplayResolver userDisplayResolver;
     private final CurationRepository curationRepository;

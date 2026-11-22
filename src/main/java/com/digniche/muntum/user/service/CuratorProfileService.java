@@ -5,6 +5,7 @@ import com.digniche.muntum.curation.repository.CurationRepository;
 import com.digniche.muntum.global.auditor.SpecialUserType;
 import com.digniche.muntum.global.auditor.UserDisplay;
 import com.digniche.muntum.global.auditor.UserDisplayLabels;
+import com.digniche.muntum.global.auditor.UserDisplayNames;
 import com.digniche.muntum.global.auditor.UserDisplayLookup;
 import com.digniche.muntum.global.auditor.UserDisplayResolver;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
@@ -37,7 +38,8 @@ public class CuratorProfileService {
 
     private static final String MANAGER_NICKNAME = "문틈";
     private static final String WITHDRAWN_CURATOR_NICKNAME = "익명의 큐레이터";
-    private static final UserDisplayLabels CURATION_AUTHOR_LABELS = new UserDisplayLabels("문틈", "익명의 큐레이터", "익명의 큐레이터", "문틈");
+    private static final UserDisplayLabels CURATION_AUTHOR_LABELS = new UserDisplayLabels(
+            UserDisplayNames.MUNTUM, UserDisplayNames.ANONYMOUS_CURATOR, UserDisplayNames.ANONYMOUS_CURATOR, UserDisplayNames.MUNTUM);
 
     private final CurationRepository curationRepository;
     private final UserRepository userRepository;
