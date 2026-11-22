@@ -9,6 +9,7 @@ import com.digniche.muntum.curation.repository.CurationRepository;
 import com.digniche.muntum.curation.service.CurationService;
 import com.digniche.muntum.curationlike.service.CurationLikeService;
 import com.digniche.muntum.curator.repository.CuratorApplicationRepository;
+import com.digniche.muntum.global.auditor.UserDisplayNames;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
@@ -136,11 +137,17 @@ public class UserService {
      */
     @Transactional
     public void setNickname(UUID userId, NicknameUpdateRequest request) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 화면 문구와 같은 닉네임은 차단. 서비스 이름은 관리자의 경우 허용
+        if (UserDisplayNames.isReservedNicknameFor(request.nickname(), user.getRole())) {
+            throw new BusinessException(ErrorCode.RESERVED_NICKNAME);
+        }
+
         if (userRepository.existsByNicknameAndIdNot(request.nickname(), userId)) {
             throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXISTS);
         }
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.updateNickname(request.nickname());
     }
 

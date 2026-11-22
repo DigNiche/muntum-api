@@ -49,6 +49,7 @@ public enum ErrorCode {
     KAKAO_UNLINK_FAILED("A031", "카카오 인증 연결 해제에 실패했습니다", HttpStatus.BAD_GATEWAY),
     // 사용자 닉네임
     NICKNAME_ALREADY_EXISTS("U001", "이미 사용 중인 닉네임입니다", HttpStatus.CONFLICT),
+    RESERVED_NICKNAME("U002", "사용할 수 없는 닉네임입니다", HttpStatus.BAD_REQUEST),
 
     // 사용자 약관 동의
     TERMS_NOT_FOUND("T001", "약관 동의 정보가 존재하지 않습니다", HttpStatus.NOT_FOUND),
