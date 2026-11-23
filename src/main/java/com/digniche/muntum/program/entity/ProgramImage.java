@@ -26,12 +26,7 @@ public class ProgramImage extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(
-            name = "id",
-            columnDefinition = "BINARY(16)",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -47,18 +42,11 @@ public class ProgramImage extends BaseEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(
-            name = "deleted_by",
-            columnDefinition = "BINARY(16)"
-    )
+    @Column(name = "deleted_by", columnDefinition = "BINARY(16)" )
     private UUID deletedBy;
 
     @Builder
-    public ProgramImage(
-            Program program,
-            String imageUrl,
-            int displayOrder
-    ) {
+    public ProgramImage(Program program, String imageUrl,int displayOrder) {
         this.program = program;
         this.imageUrl = imageUrl;
         this.displayOrder = displayOrder;
