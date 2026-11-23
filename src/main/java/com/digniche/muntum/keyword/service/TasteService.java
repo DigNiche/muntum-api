@@ -1,6 +1,5 @@
 package com.digniche.muntum.keyword.service;
 
-import com.digniche.muntum.global.PageResponse;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.keyword.dto.KeywordResponse;
@@ -9,25 +8,15 @@ import com.digniche.muntum.keyword.entity.Keyword;
 import com.digniche.muntum.keyword.entity.UserKeyword;
 import com.digniche.muntum.keyword.repository.KeywordRepository;
 import com.digniche.muntum.keyword.repository.UserKeywordRepository;
-import com.digniche.muntum.program.dto.request.ProgramFilterChip;
-import com.digniche.muntum.program.dto.response.ProgramCardResponse;
-import com.digniche.muntum.program.entity.Program;
-import com.digniche.muntum.program.entity.ProgramStatus;
-import com.digniche.muntum.program.service.ProgramFilterCondition;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.digniche.muntum.global.analytics.event.OnboardingCompletedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
