@@ -28,7 +28,9 @@ public class RecentSearchService {
         return PREFIX + userId;
     }
 
-    // 저장: 있으면 시각 갱신(중복 X), 10개 초과분 제거, TTL 갱신
+    /**
+     * 검색어 저장: 있으면 시각 갱신(중복 X), 10개 초과분 제거, TTL 갱신
+     */
     public void save(UUID userId, String query) {
         String key = key(userId);
         double score = System.currentTimeMillis();
@@ -46,8 +48,7 @@ public class RecentSearchService {
 
     // 조회: 최근순(score 내림차순) 10개
     public List<String> getRecent(UUID userId) {
-        Set<String> result = redisTemplate.opsForZSet()
-                .reverseRange(key(userId), 0, MAX_SIZE - 1);
+        Set<String> result = redisTemplate.opsForZSet().reverseRange(key(userId), 0, MAX_SIZE - 1);
         return result == null ? List.of() : List.copyOf(result);
     }
 

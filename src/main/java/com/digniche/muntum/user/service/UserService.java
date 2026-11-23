@@ -21,6 +21,7 @@ import com.digniche.muntum.keyword.repository.UserKeywordRepository;
 import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import com.digniche.muntum.scrap.repository.ScrapRepository;
+import com.digniche.muntum.search.service.RecentSearchService;
 import com.digniche.muntum.suggestion.repository.SpotSuggestionRepository;
 import com.digniche.muntum.user.dto.request.NicknameUpdateRequest;
 import com.digniche.muntum.user.dto.request.PasswordChangeRequest;
@@ -91,6 +92,7 @@ public class UserService {
     private final TermsRepository termsRepository;
     private final SocialAccountRepository socialAccountRepository;
     private final RefreshTokenService refreshTokenService;
+    private final RecentSearchService recentSearchService;
     private final AccessTokenService accessTokenService;
     private final AuthService authService;
     private final UserProfileImageService userProfileImageService;
@@ -277,37 +279,26 @@ public class UserService {
      * 회원 탈퇴
      */
     public void withdraw(UUID userId, WithdrawRequest request, String accessToken) {
+        // 탈퇴 가능한 = 존재하는 사용자/소셜 계정인지 확인
         User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        // 일반 회원 가입 / 소셜 연동 가입 인증
         SocialAccount socialAccount = socialAccountRepository.findByUserId(userId).orElse(null);
-
         if (socialAccount == null) { verifyPasswordWithdrawal(user, request); }
         else {
             verifySocialWithdrawal(socialAccount, request);
-            log.info(
-                    "[SOCIAL_WITHDRAW_REAUTH_AND_REVOKE_COMPLETED] provider={}, userId={}",
-                    socialAccount.getProvider(),
-                    userId
-            );
+            log.info("[SOCIAL_WITHDRAW_REAUTH_AND_REVOKE_COMPLETED] provider={}, userId={}", socialAccount.getProvider(), userId);
         }
 
         // 외부 인증 및 연결 해제 완료 후 DB 탈퇴 처리
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-
         try {
-            transactionTemplate.executeWithoutResult(
-                    status -> completeWithdrawal(user)
-            );
+            transactionTemplate.executeWithoutResult(status -> completeWithdrawal(user));
         } catch (RuntimeException exception) {
-            log.error(
-                    "[WITHDRAW_TRANSACTION_ERROR] userId={}, provider={}, exceptionType={}",
-                    userId,
-                    socialAccount == null
-                            ? "EMAIL"
-                            : socialAccount.getProvider(),
+            log.error("[WITHDRAW_TRANSACTION_ERROR] userId={}, provider={}, exceptionType={}", userId,
+                    socialAccount == null ? "EMAIL" : socialAccount.getProvider(),
                     exception.getClass().getSimpleName()
             );
-
             throw exception;
         }
         log.info("[WITHDRAW_DB_DELETE_COMPLETED] userId={}",userId);
@@ -316,10 +307,14 @@ public class UserService {
         try {
             refreshTokenService.delete(userId);
         } catch (RuntimeException exception) {
-            log.error(
-                    "[WITHDRAW_REFRESH_TOKEN_DELETE_FAILED] userId={}",
-                    userId
-            );
+            log.error("[WITHDRAW_REFRESH_TOKEN_DELETE_FAILED] userId={}", userId);
+        }
+
+        // 최근 검색어 삭제 (실패해도 TTL 30일 뒤 자동 만료)
+        try {
+            recentSearchService.deleteAll(userId);
+        } catch (RuntimeException exception) {
+            log.error("[WITHDRAW_RECENT_SEARCH_DELETE_FAILED] userId={}", userId);
         }
 
         try {
@@ -365,6 +360,7 @@ public class UserService {
         return rows.stream()
                 .collect(Collectors.toMap(row -> (UUID) row[0], row -> (Long) row[1]));
     }
+
 
     /**
      * 일반 가입 회원 검증
