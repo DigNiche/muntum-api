@@ -46,6 +46,20 @@ public interface ProgramKeywordRepository extends JpaRepository<ProgramKeyword, 
     @Query("SELECT DISTINCT pk.keyword FROM ProgramKeyword pk")
     List<Keyword> findAllKeywords();
 
+    /**
+     * 관리자 탈퇴 시, Withdrawn UUID로 채우기
+     */
+    @Modifying
+    @Query("UPDATE ProgramKeyword pk SET pk.createdBy = :withdrawnUuid WHERE pk.createdBy = :userId")
+    void replaceCreatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+    @Modifying
+    @Query("UPDATE ProgramKeyword pk SET pk.updatedBy = :withdrawnUuid WHERE pk.updatedBy = :userId")
+    void replaceUpdatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+    @Modifying
+    @Query("UPDATE ProgramKeyword pk SET pk.deletedBy = :withdrawnUuid WHERE pk.deletedBy = :userId")
+    void replaceDeletedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 
 }
 

@@ -1,10 +1,12 @@
 package com.digniche.muntum.user.service;
 
 import com.digniche.muntum.global.auditor.UserDisplayNames;
+import com.digniche.muntum.curation.entity.CurationStatus;
 import com.digniche.muntum.curation.repository.CurationRepository;
 import com.digniche.muntum.global.auditor.UserDisplayResolver;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
 import com.digniche.muntum.user.dto.response.CuratorProfileResponse;
+import com.digniche.muntum.user.dto.response.MyCuratorProfileResponse;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserRole;
 import com.digniche.muntum.user.repository.UserRepository;
@@ -31,12 +33,14 @@ import static org.mockito.Mockito.when;
 class CuratorProfileServiceAuthorProfileTest {
 
     private UserRepository userRepository;
+    private CurationRepository curationRepository;
     private CuratorProfileService service;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
-        service = new CuratorProfileService(mock(CurationRepository.class), userRepository, new UserDisplayResolver(userRepository));
+        curationRepository = mock(CurationRepository.class);
+        service = new CuratorProfileService(curationRepository, new UserDisplayResolver(userRepository));
     }
 
     @Test
@@ -99,6 +103,20 @@ class CuratorProfileServiceAuthorProfileTest {
         assertThat(profiles.get(curator.getId()).nickname()).isEqualTo("민정");
         assertThat(profiles.get(withdrawnCurator).curatorId()).isNull();
         verify(userRepository, times(1)).findAllById(any());
+    }
+
+    @Test
+    void 내_큐레이터_프로필은_본인_정보와_상태별_큐레이션_수로_나온다() {
+        User curator = member(UserRole.CURATOR, "민정", "https://storage/minjung.jpg");
+        when(userRepository.findAllById(any())).thenReturn(List.of(curator));
+        when(curationRepository.countByCuratorIdAndStatusAndDeletedAtIsNull(curator.getId(), CurationStatus.APPROVED)).thenReturn(3L);
+        when(curationRepository.countByCuratorIdAndStatusAndDeletedAtIsNull(curator.getId(), CurationStatus.PENDING)).thenReturn(2L);
+        when(curationRepository.countByCuratorIdAndStatusAndDeletedAtIsNull(curator.getId(), CurationStatus.CHANGES_REQUESTED)).thenReturn(1L);
+
+        MyCuratorProfileResponse profile = service.getMyCuratorProfile(curator.getId());
+
+        assertThat(profile).isEqualTo(new MyCuratorProfileResponse(
+                curator.getId(), "CURATOR", "민정", "https://storage/minjung.jpg", 3L, 2L, 1L));
     }
 
     private static User member(UserRole role, String nickname, String profileImageUrl) {

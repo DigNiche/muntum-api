@@ -16,7 +16,9 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.global.redis.RefreshTokenService;
 import com.digniche.muntum.keyword.repository.KeywordRepository;
+import com.digniche.muntum.keyword.repository.ProgramKeywordRepository;
 import com.digniche.muntum.keyword.repository.UserKeywordRepository;
+import com.digniche.muntum.program.repository.ProgramImageRepository;
 import com.digniche.muntum.program.repository.ProgramRepository;
 import com.digniche.muntum.scrap.repository.ScrapRepository;
 import com.digniche.muntum.suggestion.repository.SpotSuggestionRepository;
@@ -81,6 +83,8 @@ public class UserService {
     private final UserKeywordRepository userKeywordRepository;
     private final KeywordRepository keywordRepository;
     private final ProgramRepository programRepository;
+    private final ProgramImageRepository programImageRepository;
+    private final ProgramKeywordRepository programKeywordRepository;
     private final UserTermsAgreementRepository userTermsAgreementRepository;
     private final AnnouncementRepository announcementRepository;
     private final CuratorApplicationRepository curatorApplicationRepository;
@@ -516,10 +520,20 @@ public class UserService {
                 keywordRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 keywordRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 프로그램의 생성자/수정자/삭제자 시스템 UUID 처리
+                // 프로그램의 생성자/수정자/삭제자
                 programRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 programRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 programRepository.replaceDeletedByWith(userId, withdrawnUuid);
+
+                // 프로그램 이미지의 생성자/수정자/삭제자
+                programImageRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                programImageRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                programImageRepository.replaceDeletedByWith(userId, withdrawnUuid);
+
+                // 프로그램 키워드의 생성자/수정자/삭제자
+                programKeywordRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                programKeywordRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                programKeywordRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
                 // 공지의 생성자/수정자/삭제자
                 announcementRepository.replaceCreatedByWith(userId, withdrawnUuid);
@@ -552,10 +566,6 @@ public class UserService {
                 spotSuggestionRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceInformerWith(userId, withdrawnUuid);
-
-                // 프로그램의 생성자/수정자 Null 처리 및 시스템 UUID 처리
-                programRepository.replaceCreatedByWith(userId, withdrawnUuid);
-                programRepository.replaceUpdatedByWith(userId, withdrawnUuid);
 
                 // 큐레이션의 작성자/생성자/수정자/삭제자
                 curationRepository.replaceCuratorIdWith(userId, withdrawnUuid);

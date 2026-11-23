@@ -332,7 +332,7 @@ public class ProgramService {
                 .map(ProgramKeywordResponse::from)
                 .toList();
         ProgramReactionSummaryResponse reaction = programReactionService.getReactionSummary(programId, userId);
-        CuratorProfileResponse curator = curatorProfileService.getCuratorProfile(program.getCreatedBy());
+        CuratorProfileResponse curator = curatorProfileService.getCurationAuthorProfile(program.getCreatedBy());
         List<PublicCurationSummaryResponse> curations = publicCurationQueryService.getAllSummaries(programId, userId);
         return ProgramResponse.from(program, images, keywords, reaction, curator, curations);
     }
@@ -652,28 +652,6 @@ public class ProgramService {
             }
         };
     }
-/*
-    // 큐레이터 소개 카드 생성
-    private CuratorProfileResponse getCuratorProfile(UUID createdBy) {
-        String curator = createdBy.toString();
-        String prefix = curator.substring(0, AuditorAwareImpl.WITHDRAWN_MANAGER_UUID_PREFIX.length());
-//        String suffix = curator.substring(curator.length() - 4).toUpperCase();
-
-        // 탈퇴한 관리자 / 큐레이터
-        switch (prefix) {
-            case AuditorAwareImpl.WITHDRAWN_MANAGER_UUID_PREFIX -> {
-                return CuratorProfileResponse.from(createdBy, UserRole.MANAGER.name(), WITHDRAWN_MANAGER_NICKNAME); //  + " " + suffix);
-            }
-            case AuditorAwareImpl.WITHDRAWN_CURATOR_UUID_PREFIX -> {
-                return CuratorProfileResponse.from(createdBy, UserRole.CURATOR.name(), WITHDRAWN_CURATOR_NICKNAME); // + " " + suffix);
-            }
-        }
-
-        // Active 관리자 / 큐레이터
-        User user = userRepository.findById(createdBy).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        String nickname = (user.getRole().equals(UserRole.MANAGER)) ? WITHDRAWN_MANAGER_NICKNAME : user.getNickname();
-        return CuratorProfileResponse.from(user.getId(), user.getRole().name(), nickname);
-    }*/
 
     @Transactional
     public ProgramResponse updateProgramStatus(UUID programId, ProgramStatus status) {

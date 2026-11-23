@@ -32,4 +32,19 @@ public interface ProgramImageRepository extends JpaRepository<ProgramImage, UUID
     void deleteAllByProgramId(@Param("programId") UUID programId);
 
     void deleteByProgramId(UUID programId);
+
+    /**
+     * 관리자 탈퇴 시, Withdrawn UUID로 채우기
+     */
+    @Modifying
+    @Query("UPDATE ProgramImage pi SET pi.createdBy = :withdrawnUuid WHERE pi.createdBy = :userId")
+    void replaceCreatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+    @Modifying
+    @Query("UPDATE ProgramImage pi SET pi.updatedBy = :withdrawnUuid WHERE pi.updatedBy = :userId")
+    void replaceUpdatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
+
+    @Modifying
+    @Query("UPDATE ProgramImage pi SET pi.deletedBy = :withdrawnUuid WHERE pi.deletedBy = :userId")
+    void replaceDeletedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 }
