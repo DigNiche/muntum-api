@@ -16,10 +16,10 @@ public record CuratorApplicationCardResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static CuratorApplicationCardResponse from(CuratorApplication application) {
+    public static CuratorApplicationCardResponse from(CuratorApplication application, UserProfileResponse applicant) {
         return new CuratorApplicationCardResponse(
                 application.getId(),
-                UserProfileResponse.from(application.getApplicant()),
+                applicant,
                 ApplicantStatusInfoResponse.from(application),
                 application.getCreatedAt(),
                 application.getUpdatedAt()

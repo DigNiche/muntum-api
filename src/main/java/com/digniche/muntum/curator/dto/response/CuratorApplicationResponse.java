@@ -18,10 +18,10 @@ public record CuratorApplicationResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static CuratorApplicationResponse from(CuratorApplication application, ReviewerProfileResponse reviewer) {
+    public static CuratorApplicationResponse from(CuratorApplication application, UserProfileResponse applicant, ReviewerProfileResponse reviewer) {
         return new CuratorApplicationResponse(
                 application.getId(),
-                UserProfileResponse.from(application.getApplicant()),
+                applicant,
                 ApplicationContentResponse.from(application),
                 ApplicantStatusInfoResponse.from(application),
                 reviewer,

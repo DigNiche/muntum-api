@@ -1,9 +1,10 @@
 package com.digniche.muntum.curator.dto.request;
 
 import com.digniche.muntum.curator.entity.CuratorApplication;
-import com.digniche.muntum.user.entity.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
+import java.util.UUID;
 
 /**
  * 큐레이터 지원서 작성 DTO
@@ -21,9 +22,9 @@ public record CuratorApplicationCreateRequest(
         @NotBlank
         String curation
 ) {
-    public CuratorApplication toEntity(User applicant) {
+    public CuratorApplication toEntity(UUID applicantId) {
         return CuratorApplication.builder()
-                .applicant(applicant)
+                .applicantId(applicantId)
                 .programName(programName)
                 .tagline(tagline)
                 .curation(curation)

@@ -115,9 +115,9 @@ class UserOwnedDataCascadeTest {
                 Map.entry("program_reactions.user_id", "CASCADE"),
                 Map.entry("social_accounts.user_id", "NO ACTION"),
                 Map.entry("user_terms_agreements.user_id", "NO ACTION"),
-                Map.entry("curation_likes.user_id", "NO ACTION"),
-                Map.entry("curator_applications.applicant_id", "NO ACTION")
+                Map.entry("curation_likes.user_id", "NO ACTION")
                 // spot_suggestions.reviewed_by·informer는 FK 없는 UUID 칸 (V202611181400, V202611181500)
+                // curator_applications.applicant_id도 FK 없는 UUID 칸 (V202611231000)
         );
     }
 

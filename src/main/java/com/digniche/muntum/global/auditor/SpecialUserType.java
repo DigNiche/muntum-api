@@ -1,6 +1,7 @@
 package com.digniche.muntum.global.auditor;
 
 import com.digniche.muntum.global.config.AuditorAwareImpl;
+import com.digniche.muntum.user.entity.UserRole;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +17,17 @@ public enum SpecialUserType {
     WITHDRAWN_CURATOR,  // 탈퇴한 큐레이터
     WITHDRAWN_AUDIENCE, // 탈퇴한 관람객
     SYSTEM;             // 시스템
+
+    /**
+     * 화면에 내보낼 역할 (탈퇴 관리자·시스템은 관리자)
+     */
+    public UserRole role() {
+        return switch (this) {
+            case WITHDRAWN_MANAGER, SYSTEM -> UserRole.MANAGER;
+            case WITHDRAWN_CURATOR -> UserRole.CURATOR;
+            case WITHDRAWN_AUDIENCE -> UserRole.AUDIENCE;
+        };
+    }
 
     /**
      * 특수 UUID 반환, 일반 회원 UUID 혹은 Null인 경우 empty 반환

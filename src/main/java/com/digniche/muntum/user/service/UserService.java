@@ -8,6 +8,7 @@ import com.digniche.muntum.curation.repository.CurationImageRepository;
 import com.digniche.muntum.curation.repository.CurationRepository;
 import com.digniche.muntum.curation.service.CurationService;
 import com.digniche.muntum.curationlike.service.CurationLikeService;
+import com.digniche.muntum.curator.entity.CuratorApplicationStatus;
 import com.digniche.muntum.curator.repository.CuratorApplicationRepository;
 import com.digniche.muntum.global.auditor.UserDisplayNames;
 import com.digniche.muntum.global.config.AuditorAwareImpl;
@@ -495,6 +496,9 @@ public class UserService {
         // 한 번도 승인되지 않은 큐레이션과 이미지 삭제 (이미지 파일은 커밋 후)
         curationService.deleteNeverApprovedCurations(userId);
 
+        // 검토가 확정되지 않은(대기) 큐레이터 지원서 삭제 (승인·반려로 확정된 지원서만 남김)
+        curatorApplicationRepository.deleteByApplicantIdAndStatus(userId, CuratorApplicationStatus.PENDING);
+
         String role = user.getRole().name();
         UUID withdrawnUuid = AuditorAwareImpl.toWithdrawnUserUuid(role, userId);
 
@@ -527,9 +531,9 @@ public class UserService {
                 termsRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 termsRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 큐레이터 지원서의 검토자/수정자
-                curatorApplicationRepository.replaceReviewedByWith(userId, withdrawnUuid);
+                // 큐레이터 지원서의 수정자/검토자
                 curatorApplicationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+                curatorApplicationRepository.replaceReviewedByWith(userId, withdrawnUuid);
 
                 // 큐레이션의 작성자/생성자/수정자/검토자/삭제자
                 curationRepository.replaceCuratorIdWith(userId, withdrawnUuid);
@@ -563,18 +567,27 @@ public class UserService {
                 curationImageRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 curationImageRepository.replaceUpdatedByWith(userId, withdrawnUuid);
 
+                // 큐레이터 지원서의 지원자/생성자/수정자
+                curatorApplicationRepository.replaceApplicantIdWith(userId, withdrawnUuid);
+                curatorApplicationRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                curatorApplicationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+
             }
             case "AUDIENCE" -> {
                 // 제보의 생성자/수정자/제보자는 탈퇴자 UUID 처리
                 spotSuggestionRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceInformerWith(userId, withdrawnUuid);
+
+                // 큐레이터 지원서의 지원자/생성자/수정자
+                curatorApplicationRepository.replaceApplicantIdWith(userId, withdrawnUuid);
+                curatorApplicationRepository.replaceCreatedByWith(userId, withdrawnUuid);
+                curatorApplicationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
             }
         }
 
         // 사용자 관련 데이터 삭제
         userTermsAgreementRepository.deleteAllByUserId(userId);
-        curatorApplicationRepository.deleteAllByUserId(userId);
 
         // social_accounts가 users를 외래키로 참조하므로 users보다 먼저 삭제
         socialAccountRepository.deleteAllByUserId(userId);

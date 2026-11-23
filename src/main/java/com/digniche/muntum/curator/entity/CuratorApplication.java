@@ -30,9 +30,8 @@ public class CuratorApplication extends BaseEntity {
     @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "applicant_id", nullable = false)
-    private User applicant;
+    @Column(name = "applicant_id", nullable = false)
+    private UUID applicantId;
 
     @Column(name = "program_name", nullable = false, length = 100)
     private String programName;
@@ -58,14 +57,15 @@ public class CuratorApplication extends BaseEntity {
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
 
+
     @Builder
     public CuratorApplication(
-            User applicant,
+            UUID applicantId,
             String programName,
             String tagline,
             String curation
     ) {
-        this.applicant = applicant;
+        this.applicantId = applicantId;
         this.programName = programName;
         this.tagline = tagline;
         this.curation = curation;

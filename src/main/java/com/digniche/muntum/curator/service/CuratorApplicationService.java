@@ -10,8 +10,14 @@ import com.digniche.muntum.curator.entity.CuratorApplicationRejectReason;
 import com.digniche.muntum.curator.entity.CuratorApplicationStatus;
 import com.digniche.muntum.curator.repository.CuratorApplicationRepository;
 import com.digniche.muntum.global.PageResponse;
+import com.digniche.muntum.global.auditor.SpecialUserType;
+import com.digniche.muntum.global.auditor.UserDisplayLabels;
+import com.digniche.muntum.global.auditor.UserDisplayLookup;
+import com.digniche.muntum.global.auditor.UserDisplayNames;
+import com.digniche.muntum.global.auditor.UserDisplayResolver;
 import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
+import com.digniche.muntum.user.dto.response.UserProfileResponse;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserRole;
 import com.digniche.muntum.user.repository.UserRepository;
@@ -21,9 +27,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
-
-import static com.digniche.muntum.global.config.AuditorAwareImpl.*;
 
 /**
  * 큐레이터 지원하기 서비스
@@ -34,6 +40,12 @@ public class CuratorApplicationService {
 
     private final CuratorApplicationRepository curatorApplicationRepository;
     private final UserRepository userRepository;
+    private final UserDisplayResolver userDisplayResolver;
+
+    private static final UserDisplayLabels APPLICANT_LABELS = new UserDisplayLabels( // 지원자 칸 문구표
+            UserDisplayNames.MUNTUM, UserDisplayNames.ANONYMOUS_CURATOR, UserDisplayNames.ANONYMOUS_AUDIENCE, UserDisplayNames.MUNTUM);
+    private static final UserDisplayLabels REVIEWER_LABELS = new UserDisplayLabels( // 검토자 칸 문구표
+            UserDisplayNames.MUNTUM, UserDisplayNames.ANONYMOUS_CURATOR, UserDisplayNames.ANONYMOUS_AUDIENCE, UserDisplayNames.MUNTUM);
 
     /**
      * 관람객의 큐레이터 지원서 생성
@@ -48,14 +60,15 @@ public class CuratorApplicationService {
         }
 
         // 사용자에게 이미 지원 상태가 PENDING인 지원서가 없는지 확인
-        if (curatorApplicationRepository.existsByApplicant_IdAndStatus(applicantId, CuratorApplicationStatus.PENDING)) {
+        if (curatorApplicationRepository.existsByApplicantIdAndStatus(applicantId, CuratorApplicationStatus.PENDING)) {
             throw new BusinessException(ErrorCode.CURATOR_APPLICATION_ALREADY_PENDING);
         }
 
         // 큐레이터 지원서 생성
-        CuratorApplication application = curatorApplicationRepository.save(request.toEntity(applicant));
-        return CuratorApplicationResponse.from(application, null);
+        CuratorApplication application = curatorApplicationRepository.save(request.toEntity(applicant.getId()));
+        return CuratorApplicationResponse.from(application, UserProfileResponse.from(applicant), null);
     }
+
 
     /**
      * 관람객의 큐레이터 지원서 수정 (대기 상태에서만 가능)
@@ -74,7 +87,8 @@ public class CuratorApplicationService {
 
         application.updatePortfolio(request.programName(), request.tagline(), request.curation());
 
-        return CuratorApplicationResponse.from(application, null);
+        UserDisplayLookup lookup = userDisplayResolver.load(List.of(application.getApplicantId()));
+        return CuratorApplicationResponse.from(application, toApplicantProfileResponse(application.getApplicantId(), lookup), null);
     }
 
 
@@ -84,10 +98,14 @@ public class CuratorApplicationService {
      */
     @Transactional(readOnly = true)
     public CuratorApplicationCardResponse getLatestApplication(UUID applicantId) {
-        return curatorApplicationRepository.findFirstByApplicant_IdOrderByCreatedAtDesc(applicantId)
-                .map(CuratorApplicationCardResponse::from)
+        return curatorApplicationRepository.findFirstByApplicantIdOrderByCreatedAtDesc(applicantId)
+                .map(application -> {
+                    UserDisplayLookup lookup = userDisplayResolver.load(List.of(application.getApplicantId()));
+                    return CuratorApplicationCardResponse.from(application, toApplicantProfileResponse(application.getApplicantId(), lookup));
+                })
                 .orElse(null);
     }
+
 
     /**
      * 특정 사용자의 지원 내역 단건 상세 조회
@@ -101,14 +119,12 @@ public class CuratorApplicationService {
             throw new BusinessException(ErrorCode.CURATOR_APPLICATION_ACCESS_DENIED);
         }
 
-        // 검토자 정보 확인
-        ReviewerProfileResponse reviewerProfile = null;
+        // 지원자와 검토자를 한 번에 조회 (대기 상태는 검토자 없음)
+        UUID reviewedBy = (application.getStatus() == CuratorApplicationStatus.PENDING) ? null : application.getReviewedBy();
+        UserDisplayLookup lookup = userDisplayResolver.load(Arrays.asList(application.getApplicantId(), reviewedBy));
 
-        if (!(application.getStatus().equals(CuratorApplicationStatus.PENDING))) {
-            reviewerProfile = displayReviewerProfile(application.getReviewedBy());
-        }
-
-        return CuratorApplicationResponse.from(application, reviewerProfile);
+        return CuratorApplicationResponse.from(
+                application, toApplicantProfileResponse(application.getApplicantId(), lookup), toReviewerProfileResponse(reviewedBy, lookup));
     }
 
     /**
@@ -117,7 +133,7 @@ public class CuratorApplicationService {
     @Transactional(readOnly = true)
     public PageResponse<CuratorApplicationCardResponse> getMyApplications(UUID applicantId, Pageable pageable) {
         Page<CuratorApplication> applications = getApplicationsByApplicant(applicantId, pageable);
-        return PageResponse.from(applications.map(CuratorApplicationCardResponse::from));
+        return toCardResponse(applications);
     }
 
 
@@ -129,7 +145,7 @@ public class CuratorApplicationService {
         Page<CuratorApplication> applications =
                 (status != null) ? curatorApplicationRepository.findByStatus(status, pageable) : curatorApplicationRepository.findAll(pageable);
 
-        return PageResponse.from(applications.map(CuratorApplicationCardResponse::from));
+        return toCardResponse(applications);
     }
 
     /**
@@ -157,22 +173,44 @@ public class CuratorApplicationService {
             default -> throw new BusinessException(ErrorCode.INVALID_CURATOR_APPLICATION_STATUS_TRANSITION);
         }
 
-        return CuratorApplicationResponse.from(application, reviewerProfile);
+        UserDisplayLookup lookup = userDisplayResolver.load(List.of(application.getApplicantId()));
+        return CuratorApplicationResponse.from(application, toApplicantProfileResponse(application.getApplicantId(), lookup), reviewerProfile);
     }
 
 
     /**
-     * 검토자 정보
+     * 목록 조회 응답 변환
      */
-    private ReviewerProfileResponse displayReviewerProfile(UUID reviewerId) {
-        if (reviewerId == null) return null;
+    private PageResponse<CuratorApplicationCardResponse> toCardResponse(Page<CuratorApplication> applications) {
+        UserDisplayLookup lookup = userDisplayResolver.load(applications.getContent().stream().map(CuratorApplication::getApplicantId).toList());
+        return PageResponse.from(applications.map(
+                application -> CuratorApplicationCardResponse.from(application, toApplicantProfileResponse(application.getApplicantId(), lookup))));
+    }
 
-        if (reviewerId.toString().startsWith(WITHDRAWN_MANAGER_UUID_PREFIX)) {
-            return ReviewerProfileResponse.from(reviewerId, MUNTUM_OFFICIAL_NICKNAME, MUNTUM_OFFICIAL_EMAIL);
-        } else {
-            User reviewer = getUser(reviewerId);
-            return ReviewerProfileResponse.from(reviewerId, reviewer.getNickname(), reviewer.getEmail());
+    /**
+     * 지원자 프로필 응답 변환
+     */
+    private UserProfileResponse toApplicantProfileResponse(UUID applicantId, UserDisplayLookup lookup) {
+        return lookup.findMember(applicantId)
+                .map(UserProfileResponse::from)
+                .orElseGet(() -> {
+                    String nickname = lookup.display(applicantId, APPLICANT_LABELS).nickname();
+                    String role = SpecialUserType.from(applicantId).map(type -> type.role().name()).orElse(null);
+                    return new UserProfileResponse(null, null, nickname, null, role, null, null);
+                });
+    }
+
+
+    /**
+     * 검토자 프로필 응답 변환
+     */
+    private ReviewerProfileResponse toReviewerProfileResponse(UUID reviewerId, UserDisplayLookup lookup) {
+        if (reviewerId == null) {
+            return null;
         }
+        return lookup.findMember(reviewerId)
+                .map(reviewer -> ReviewerProfileResponse.from(reviewer.getId(), reviewer.getNickname(), reviewer.getEmail()))
+                .orElseGet(() -> ReviewerProfileResponse.from(null, lookup.display(reviewerId, REVIEWER_LABELS).nickname(), null));
     }
 
 
@@ -180,8 +218,9 @@ public class CuratorApplicationService {
      * 큐레이터 지원 승인 절차
      */
     private void approve(CuratorApplication application, User reviewer) {
+        User applicant = getUser(application.getApplicantId());
         application.approve(reviewer);
-        application.getApplicant().promoteToCurator();
+        applicant.promoteToCurator();
     }
 
     /**
@@ -199,8 +238,7 @@ public class CuratorApplicationService {
      * - 큐레이터 지원자 == 현재 로그인한 사용자인 경우 True
      */
     private boolean isOwner(CuratorApplication application, UUID userId) {
-        return application.getApplicant() != null
-                && application.getApplicant().getId().equals(userId);
+        return application.getApplicantId().equals(userId);
     }
 
     /**
@@ -220,7 +258,7 @@ public class CuratorApplicationService {
     }
 
     private Page<CuratorApplication> getApplicationsByApplicant(UUID applicantId, Pageable pageable) {
-        return curatorApplicationRepository.findByApplicant_IdOrderByCreatedAtDesc(applicantId, pageable);
+        return curatorApplicationRepository.findByApplicantIdOrderByCreatedAtDesc(applicantId, pageable);
     }
 
     /**
