@@ -31,8 +31,7 @@ public interface UserKeywordRepository extends JpaRepository<UserKeyword, UUID> 
     // 가장 많이 집계된 = 사용자의 인기 키워드
     @Query("""
     SELECT uk.keyword FROM UserKeyword uk
-    WHERE uk.deletedAt IS NULL
-    AND uk.keyword.active = true
+    WHERE uk.keyword.active = true
     GROUP BY uk.keyword
     ORDER BY COUNT(uk) DESC
 """)
@@ -43,7 +42,6 @@ public interface UserKeywordRepository extends JpaRepository<UserKeyword, UUID> 
     SELECT uk.keyword.id
     FROM UserKeyword uk
     WHERE uk.user.id = :userId
-    AND uk.deletedAt IS NULL
     AND uk.keyword.active = true
 """)
     List<UUID> findActiveKeywordIdsByUserId(@Param("userId") UUID userId);
@@ -53,7 +51,6 @@ public interface UserKeywordRepository extends JpaRepository<UserKeyword, UUID> 
     SELECT uk.user.id, COUNT(uk)
     FROM UserKeyword uk
     WHERE uk.user.id IN :userIds
-    AND uk.deletedAt IS NULL
     AND uk.keyword.active = true
     GROUP BY uk.user.id
 """)

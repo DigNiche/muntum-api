@@ -11,28 +11,16 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.UUID;
-import java.time.LocalDateTime;
 
 
 // 이 Entity가 사용자와 키워드를 연결하지만, 기능 중심으로 보면 키워드 선택 관계에 더 가깝기 때문에 Keyword에다가 둠.
 @Entity
 @Table(
         name = "user_keywords",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_user_keywords_user_keyword",
-                        columnNames = {"user_id", "keyword_id"}
-                )
-        },
+        uniqueConstraints = {@UniqueConstraint(name = "uk_user_keywords_user_keyword", columnNames = {"user_id", "keyword_id"})},
         indexes = {
-                @Index(
-                        name = "idx_user_keywords_user_id",
-                        columnList = "user_id"
-                ),
-                @Index(
-                        name = "idx_user_keywords_keyword_id",
-                        columnList = "keyword_id"
-                )
+                @Index(name = "idx_user_keywords_user_id", columnList = "user_id"),
+                @Index(name = "idx_user_keywords_keyword_id", columnList = "keyword_id")
         }
 )
 @Getter
@@ -43,20 +31,6 @@ public class UserKeyword extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     private UUID id;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
-
-    /**
-     * 논리 삭제 처리
-     */
-    public void softDelete(UUID deletedBy) {
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
-    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_user_keywords_user"))
