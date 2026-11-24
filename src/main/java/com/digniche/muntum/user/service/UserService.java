@@ -29,6 +29,7 @@ import com.digniche.muntum.user.dto.request.TermsConsentListRequest;
 import com.digniche.muntum.user.dto.request.TermsConsentRequest;
 import com.digniche.muntum.user.dto.response.UserConsentStatusResponse;
 import com.digniche.muntum.user.entity.User;
+import com.digniche.muntum.user.entity.UserRole;
 import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.entity.UserTermsAgreement;
 import com.digniche.muntum.user.repository.TermsRepository;
@@ -486,9 +487,16 @@ public class UserService {
      */
     private void completeWithdrawal(User user) {
         UUID userId = user.getId();
-
+        String role = user.getRole().name();
+        UUID withdrawnUuid = AuditorAwareImpl.toWithdrawnUserUuid(role, userId);
         // User 행 배타 잠금. 잠금 조회 후 일반 조회 시 스냅샷 생성. Lock 순서 : User -> Curation -> Curation Like
         userRepository.findByIdForUpdate(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 관리자가 수정한 다른 회원 행의 수정자를 탈퇴자 UUID 처리
+            // ❗위치 고정 필수❗회원->큐레이션 순서로 잠그는 다른 탈퇴 처리 로직과 맞추기 위해, 회원 행 잠금 바로 다음, idx_users_updated_by로 해당 회원 행만 잠그고, 다른 테이블 잠그는 단계 앞에 둔다
+        if (user.getRole() == UserRole.MANAGER) {
+            userRepository.replaceUpdatedByWith(userId, withdrawnUuid);
+        }
 
         // 큐레이션 좋아요 삭제 및 좋아요 수 감소
         curationLikeService.clearLikeActivity(userId);
@@ -499,11 +507,10 @@ public class UserService {
         // 검토가 확정되지 않은(대기) 큐레이터 지원서 삭제 (승인·반려로 확정된 지원서만 남김)
         curatorApplicationRepository.deleteByApplicantIdAndStatus(userId, CuratorApplicationStatus.PENDING);
 
-        String role = user.getRole().name();
-        UUID withdrawnUuid = AuditorAwareImpl.toWithdrawnUserUuid(role, userId);
-
         switch (role) {
             case "MANAGER" -> {
+                // (다른 회원 행의 수정자 치환은 잠금 순서 때문에 위에서 이미 했다)
+
                 // 제보의 생성/수정/검토자/제보자/삭제자는 탈퇴자 UUID 처리
                 spotSuggestionRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
@@ -511,48 +518,48 @@ public class UserService {
                 spotSuggestionRepository.replaceInformerWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 키워드의 생성/수정/삭제자 시스템 UUID 처리
+                // 키워드의 생성/수정/삭제자 탈퇴자 UUID 처리
                 keywordRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 keywordRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 keywordRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 프로그램의 생성자/수정자/삭제자
+                // 프로그램의 생성자/수정자/삭제자 탈퇴자 UUID 처리
                 programRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 programRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 programRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 프로그램 이미지의 생성자/수정자/삭제자
+                // 프로그램 이미지의 생성자/수정자/삭제자 탈퇴자 UUID 처리
                 programImageRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 programImageRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 programImageRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 프로그램 키워드의 생성자/수정자/삭제자
+                // 프로그램 키워드의 생성자/수정자/삭제자 탈퇴자 UUID 처리
                 programKeywordRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 programKeywordRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 programKeywordRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 공지의 생성자/수정자/삭제자
+                // 공지의 생성자/수정자/삭제자 탈퇴자 UUID 처리
                 announcementRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 announcementRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 announcementRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 약관의 생성자/수정자/삭제자
+                // 약관의 생성자/수정자/삭제자 탈퇴자 UUID 처리
                 termsRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 termsRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 termsRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 큐레이터 지원서의 수정자/검토자
+                // 큐레이터 지원서의 수정자/검토자 탈퇴자 UUID 처리
                 curatorApplicationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 curatorApplicationRepository.replaceReviewedByWith(userId, withdrawnUuid);
 
-                // 큐레이션의 작성자/생성자/수정자/검토자/삭제자
+                // 큐레이션의 작성자/생성자/수정자/검토자/삭제자 탈퇴자 UUID 처리
                 curationRepository.replaceCuratorIdWith(userId, withdrawnUuid);
                 curationRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 curationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 curationRepository.replaceReviewedByWith(userId, withdrawnUuid);
                 curationRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 큐레이션 이미지의 생성자/수정자
+                // 큐레이션 이미지의 생성자/수정자 탈퇴자 UUID 처리
                 curationImageRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 curationImageRepository.replaceUpdatedByWith(userId, withdrawnUuid);
 
@@ -563,17 +570,17 @@ public class UserService {
                 spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceInformerWith(userId, withdrawnUuid);
 
-                // 큐레이션의 작성자/생성자/수정자/삭제자
+                // 큐레이션의 작성자/생성자/수정자/삭제자 탈퇴자 UUID 처리
                 curationRepository.replaceCuratorIdWith(userId, withdrawnUuid);
                 curationRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 curationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 curationRepository.replaceDeletedByWith(userId, withdrawnUuid);
 
-                // 큐레이션 이미지의 생성자/수정자
+                // 큐레이션 이미지의 생성자/수정자 탈퇴자 UUID 처리
                 curationImageRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 curationImageRepository.replaceUpdatedByWith(userId, withdrawnUuid);
 
-                // 큐레이터 지원서의 지원자/생성자/수정자
+                // 큐레이터 지원서의 지원자/생성자/수정자 탈퇴자 UUID 처리
                 curatorApplicationRepository.replaceApplicantIdWith(userId, withdrawnUuid);
                 curatorApplicationRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 curatorApplicationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
@@ -585,7 +592,7 @@ public class UserService {
                 spotSuggestionRepository.replaceUpdatedByWith(userId, withdrawnUuid);
                 spotSuggestionRepository.replaceInformerWith(userId, withdrawnUuid);
 
-                // 큐레이터 지원서의 지원자/생성자/수정자
+                // 큐레이터 지원서의 지원자/생성자/수정자 탈퇴자 UUID 처리
                 curatorApplicationRepository.replaceApplicantIdWith(userId, withdrawnUuid);
                 curatorApplicationRepository.replaceCreatedByWith(userId, withdrawnUuid);
                 curatorApplicationRepository.replaceUpdatedByWith(userId, withdrawnUuid);
@@ -626,17 +633,11 @@ public class UserService {
         });
     }
 
+
     @Transactional(readOnly = true)
     public UserConsentStatusResponse getTermsConsent(UUID userId) {
-        UserTermsAgreement agreement =
-                userTermsAgreementRepository
-                        .findTopByUserIdOrderByCreatedAtDesc(userId)
-                        .orElseThrow(() ->
-                                new BusinessException(
-                                        ErrorCode.TERMS_NOT_FOUND
-                                )
-                        );
-
+        UserTermsAgreement agreement = userTermsAgreementRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+                                                                    .orElseThrow(() -> new BusinessException(ErrorCode.TERMS_NOT_FOUND));
         return UserConsentStatusResponse.from(agreement);
     }
 }

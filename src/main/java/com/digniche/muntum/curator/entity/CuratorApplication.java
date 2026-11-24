@@ -59,12 +59,7 @@ public class CuratorApplication extends BaseEntity {
 
 
     @Builder
-    public CuratorApplication(
-            UUID applicantId,
-            String programName,
-            String tagline,
-            String curation
-    ) {
+    public CuratorApplication(UUID applicantId, String programName, String tagline, String curation) {
         this.applicantId = applicantId;
         this.programName = programName;
         this.tagline = tagline;

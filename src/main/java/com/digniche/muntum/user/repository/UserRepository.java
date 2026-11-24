@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
@@ -69,4 +70,13 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      */
     @Query(value = "SELECT COUNT(*) FROM users WHERE id = :userId FOR SHARE", nativeQuery = true)
     long countByIdForShare(@Param("userId") UUID userId);
+
+
+    /**
+     * 관리자 탈퇴 시, 그 관리자가 수정한 다른 회원 행의 수정자를 Withdrawn UUID로 채우기
+     * - idx_users_updated_by로 해당 행만 잠근다
+     */
+    @Modifying
+    @Query("UPDATE User u SET u.updatedBy = :withdrawnUuid WHERE u.updatedBy = :userId")
+    int replaceUpdatedByWith(@Param("userId") UUID userId, @Param("withdrawnUuid") UUID withdrawnUuid);
 }
