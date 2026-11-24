@@ -456,7 +456,8 @@ public class ProgramService {
     }
 
     //헬퍼
-    private Page<ProgramCardResponse> toCardResponsePage(Page<Program> programPage) {
+    // ProgramQueryService(같은 패키지)도 카드 응답 변환에 쓰도록 package-private으로 둔다
+    Page<ProgramCardResponse> toCardResponsePage(Page<Program> programPage) {
         List<UUID> programIds = programPage.getContent().stream().map(Program::getId).toList();
         Map<UUID, String> thumbnailMap = programImageService.getThumbnailMap(programIds);
         Map<UUID, List<ProgramKeywordResponse>> keywordMap = programKeywordRepository
