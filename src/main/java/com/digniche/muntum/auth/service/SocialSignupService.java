@@ -115,7 +115,7 @@ public class SocialSignupService {
         String email = pending.email().trim();
 
         // 2. Preserve the existing no-auto-linking email policy.
-        if (userRepository.existsByEmailAndStatusNot(email, UserStatus.DELETED)) {
+        if (userRepository.existsByEmail(email)) {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 

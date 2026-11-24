@@ -8,7 +8,6 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.user.entity.SocialAccount;
 import com.digniche.muntum.user.entity.User;
-import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.repository.SocialAccountRepository;
 import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -274,10 +273,7 @@ public class SocialLoginService {
         email = email.trim();
 
         // 3. 이메일을 기준으로 계정을 자동 연결하지 않는 정책 유지
-        if (userRepository.existsByEmailAndStatusNot(
-                email,
-                UserStatus.DELETED
-        )) {
+        if (userRepository.existsByEmail(email)) {
             throw new BusinessException(
                     ErrorCode.EMAIL_ALREADY_EXISTS
             );

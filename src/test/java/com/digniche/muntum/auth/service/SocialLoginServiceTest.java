@@ -141,7 +141,7 @@ class SocialLoginServiceTest {
         givenAppleVerifiedAndExchanged();
         when(socialAccountRepository.findByProviderAndProviderUserId(SocialProvider.APPLE, APPLE_SUB))
                 .thenReturn(Optional.empty());
-        when(userRepository.existsByEmailAndStatusNot(EMAIL, UserStatus.DELETED)).thenReturn(false);
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
         when(socialAccountRepository.save(any(SocialAccount.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(tokenIssuer.issue(any(User.class))).thenReturn(ISSUED_TOKEN);

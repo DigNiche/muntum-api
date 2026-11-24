@@ -5,7 +5,6 @@ import com.digniche.muntum.global.exception.BusinessException;
 import com.digniche.muntum.global.exception.ErrorCode;
 import com.digniche.muntum.global.mail.MailService;
 import com.digniche.muntum.global.redis.EmailVerificationRedisService;
-import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +46,7 @@ public class EmailVerificationService {
         }
 
         // 2. 이미 가입된 이메일인지 확인
-        if (userRepository.existsByEmailAndStatusNot(normalizedEmail, UserStatus.DELETED)) {
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 

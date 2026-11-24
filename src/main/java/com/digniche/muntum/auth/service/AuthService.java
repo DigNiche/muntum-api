@@ -67,10 +67,7 @@ public class AuthService {
 
         User committedUser = transactionTemplate.execute(status -> {
 
-            if (userRepository.existsByEmailAndStatusNot(
-                    request.email(),
-                    UserStatus.DELETED
-            )) {
+            if (userRepository.existsByEmail(request.email())) {
                 throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
             }
 

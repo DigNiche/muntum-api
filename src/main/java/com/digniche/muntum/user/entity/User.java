@@ -56,12 +56,6 @@ public class User extends BaseEntity {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt = null;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt = null;
-
-    @Column(name = "deleted_by")
-    private UUID deletedBy = null;
-
     @Builder
     public User(
             String email,
@@ -127,18 +121,6 @@ public class User extends BaseEntity {
      * 삭제
      */
     public void clearProfileImage() { this.profileImageUrl = null; }
-
-    /**
-     * 사용자 소프트 삭제로 인한 타 Entity의 사용자 정보 마스킹
-     */
-    public void maskDeletedUserInfo(String addMaskingLetter, String withdrawalNicknamePrefix) {
-        this.email = this.email + addMaskingLetter;
-        this.nickname = withdrawalNicknamePrefix + addMaskingLetter;
-        if (this.password != null) {
-            this.password = this.password + addMaskingLetter;
-        }
-        this.profileImageUrl = null;
-    }
 
     /**
      * 소셜 로그인 신규 사용자 생성

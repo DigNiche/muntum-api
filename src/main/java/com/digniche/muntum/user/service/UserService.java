@@ -30,7 +30,6 @@ import com.digniche.muntum.user.dto.request.TermsConsentRequest;
 import com.digniche.muntum.user.dto.response.UserConsentStatusResponse;
 import com.digniche.muntum.user.entity.User;
 import com.digniche.muntum.user.entity.UserRole;
-import com.digniche.muntum.user.entity.UserStatus;
 import com.digniche.muntum.user.entity.UserTermsAgreement;
 import com.digniche.muntum.user.repository.TermsRepository;
 import com.digniche.muntum.user.repository.UserRepository;
@@ -109,9 +108,6 @@ public class UserService {
     private final SocialTokenCipher socialTokenCipher;
     private final PlatformTransactionManager transactionManager;
 
-    public static final String MASKING_LETTER_PREFIX = "_del_";
-    private static final int DATA_RETENTION_DISPOSAL_YEAR = 5;
-    private static final String WITHDRAWAL_NICKNAME_PREFIX = "탈퇴회원";
     private static final UUID SYSTEM_UUID = AuditorAwareImpl.SYSTEM_UUID;
 
     /**
@@ -132,8 +128,8 @@ public class UserService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<User> users = (search == null || search.isBlank())
-                ? userRepository.findAllByStatusNot(UserStatus.DELETED, pageable)
-                : userRepository.searchByNicknameOrEmail(search.trim(), UserStatus.DELETED, pageable);
+                ? userRepository.findAll(pageable)
+                : userRepository.searchByNicknameOrEmail(search.trim(), pageable);
 
         List<UserProfileDetailResponse> content = toProfileResponses(users.getContent());
         return PageResponse.from(new PageImpl<>(content, pageable, users.getTotalElements()));
@@ -260,20 +256,6 @@ public class UserService {
 
         user.changePassword(passwordEncoder.encode(request.newPassword()));
         refreshTokenService.delete(userId);  // 다른 기기 세션 로그아웃 (재로그인 유도)
-    }
-
-    /**
-     * 회원 탈퇴 N년 후 정보 완전 파기
-     * @Scheduled(cron = "0 0 3 * * *")
-     */
-    @Transactional
-    public void deleteExpiredWithdrawalUsers() {
-        LocalDateTime ago = LocalDateTime.now().minusYears(DATA_RETENTION_DISPOSAL_YEAR);
-
-        // TODO: 사용자 데이터 완전 삭제
-
-        // 탈퇴 후 DATA_RETENTION_DISPOSAL_YEAR 기간이 지났고, 여전히 DELETED 상태인 유저들만 완전 삭제
-        userRepository.deleteByStatusAndDeletedAtBefore(UserStatus.DELETED, ago);
     }
 
     /**
@@ -604,22 +586,6 @@ public class UserService {
 
         // social_accounts가 users를 외래키로 참조하므로 users보다 먼저 삭제
         socialAccountRepository.deleteAllByUserId(userId);
-
-        /*
-         탈퇴 후 재가입을 위한 이메일 마스킹 처리(비식별화). DB의 Email 컬럼 Unique 제약 유지.
-                String maskingLetter = MASKING_LETTER_PREFIX + user.getId();
-                user.maskDeletedUserInfo(maskingLetter, WITHDRAWAL_NICKNAME_PREFIX);
-                user.softDelete(userId);
-
-                String maskingLetter = MASKING_LETTER_PREFIX + user.getId();
-                user.maskDeletedUserInfo(maskingLetter, WITHDRAWAL_NICKNAME_PREFIX);
-                user.softDelete(userId);
-         현재 Access Token 블랙리스트 등록
-         */
-
-        /* 회원 탈퇴 N년 후 정보 완전 파기
-            @Scheduled(cron = "0 0 3 * * *")
-        */
 
         // 사용자 객체 삭제 : [ CASCADE DELETE ] 스크랩(scraps), 관심 키워드(user_keywords), 프로그램 반응(program_reactions)
         userRepository.delete(user);
